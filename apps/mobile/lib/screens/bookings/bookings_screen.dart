@@ -164,9 +164,21 @@ class _BookingsScreenState extends State<BookingsScreen> {
                     child: ElevatedButton(
                       onPressed: () async {
                         try {
-                          final targetBizId = _businesses.isNotEmpty
-                              ? _businesses.first.id
-                              : '0bf3972e-20a4-4b29-b190-e67fb185118f';
+                          Business? matchedBiz;
+                          final sLower = selectedService.toLowerCase();
+                          if (sLower.contains('print') || sLower.contains('thesis') || sLower.contains('stationery')) {
+                            matchedBiz = _businesses.cast<Business?>().firstWhere(
+                              (b) => b != null && (b.name.toLowerCase().contains('stationery') || b.name.toLowerCase().contains('print')),
+                              orElse: () => null,
+                            );
+                          } else if (sLower.contains('laptop') || sLower.contains('software') || sLower.contains('diagnostics')) {
+                            matchedBiz = _businesses.cast<Business?>().firstWhere(
+                              (b) => b != null && (b.name.toLowerCase().contains('tech') || b.name.toLowerCase().contains('electronic')),
+                              orElse: () => null,
+                            );
+                          }
+
+                          final targetBizId = matchedBiz?.id ?? (_businesses.isNotEmpty ? _businesses.first.id : '0bf3972e-20a4-4b29-b190-e67fb185118f');
                           await _bookingService.createBooking(
                             businessId: targetBizId,
                             serviceName: selectedService,
