@@ -20,4 +20,21 @@ class ApiEndpoints {
   // Bookings
   static const String bookings = '/bookings';
   static const String myBookings = '/bookings/my-bookings';
+
+  // Transport
+  static const String transportTrips = '/transport/trips';
+  static const String transportReservations = '/transport/reservations';
+  static const String transportMyReservations = '/transport/reservations/my';
+
+  // Housing
+  static const String housingListings = '/housing/listings';
+  static const String housingViewings = '/housing/viewings';
+  static const String housingMyViewings = '/housing/viewings/my';
+
+  // Events
+  static const String events = '/events';
+  static const String myEventRsvps = '/events/rsvps/my';
+
+  // Learning Resources
+  static const String learningResources = '/learning/resources';
 }

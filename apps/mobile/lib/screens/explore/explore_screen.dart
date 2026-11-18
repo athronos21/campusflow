@@ -3,6 +3,10 @@ import '../../core/constants/app_colors.dart';
 import '../../models/business.dart';
 import '../../services/business_service.dart';
 import 'shop_detail_screen.dart';
+import '../transport/transport_screen.dart';
+import '../housing/housing_screen.dart';
+import '../events/events_screen.dart';
+import '../learning/learning_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -81,6 +85,46 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         border: InputBorder.none,
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Quick Campus Services
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildQuickServiceButton(
+                        context,
+                        icon: Icons.directions_bus,
+                        color: Colors.amber.shade700,
+                        bgColor: Colors.amber.shade50,
+                        label: 'Transport',
+                        screen: const TransportScreen(),
+                      ),
+                      _buildQuickServiceButton(
+                        context,
+                        icon: Icons.home_work_outlined,
+                        color: Colors.teal.shade700,
+                        bgColor: Colors.teal.shade50,
+                        label: 'Housing',
+                        screen: const HousingScreen(),
+                      ),
+                      _buildQuickServiceButton(
+                        context,
+                        icon: Icons.event,
+                        color: Colors.indigo.shade700,
+                        bgColor: Colors.indigo.shade50,
+                        label: 'Events',
+                        screen: const EventsScreen(),
+                      ),
+                      _buildQuickServiceButton(
+                        context,
+                        icon: Icons.menu_book,
+                        color: Colors.cyan.shade800,
+                        bgColor: Colors.cyan.shade50,
+                        label: 'Academic',
+                        screen: const LearningScreen(),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 20),
 
@@ -180,6 +224,47 @@ class _ExploreScreenState extends State<ExploreScreen> {
         name: 'Haramaya Campus Cafe & Snack',
         description: 'Fresh coffee, snacks, breakfast, and fast food near Student Lounge.',
         status: 'verified',
+      ),
+    );
+  }
+
+  Widget _buildQuickServiceButton(
+    BuildContext context, {
+    required IconData icon,
+    required Color color,
+    required Color bgColor,
+    required String label,
+    required Widget screen,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => screen),
+        );
+      },
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: color.withValues(alpha: 0.2)),
+            ),
+            child: Icon(icon, color: color, size: 28),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
       ),
     );
   }
