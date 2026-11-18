@@ -1,0 +1,323 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserStatus {
+  active
+  suspended
+  deleted
+}
+
+enum CampusRole {
+  student
+  merchant
+  merchant_staff
+  campus_moderator
+  campus_admin
+}
+
+enum MembershipStatus {
+  active
+  pending
+  revoked
+}
+
+enum BusinessStatus {
+  pending
+  verified
+  rejected
+  suspended
+}
+
+enum BusinessStaffRole {
+  manager
+  staff
+}
+
+enum OrderStatus {
+  pending
+  accepted
+  preparing
+  ready
+  completed
+  cancelled
+  rejected
+}
+
+enum PaymentStatus {
+  unpaid
+  pending
+  paid
+  failed
+  refunded
+}
+
+enum BookingStatus {
+  requested
+  confirmed
+  completed
+  cancelled
+  rejected
+}
+
+enum ReportStatus {
+  pending
+  in_review
+  resolved
+  dismissed
+}
+
+model Campus {
+  id          String              @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String              @unique
+  city        String
+  isActive    Boolean             @default(true) @map("is_active")
+  createdAt   DateTime            @default(now()) @map("created_at")
+
+  memberships CampusMembership[]
+  businesses  Business[]
+  categories  Category[]
+  orders      Order[]
+  announcements Announcement[]
+  auditLogs   AuditLog[]
+
+  @@map("campuses")
+}
+
+model User {
+  id           String             @id @default(uuid()) @db.Uuid
+  email        String?            @unique
+  phone        String?            @unique
+  displayName  String             @map("display_name")
+  passwordHash String?            @map("password_hash")
+  status       UserStatus         @default(active)
+  createdAt    DateTime           @default(now()) @map("created_at")
+  updatedAt    DateTime           @updatedAt @map("updated_at")
+
+  memberships   CampusMembership[]
+  ownedBusinesses Business[]      @relation("BusinessOwner")
+  staffRoles    BusinessStaff[]
+  orders        Order[]           @relation("CustomerOrders")
+  bookings      Booking[]         @relation("CustomerBookings")
+  announcements Announcement[]    @relation("UserAnnouncements")
+  notifications Notification[]
+  auditLogs     AuditLog[]        @relation("ActorAuditLogs")
+  reportsFiled  Report[]          @relation("ReporterUser")
+
+  @@map("users")
+}
+
+model CampusMembership {
+  userId    String           @map("user_id") @db.Uuid
+  campusId  String           @map("campus_id") @db.Uuid
+  role      CampusRole
+  status    MembershipStatus @default(active)
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campus    Campus           @relation(fields: [campusId], references: [id], onDelete: Cascade)
+
+  @@id([userId, campusId, role])
+  @@map("campus_memberships")
+}
+
+model Business {
+  id          String         @id @default(uuid()) @db.Uuid
+  campusId    String         @map("campus_id") @db.Uuid
+  ownerId     String         @map("owner_id") @db.Uuid
+  name        String
+  description String?
+  status      BusinessStatus @default(pending)
+  createdAt   DateTime       @default(now()) @map("created_at")
+
+  campus      Campus         @relation(fields: [campusId], references: [id], onDelete: Cascade)
+  owner       User           @relation("BusinessOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  staff       BusinessStaff[]
+  products    Product[]
+  orders      Order[]
+  bookings    Booking[]
+
+  @@index([campusId, status], name: "idx_businesses_campus_status")
+  @@map("businesses")
+}
+
+model BusinessStaff {
+  businessId String            @map("business_id") @db.Uuid
+  userId     String            @map("user_id") @db.Uuid
+  role       BusinessStaffRole
+
+  business   Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([businessId, userId])
+  @@map("business_staff")
+}
+
+model Category {
+  id       String    @id @default(uuid()) @db.Uuid
+  campusId String?   @map("campus_id") @db.Uuid
+  name     String
+  slug     String
+
+  campus   Campus?   @relation(fields: [campusId], references: [id], onDelete: Cascade)
+  products Product[]
+
+  @@unique([campusId, slug])
+  @@map("categories")
+}
+
+model Product {
+  id            String      @id @default(uuid()) @db.Uuid
+  businessId    String      @map("business_id") @db.Uuid
+  categoryId    String?     @map("category_id") @db.Uuid
+  name          String
+  description   String?
+  priceMinor    BigInt      @map("price_minor")
+  currency      String      @default("ETB") @db.Char(3)
+  stockQuantity Int?        @map("stock_quantity")
+  isAvailable   Boolean     @default(true) @map("is_available")
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  business      Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  category      Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  orderItems    OrderItem[]
+
+  @@index([businessId, isAvailable], name: "idx_products_business_available")
+  @@map("products")
+}
+
+model Order {
+  id            String        @id @default(uuid()) @db.Uuid
+  campusId      String        @map("campus_id") @db.Uuid
+  customerId    String        @map("customer_id") @db.Uuid
+  businessId    String        @map("business_id") @db.Uuid
+  status        OrderStatus   @default(pending)
+  paymentStatus PaymentStatus @default(unpaid) @map("payment_status")
+  currency      String        @default("ETB") @db.Char(3)
+  subtotalMinor BigInt        @map("subtotal_minor")
+  feeMinor      BigInt        @default(0) @map("fee_minor")
+  totalMinor    BigInt        @map("total_minor")
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  campus        Campus        @relation(fields: [campusId], references: [id], onDelete: Cascade)
+  customer      User          @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Restrict)
+  business      Business      @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  items         OrderItem[]
+  payments      Payment[]
+
+  @@index([customerId, createdAt(sort: Desc)], name: "idx_orders_customer_created")
+  @@index([businessId, status], name: "idx_orders_business_status")
+  @@map("orders")
+}
+
+model OrderItem {
+  id              String   @id @default(uuid()) @db.Uuid
+  orderId         String   @map("order_id") @db.Uuid
+  productId       String?  @map("product_id") @db.Uuid
+  productName     String   @map("product_name")
+  unitPriceMinor  BigInt   @map("unit_price_minor")
+  quantity        Int
+
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product         Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@map("order_items")
+}
+
+model Booking {
+  id          String        @id @default(uuid()) @db.Uuid
+  customerId  String        @map("customer_id") @db.Uuid
+  businessId  String        @map("business_id") @db.Uuid
+  serviceName String        @map("service_name")
+  startsAt    DateTime      @map("starts_at")
+  status      BookingStatus @default(requested)
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  customer    User          @relation("CustomerBookings", fields: [customerId], references: [id], onDelete: Restrict)
+  business    Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, startsAt], name: "idx_bookings_business_start")
+  @@map("bookings")
+}
+
+model Payment {
+  id                String        @id @default(uuid()) @db.Uuid
+  orderId           String        @map("order_id") @db.Uuid
+  provider          String
+  providerReference String?       @map("provider_reference")
+  amountMinor       BigInt        @map("amount_minor")
+  currency          String        @db.Char(3)
+  status            PaymentStatus @default(pending)
+  createdAt         DateTime      @default(now()) @map("created_at")
+
+  order             Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerReference])
+  @@map("payments")
+}
+
+model Announcement {
+  id          String    @id @default(uuid()) @db.Uuid
+  campusId    String    @map("campus_id") @db.Uuid
+  authorId    String    @map("author_id") @db.Uuid
+  title       String
+  body        String
+  publishedAt DateTime? @map("published_at")
+  expiresAt   DateTime? @map("expires_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  campus      Campus    @relation(fields: [campusId], references: [id], onDelete: Cascade)
+  author      User      @relation("UserAnnouncements", fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@map("announcements")
+}
+
+model Notification {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  type      String
+  title     String
+  body      String
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)], name: "idx_notifications_user_created")
+  @@map("notifications")
+}
+
+model Report {
+  id          String       @id @default(uuid()) @db.Uuid
+  reporterId  String       @map("reporter_id") @db.Uuid
+  entityType  String       @map("entity_type")
+  entityId    String       @map("entity_id") @db.Uuid
+  reason      String
+  details     String?
+  status      ReportStatus @default(pending)
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  reporter    User         @relation("ReporterUser", fields: [reporterId], references: [id], onDelete: Restrict)
+
+  @@map("reports")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  actorId    String?  @map("actor_id") @db.Uuid
+  campusId   String?  @map("campus_id") @db.Uuid
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String?  @map("entity_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  actor      User?    @relation("ActorAuditLogs", fields: [actorId], references: [id], onDelete: SetNull)
+  campus     Campus?  @relation(fields: [campusId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}

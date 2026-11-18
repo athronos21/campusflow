@@ -1,0 +1,28 @@
+{
+  "name": "campusflow-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CampusFlow — Unified Campus Services Platform for Ethiopian Universities",
+  "packageManager": "pnpm@9.1.0",
+  "scripts": {
+    "build": "pnpm --filter @campusflow/contracts build && pnpm --filter @campusflow/api build && pnpm --filter @campusflow/web build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "prisma db seed",
+    "db:studio": "prisma studio",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\""
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.2.5",
+    "prisma": "^5.22.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.4.5"
+  }
+}
