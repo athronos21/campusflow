@@ -27,6 +27,12 @@ export class OrdersController {
     return this.ordersService.findUserOrders(user.id);
   }
 
+  @Get('business/:businessId')
+  @ApiOperation({ summary: 'List incoming orders for a merchant business' })
+  async getBusinessOrders(@Param('businessId') businessId: string) {
+    return this.ordersService.findBusinessOrders(businessId);
+  }
+
   @Patch(':id/status')
   @ApiOperation({ summary: 'Update order lifecycle status (Merchant or Staff)' })
   async updateStatus(

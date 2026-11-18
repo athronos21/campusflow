@@ -95,6 +95,28 @@ export class OrdersService {
     }));
   }
 
+  async findBusinessOrders(businessId: string) {
+    const orders = await this.prisma.order.findMany({
+      where: { businessId },
+      include: {
+        items: true,
+        customer: { select: { displayName: true, email: true, phone: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return orders.map((o) => ({
+      ...o,
+      subtotalMinor: Number(o.subtotalMinor),
+      feeMinor: Number(o.feeMinor),
+      totalMinor: Number(o.totalMinor),
+      items: o.items.map((i) => ({
+        ...i,
+        unitPriceMinor: Number(i.unitPriceMinor),
+      })),
+    }));
+  }
+
   async updateStatus(orderId: string, dto: UpdateOrderStatusDto) {
     const order = await this.prisma.order.update({
       where: { id: orderId },
