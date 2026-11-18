@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { apiClient } from '@/lib/api-client';
 
 interface ReportItem {
   id: string;
@@ -24,13 +25,8 @@ export default function AdminComplaintsPage() {
   const fetchReports = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch('http://localhost:4000/api/v1/moderation/reports', {
-        headers: { 'Authorization': 'Bearer admin-dev-token' },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setReports(data);
-      }
+      const data = await apiClient<ReportItem[]>('/moderation/reports');
+      setReports(data);
     } catch (e) {
       console.error(e);
     } finally {
@@ -45,13 +41,10 @@ export default function AdminComplaintsPage() {
   const handleResolve = async (id: string) => {
     try {
       setResolvingId(id);
-      const res = await fetch(`http://localhost:4000/api/v1/moderation/reports/${id}/resolve`, {
+      await apiClient(`/moderation/reports/${id}/resolve`, {
         method: 'PATCH',
-        headers: { 'Authorization': 'Bearer admin-dev-token' },
       });
-      if (res.ok) {
-        await fetchReports();
-      }
+      await fetchReports();
     } catch (e) {
       console.error(e);
     } finally {

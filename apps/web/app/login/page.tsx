@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
+import { apiClient } from '@/lib/api-client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -21,16 +22,10 @@ export default function LoginPage() {
       setLoading(true);
       setError(null);
 
-      const res = await fetch('http://localhost:4000/api/v1/auth/login', {
+      const data = await apiClient<any>('/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier, password }),
       });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || data.error?.message || 'Login failed');
-      }
 
       login(data.accessToken, {
         id: data.user.id,

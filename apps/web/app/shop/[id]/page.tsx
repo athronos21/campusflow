@@ -8,13 +8,15 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatETB } from '@/lib/utils';
+import { apiClient } from '@/lib/api-client';
+import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
 
 interface Product {
   id: string;
   name: string;
   description: string | null;
-  priceMinor: number;
+  priceMinor: number | string;
   isAvailable: boolean;
 }
 
@@ -30,6 +32,7 @@ interface Business {
 export default function ShopDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const businessId = params.id as string;
 
   const [business, setBusiness] = useState<Business | null>(null);
@@ -42,12 +45,10 @@ export default function ShopDetailPage() {
     async function loadShop() {
       try {
         setIsLoading(true);
-        const res = await fetch(`http://localhost:4000/api/v1/businesses/${businessId}`);
-        if (!res.ok) throw new Error('Shop not found');
-        const data = await res.json();
+        const data = await apiClient<Business>(`/businesses/${businessId}`);
         setBusiness(data);
       } catch (err: any) {
-        console.error(err);
+        console.error('Shop fetch error:', err);
       } finally {
         setIsLoading(false);
       }
@@ -80,6 +81,12 @@ export default function ShopDetailPage() {
   const handlePlaceOrder = async () => {
     if (!business || cartCount === 0) return;
 
+    if (!user) {
+      alert('Please sign in or create an account to place an order.');
+      router.push('/login');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       setOrderError(null);
@@ -89,12 +96,8 @@ export default function ShopDetailPage() {
         quantity,
       }));
 
-      const res = await fetch('http://localhost:4000/api/v1/orders', {
+      await apiClient('/orders', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer student-dev-token',
-        },
         body: JSON.stringify({
           campusId: business.campusId,
           businessId: business.id,
@@ -102,14 +105,6 @@ export default function ShopDetailPage() {
         }),
       });
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Failed to place order');
-      }
-
-      const orderData = await res.json();
-      console.log('Order successfully placed:', orderData);
-      // Redirect to student orders tracking page
       router.push('/orders');
     } catch (err: any) {
       setOrderError(err.message || 'Error creating order');
@@ -120,9 +115,9 @@ export default function ShopDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col justify-between">
+      <div className="min-h-screen flex flex-col justify-between bg-slate-50">
         <Navbar />
-        <div className="text-center py-20 text-slate-500 font-medium">Loading shop details...</div>
+        <div className="text-center py-24 text-slate-500 font-medium">Loading shop details...</div>
         <Footer />
       </div>
     );
@@ -130,9 +125,9 @@ export default function ShopDetailPage() {
 
   if (!business) {
     return (
-      <div className="min-h-screen flex flex-col justify-between">
+      <div className="min-h-screen flex flex-col justify-between bg-slate-50">
         <Navbar />
-        <div className="text-center py-20">
+        <div className="text-center py-24">
           <h2 className="text-xl font-bold text-slate-900">Shop Not Found</h2>
           <Link href="/directory" className="text-indigo-600 text-sm mt-2 inline-block">
             ← Return to Directory
@@ -156,7 +151,7 @@ export default function ShopDetailPage() {
               <h1 className="text-3xl font-extrabold text-slate-900">{business.name}</h1>
               <p className="text-slate-600 text-sm mt-1">{business.description}</p>
             </div>
-            <Badge variant="success">VERIFIED PARTNER</Badge>
+            <Badge variant="success">✓ VERIFIED PARTNER</Badge>
           </div>
         </div>
 
@@ -173,13 +168,13 @@ export default function ShopDetailPage() {
             const qty = cart[product.id] || 0;
 
             return (
-              <Card key={product.id} className="flex items-center justify-between shadow-sm">
+              <Card key={product.id} className="flex items-center justify-between shadow-sm p-5">
                 <div>
                   <h3 className="font-bold text-slate-900 text-base">{product.name}</h3>
                   {product.description && (
                     <p className="text-sm text-slate-500 mt-0.5">{product.description}</p>
                   )}
-                  <span className="font-extrabold text-indigo-600 text-base mt-2 block">
+                  <span className="font-black text-indigo-600 text-lg mt-2 block">
                     {formatETB(product.priceMinor)}
                   </span>
                 </div>
@@ -198,7 +193,7 @@ export default function ShopDetailPage() {
                   )}
                   <button
                     onClick={() => updateQuantity(product.id, 1)}
-                    className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm transition shadow-sm"
+                    className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition shadow-sm"
                   >
                     {qty > 0 ? '+ Add More' : 'Add to Cart'}
                   </button>

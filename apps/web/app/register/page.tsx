@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
+import { apiClient } from '@/lib/api-client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -20,8 +21,7 @@ export default function RegisterPage() {
   const router = useRouter();
 
   useEffect(() => {
-    fetch('http://localhost:4000/api/v1/campuses')
-      .then((r) => r.json())
+    apiClient<{ id: string; name: string }[]>('/campuses')
       .then((data) => {
         setCampuses(data);
         if (data.length > 0) setCampusId(data[0].id);
@@ -43,16 +43,10 @@ export default function RegisterPage() {
       if (email.trim()) payload.email = email.trim();
       if (phone.trim() && phone !== '+2519') payload.phone = phone.trim();
 
-      const res = await fetch('http://localhost:4000/api/v1/auth/register', {
+      const data = await apiClient<any>('/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || data.error?.message || 'Registration failed');
-      }
 
       login(data.accessToken, {
         id: data.user.id,

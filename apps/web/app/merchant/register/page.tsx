@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { apiClient } from '@/lib/api-client';
 import Link from 'next/link';
 
 export default function MerchantRegisterPage() {
@@ -15,8 +16,7 @@ export default function MerchantRegisterPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('http://localhost:4000/api/v1/campuses')
-      .then((r) => r.json())
+    apiClient<{ id: string; name: string }[]>('/campuses')
       .then((data) => {
         setCampuses(data);
         if (data.length > 0) setCampusId(data[0].id);
@@ -30,23 +30,14 @@ export default function MerchantRegisterPage() {
       setLoading(true);
       setError(null);
 
-      const res = await fetch('http://localhost:4000/api/v1/businesses', {
+      await apiClient('/businesses', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer merchant-dev-token',
-        },
         body: JSON.stringify({
           campusId,
           name,
           description,
         }),
       });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || 'Registration failed');
-      }
 
       setSuccess(true);
     } catch (err: any) {

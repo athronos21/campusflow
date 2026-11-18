@@ -5,12 +5,13 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatETB } from '@/lib/utils';
+import { apiClient } from '@/lib/api-client';
 
 interface Product {
   id: string;
   name: string;
   description: string | null;
-  priceMinor: number;
+  priceMinor: number | string;
   isAvailable: boolean;
 }
 
@@ -22,19 +23,18 @@ export default function MerchantMenuPage() {
   const [newPriceETB, setNewPriceETB] = useState<string>('');
   const [newDescription, setNewDescription] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [uploadingFile, setUploadingFile] = useState<boolean>(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
 
   const businessId = '0bf3972e-20a4-4b29-b190-e67fb185118f';
 
   const fetchProducts = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch(`http://localhost:4000/api/v1/products?businessId=${businessId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setProducts(data);
-      }
+      const data = await apiClient<Product[]>(`/products?businessId=${businessId}`);
+      setProducts(data);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to load catalog:', err);
     } finally {
       setIsLoading(false);
     }
@@ -46,17 +46,39 @@ export default function MerchantMenuPage() {
 
   const handleToggle = async (productId: string, current: boolean) => {
     try {
-      await fetch(`http://localhost:4000/api/v1/products/${productId}/availability`, {
+      await apiClient(`/products/${productId}/availability`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer merchant-dev-token',
-        },
         body: JSON.stringify({ isAvailable: !current }),
       });
       await fetchProducts();
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingFile(true);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const token = typeof window !== 'undefined' ? localStorage.getItem('campusflow_token') : null;
+      const res = await fetch('http://localhost:4000/api/v1/upload', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      setUploadedImageUrl(data.url);
+    } catch (err: any) {
+      alert(err.message || 'Image upload failed');
+    } finally {
+      setUploadingFile(false);
     }
   };
 
@@ -66,12 +88,8 @@ export default function MerchantMenuPage() {
       setIsSubmitting(true);
       const priceMinor = Math.round(parseFloat(newPriceETB) * 100);
 
-      const res = await fetch(`http://localhost:4000/api/v1/products/business/${businessId}`, {
+      await apiClient(`/products/business/${businessId}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer merchant-dev-token',
-        },
         body: JSON.stringify({
           name: newName,
           description: newDescription,
@@ -81,13 +99,12 @@ export default function MerchantMenuPage() {
         }),
       });
 
-      if (res.ok) {
-        setNewName('');
-        setNewPriceETB('');
-        setNewDescription('');
-        setShowAddModal(false);
-        await fetchProducts();
-      }
+      setNewName('');
+      setNewPriceETB('');
+      setNewDescription('');
+      setUploadedImageUrl(null);
+      setShowAddModal(false);
+      await fetchProducts();
     } catch (err) {
       console.error(err);
     } finally {
@@ -145,8 +162,20 @@ export default function MerchantMenuPage() {
               />
             </div>
 
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Item Image (Optional)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+              />
+              {uploadingFile && <p className="text-xs text-indigo-600 mt-1">Uploading photo...</p>}
+              {uploadedImageUrl && <p className="text-xs text-emerald-600 mt-1">✓ Image uploaded successfully</p>}
+            </div>
+
             <div className="flex gap-2 pt-2">
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || uploadingFile}>
                 {isSubmitting ? 'Saving...' : 'Add Item to Menu'}
               </Button>
               <Button type="button" variant="outline" onClick={() => setShowAddModal(false)}>
@@ -166,11 +195,11 @@ export default function MerchantMenuPage() {
       ) : (
         <div className="space-y-3">
           {products.map((item) => (
-            <Card key={item.id} className="flex items-center justify-between py-4 shadow-sm">
+            <Card key={item.id} className="flex items-center justify-between py-4 shadow-sm p-5">
               <div>
-                <h3 className="font-semibold text-slate-900 text-base">{item.name}</h3>
+                <h3 className="font-bold text-slate-900 text-base">{item.name}</h3>
                 {item.description && <p className="text-xs text-slate-500 mt-0.5">{item.description}</p>}
-                <span className="text-sm font-extrabold text-indigo-600 mt-1 block">
+                <span className="text-sm font-black text-indigo-600 mt-1 block">
                   {formatETB(item.priceMinor)}
                 </span>
               </div>

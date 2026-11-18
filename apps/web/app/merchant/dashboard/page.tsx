@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { formatETB } from '@/lib/utils';
+import { apiClient } from '@/lib/api-client';
 import Link from 'next/link';
 
 interface Order {
@@ -22,23 +23,14 @@ export default function MerchantDashboardPage() {
     async function loadStats() {
       try {
         setIsLoading(true);
-        // Load orders
-        const res = await fetch(`http://localhost:4000/api/v1/orders/business/${businessId}`, {
-          headers: { 'Authorization': 'Bearer merchant-dev-token' },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setOrders(data);
-        }
-
-        // Load products
-        const prodRes = await fetch(`http://localhost:4000/api/v1/products?businessId=${businessId}`);
-        if (prodRes.ok) {
-          const prodData = await prodRes.json();
-          setProductsCount(prodData.length);
-        }
+        const [ordersData, prodData] = await Promise.all([
+          apiClient<Order[]>(`/orders/business/${businessId}`),
+          apiClient<any[]>(`/products?businessId=${businessId}`),
+        ]);
+        setOrders(ordersData);
+        setProductsCount(prodData.length);
       } catch (err) {
-        console.error(err);
+        console.error('Failed to load merchant metrics:', err);
       } finally {
         setIsLoading(false);
       }

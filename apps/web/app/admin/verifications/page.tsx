@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { apiClient } from '@/lib/api-client';
 import Link from 'next/link';
 
 interface PendingBusiness {
@@ -30,15 +31,8 @@ export default function AdminVerificationsPage() {
   const fetchPending = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch(`http://localhost:4000/api/v1/moderation/businesses/pending?campusId=${campusId}`, {
-        headers: {
-          'Authorization': 'Bearer admin-dev-token',
-        },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setBusinesses(data);
-      }
+      const data = await apiClient<PendingBusiness[]>(`/moderation/businesses/pending?campusId=${campusId}`);
+      setBusinesses(data);
     } catch (e) {
       console.error(e);
     } finally {
@@ -53,16 +47,10 @@ export default function AdminVerificationsPage() {
   const handleVerify = async (businessId: string) => {
     try {
       setActionId(businessId);
-      const res = await fetch(`http://localhost:4000/api/v1/moderation/businesses/${businessId}/verify`, {
+      await apiClient(`/moderation/businesses/${businessId}/verify`, {
         method: 'PATCH',
-        headers: {
-          'Authorization': 'Bearer admin-dev-token',
-        },
       });
-
-      if (res.ok) {
-        await fetchPending();
-      }
+      await fetchPending();
     } catch (e) {
       console.error('Failed to verify:', e);
     } finally {
