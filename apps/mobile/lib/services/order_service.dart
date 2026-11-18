@@ -34,4 +34,30 @@ class OrderService {
       rethrow;
     }
   }
+
+  static Future<Map<String, dynamic>> initializePayment(String orderId, {String provider = 'telebirr'}) async {
+    try {
+      final response = await ApiClient.client.post(
+        '/payments/initialize',
+        data: {
+          'orderId': orderId,
+          'provider': provider,
+        },
+      );
+      return response.data;
+    } catch (e) {
+      print('Init payment error: $e');
+      rethrow;
+    }
+  }
+
+  static Future<Map<String, dynamic>> verifyPayment(String reference) async {
+    try {
+      final response = await ApiClient.client.post('/payments/verify/$reference');
+      return response.data;
+    } catch (e) {
+      print('Verify payment error: $e');
+      rethrow;
+    }
+  }
 }

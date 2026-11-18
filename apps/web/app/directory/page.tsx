@@ -205,13 +205,31 @@ export default function DirectoryPage() {
             href="/transport"
             className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition flex items-center gap-1"
           >
-            <span>🚌</span> Campus Bus Shuttles →
+            <span>🚌</span> Bus Shuttles →
+          </Link>
+          <Link
+            href="/housing"
+            className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 transition flex items-center gap-1"
+          >
+            <span>🏠</span> Off-Campus Housing →
+          </Link>
+          <Link
+            href="/events"
+            className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 transition flex items-center gap-1"
+          >
+            <span>🎯</span> Events & Passes →
+          </Link>
+          <Link
+            href="/learning"
+            className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200 hover:bg-cyan-100 transition flex items-center gap-1"
+          >
+            <span>📚</span> Academic Bank →
           </Link>
           <Link
             href="/bookings"
             className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition flex items-center gap-1"
           >
-            <span>📅</span> Service Appointments →
+            <span>📅</span> Appointments →
           </Link>
         </div>
 

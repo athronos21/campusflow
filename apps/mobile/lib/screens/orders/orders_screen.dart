@@ -50,6 +50,105 @@ class _OrdersScreenState extends State<OrdersScreen> {
     ];
   }
 
+  void _showTelebirrDialog(Order order) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final res = await OrderService.initializePayment(order.id, provider: 'telebirr');
+      if (!mounted) return;
+      final ussdCode = res['ussdQuickDial'] ?? '*127*1*251911223344*...#';
+      final ref = res['paymentReference'] ?? res['providerReference'] ?? 'REF-DEMO';
+
+      if (!mounted) return;
+      showModalBottomSheet(
+        context: context,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (ctx) => Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.phone_android, color: Colors.blue),
+                      SizedBox(width: 8),
+                      Text('Telebirr Digital Checkout', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    ],
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Order Total: ${Formatters.formatETB(order.totalMinor)}',
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Telebirr Quick-Dial USSD Code:', style: TextStyle(fontSize: 11, color: Colors.blueGrey)),
+                    const SizedBox(height: 4),
+                    Text(
+                      ussdCode,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, fontFamily: 'monospace'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    try {
+                      await OrderService.verifyPayment(ref);
+                      if (ctx.mounted) Navigator.pop(ctx);
+                      messenger.showSnackBar(
+                        const SnackBar(content: Text('Telebirr Payment Confirmed!')),
+                      );
+                      _loadOrders();
+                    } catch (e) {
+                      messenger.showSnackBar(
+                        SnackBar(content: Text('Payment verification failed: $e')),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade700,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Simulate Telebirr Payment Succeeded', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Failed to initialize payment: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -129,10 +228,24 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                     Formatters.formatETB(order.totalMinor),
                                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                                   ),
-                                  const Text('Pay at pickup', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                                  Text(
+                                    order.paymentStatus == 'paid' ? 'Paid via Telebirr' : 'Pay via Telebirr or at pickup',
+                                    style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                                  ),
                                 ],
                               ),
-                              if (isReady)
+                              if (order.paymentStatus != 'paid')
+                                ElevatedButton.icon(
+                                  onPressed: () => _showTelebirrDialog(order),
+                                  icon: const Icon(Icons.payment, size: 14, color: Colors.white),
+                                  label: const Text('Pay Telebirr', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.blue.shade700,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  ),
+                                )
+                              else if (isReady)
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                   decoration: BoxDecoration(
@@ -142,6 +255,18 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                   child: const Text(
                                     'Ready for Pickup! 🔔',
                                     style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                  ),
+                                )
+                              else
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.shade50,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    'PAID ✓',
+                                    style: TextStyle(color: Colors.green.shade800, fontSize: 11, fontWeight: FontWeight.bold),
                                   ),
                                 ),
                             ],
