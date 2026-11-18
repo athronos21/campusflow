@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { formatETB } from '@/lib/utils';
 import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
+import { useCart } from '@/lib/cart-context';
 import Link from 'next/link';
 
 interface Product {
@@ -33,6 +34,7 @@ export default function ShopDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
+  const { addItem, updateQuantity: updateGlobalQuantity, clearCart } = useCart();
   const businessId = params.id as string;
 
   const [business, setBusiness] = useState<Business | null>(null);
@@ -71,6 +73,28 @@ export default function ShopDetailPage() {
     });
   };
 
+  const handleAddItem = (product: Product) => {
+    updateQuantity(product.id, 1);
+    if (business) {
+      addItem(
+        {
+          id: product.id,
+          name: product.name,
+          priceMinor: product.priceMinor,
+          businessId: business.id,
+          businessName: business.name,
+          campusId: business.campusId,
+        },
+        1
+      );
+    }
+  };
+
+  const handleRemoveItem = (product: Product) => {
+    updateQuantity(product.id, -1);
+    updateGlobalQuantity(product.id, -1);
+  };
+
   const totalMinor = Object.entries(cart).reduce((sum, [productId, qty]) => {
     const p = business?.products.find((prod) => prod.id === productId);
     return sum + (p ? Number(p.priceMinor) * qty : 0);
@@ -105,6 +129,7 @@ export default function ShopDetailPage() {
         }),
       });
 
+      clearCart();
       router.push('/orders');
     } catch (err: any) {
       setOrderError(err.message || 'Error creating order');
@@ -183,7 +208,7 @@ export default function ShopDetailPage() {
                   {qty > 0 && (
                     <>
                       <button
-                        onClick={() => updateQuantity(product.id, -1)}
+                        onClick={() => handleRemoveItem(product)}
                         className="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center justify-center font-bold text-lg transition"
                       >
                         -
@@ -192,7 +217,7 @@ export default function ShopDetailPage() {
                     </>
                   )}
                   <button
-                    onClick={() => updateQuantity(product.id, 1)}
+                    onClick={() => handleAddItem(product)}
                     className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition shadow-sm"
                   >
                     {qty > 0 ? '+ Add More' : 'Add to Cart'}
@@ -206,8 +231,8 @@ export default function ShopDetailPage() {
 
       {/* Floating Checkout Drawer */}
       {cartCount > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-xl p-4 z-50">
-          <div className="max-w-4xl mx-auto flex items-center justify-between">
+        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-slate-200 shadow-xl p-4 z-50">
+          <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
             <div>
               <div className="text-xs text-slate-500 uppercase font-semibold">
                 {cartCount} {cartCount === 1 ? 'item' : 'items'} in pickup cart
@@ -215,14 +240,21 @@ export default function ShopDetailPage() {
               <div className="text-2xl font-black text-slate-900">{formatETB(totalMinor)}</div>
             </div>
 
-            <Button
-              size="lg"
-              disabled={isSubmitting}
-              onClick={handlePlaceOrder}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 font-semibold shadow-md"
-            >
-              {isSubmitting ? 'Placing Order...' : 'Confirm Pickup Order →'}
-            </Button>
+            <div className="flex items-center gap-3">
+              <Link href="/cart">
+                <Button variant="outline" size="lg" className="font-semibold border-slate-300">
+                  Review Cart ({cartCount}) 🛒
+                </Button>
+              </Link>
+              <Button
+                size="lg"
+                disabled={isSubmitting}
+                onClick={handlePlaceOrder}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 font-semibold shadow-md"
+              >
+                {isSubmitting ? 'Placing Order...' : 'Confirm Pickup Order →'}
+              </Button>
+            </div>
           </div>
         </div>
       )}

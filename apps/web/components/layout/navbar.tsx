@@ -3,9 +3,11 @@
 import React from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
+import { useCart } from '@/lib/cart-context';
 
 export function Navbar() {
   const { user, logout } = useAuth();
+  const { itemCount } = useCart();
 
   return (
     <nav className="border-b border-slate-200 bg-white/90 backdrop-blur sticky top-0 z-50">
@@ -35,6 +37,15 @@ export function Navbar() {
           </Link>
           <Link href="/orders" className="hover:text-indigo-600 transition">
             Orders
+          </Link>
+          <Link href="/cart" className="hover:text-indigo-600 transition flex items-center gap-1.5 font-semibold text-slate-700">
+            <span>🛒</span>
+            <span>Cart</span>
+            {itemCount > 0 && (
+              <span className="bg-indigo-600 text-white text-[11px] px-1.5 py-0.5 rounded-full font-bold">
+                {itemCount}
+              </span>
+            )}
           </Link>
           <Link href="/merchant/dashboard" className="hover:text-indigo-600 transition">
             Merchant
