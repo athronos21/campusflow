@@ -9,7 +9,6 @@ export class CatalogService {
   async findProducts(query: ProductQueryDto) {
     return this.prisma.product.findMany({
       where: {
-        isAvailable: true,
         ...(query.businessId ? { businessId: query.businessId } : {}),
         ...(query.categoryId ? { categoryId: query.categoryId } : {}),
         ...(query.search
@@ -27,7 +26,8 @@ export class CatalogService {
           select: { id: true, name: true, campusId: true },
         },
       },
-      take: query.limit || 30,
+      take: query.limit || 50,
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -43,6 +43,13 @@ export class CatalogService {
         stockQuantity: dto.stockQuantity,
         isAvailable: dto.isAvailable ?? true,
       },
+    });
+  }
+
+  async toggleAvailability(id: string, isAvailable: boolean) {
+    return this.prisma.product.update({
+      where: { id },
+      data: { isAvailable },
     });
   }
 }

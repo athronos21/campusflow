@@ -27,6 +27,20 @@ export class ModerationController {
     return this.moderationService.verifyBusiness(id);
   }
 
+  @Get('reports')
+  @Roles('campus_admin', 'campus_moderator')
+  @ApiOperation({ summary: 'List student complaints and reported transactions' })
+  async getReports() {
+    return this.moderationService.getReports();
+  }
+
+  @Patch('reports/:id/resolve')
+  @Roles('campus_admin', 'campus_moderator')
+  @ApiOperation({ summary: 'Resolve a reported dispute' })
+  async resolveReport(@Param('id') id: string) {
+    return this.moderationService.resolveReport(id);
+  }
+
   @Post('reports')
   @ApiOperation({ summary: 'Report a merchant, product, or transaction' })
   async fileReport(

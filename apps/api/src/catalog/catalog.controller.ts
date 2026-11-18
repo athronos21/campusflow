@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CatalogService } from './catalog.service';
 import { CreateProductDto, ProductQueryDto } from '@campusflow/contracts';
@@ -13,7 +13,6 @@ export class CatalogController {
   @ApiOperation({ summary: 'Search and filter active products in campus catalog' })
   async getProducts(@Query() query: ProductQueryDto) {
     const products = await this.catalogService.findProducts(query);
-    // Convert BigInt priceMinor to string/number for JSON serialization
     return products.map((p) => ({
       ...p,
       priceMinor: Number(p.priceMinor),
@@ -29,6 +28,21 @@ export class CatalogController {
     @Body() dto: CreateProductDto,
   ) {
     const product = await this.catalogService.createProduct(businessId, dto);
+    return {
+      ...product,
+      priceMinor: Number(product.priceMinor),
+    };
+  }
+
+  @Patch(':id/availability')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Toggle product stock availability' })
+  async toggleAvailability(
+    @Param('id') id: string,
+    @Body('isAvailable') isAvailable: boolean,
+  ) {
+    const product = await this.catalogService.toggleAvailability(id, isAvailable);
     return {
       ...product,
       priceMinor: Number(product.priceMinor),

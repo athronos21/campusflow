@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { BusinessStatus } from '@prisma/client';
+import { BusinessStatus, ReportStatus } from '@prisma/client';
 
 @Injectable()
 export class ModerationService {
@@ -34,6 +34,23 @@ export class ModerationService {
         reason,
         details,
       },
+    });
+  }
+
+  async getReports() {
+    return this.prisma.report.findMany({
+      include: {
+        reporter: { select: { displayName: true, email: true, phone: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    });
+  }
+
+  async resolveReport(id: string) {
+    return this.prisma.report.update({
+      where: { id },
+      data: { status: ReportStatus.resolved },
     });
   }
 }
