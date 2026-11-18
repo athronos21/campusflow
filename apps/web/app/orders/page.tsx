@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { OrderStatusBadge } from '@/components/commerce/order-status-badge';
 import { formatETB } from '@/lib/utils';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, API_BASE_URL } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
 
@@ -53,7 +53,7 @@ export default function StudentOrdersPage() {
     // Setup real-time Server-Sent Events (SSE) for instant live order updates
     let eventSource: EventSource | null = null;
     try {
-      eventSource = new EventSource('http://localhost:4000/api/v1/orders/stream');
+      eventSource = new EventSource(`${API_BASE_URL}/orders/stream`);
       eventSource.onmessage = (event) => {
         try {
           const payload = JSON.parse(event.data);

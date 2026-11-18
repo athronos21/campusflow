@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { OrderStatusBadge } from '@/components/commerce/order-status-badge';
 import { formatETB } from '@/lib/utils';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, API_BASE_URL } from '@/lib/api-client';
 
 interface OrderItem {
   id: string;
@@ -71,7 +71,7 @@ export default function MerchantOrdersQueuePage() {
     // Connect to real-time Server-Sent Events stream
     let eventSource: EventSource | null = null;
     try {
-      eventSource = new EventSource(`http://localhost:4000/api/v1/orders/stream?businessId=${businessId}`);
+      eventSource = new EventSource(`${API_BASE_URL}/orders/stream?businessId=${businessId}`);
       eventSource.onmessage = (event) => {
         try {
           const payload = JSON.parse(event.data);
