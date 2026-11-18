@@ -135,3 +135,13 @@ Use these pre-configured accounts to test role-based access:
 * **JWT Authentication:** Stateful user sessions signed with RS256/HS256 tokens and injected automatically into `apiClient` and Dio HTTP interceptors.
 * **Server-Sent Events (SSE):** Merchant live order queues update without polling via `GET /api/v1/orders/stream`, accompanied by instant client-side Web Audio synthesis alerts.
 * **No Direct DB Access:** Client applications (Next.js and Flutter) communicate exclusively via versioned REST API endpoints (`/api/v1`).
+
+---
+
+## 📚 Strategic Playbooks & Operational Documentation
+
+Comprehensive operational and strategic guides for executing the live campus rollout:
+
+1. **[Pilot Launch Sprint Plan](./docs/pilot-launch-sprint-plan.md):** 14-day execution schedule covering cloud staging deployment, on-site merchant counter hardware setup, student alpha activation, and metrics.
+2. **[Haramaya Merchant & Student Playbook](./docs/haramaya-onboarding-playbook.md):** Merchant acquisition pitch script, in-store QR table tent checklist, out-of-stock protocol, and student Telegram channels.
+3. **[University Systems Integration Architecture](./docs/university-systems-integration.md):** Roadmap for institutional Single Sign-On (SSO / SAML / OIDC), Registrar SIS course sync, and campus Wi-Fi captive portal zero-rating.
