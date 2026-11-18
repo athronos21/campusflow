@@ -13,6 +13,9 @@ import { AnnouncementsModule } from './announcements/announcements.module';
 import { TransportModule } from './transport/transport.module';
 import { PaymentsModule } from './payments/payments.module';
 import { UploadModule } from './upload/upload.module';
+import { HousingModule } from './housing/housing.module';
+import { EventsModule } from './events/events.module';
+import { LearningModule } from './learning/learning.module';
 
 @Module({
   imports: [
@@ -30,6 +33,9 @@ import { UploadModule } from './upload/upload.module';
     TransportModule,
     PaymentsModule,
     UploadModule,
+    HousingModule,
+    EventsModule,
+    LearningModule,
   ],
 })
 export class AppModule {}

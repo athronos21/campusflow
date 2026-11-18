@@ -133,16 +133,72 @@ async function runE2ETest() {
     console.log(`       QR Token: ${ticket.qrCode}`);
     console.log(`       Seats remaining: ${updatedTrip?.availableSeats} (decremented from ${initialSeats})`);
 
+    // 8. Verify Student Housing & Accommodation (Service 05)
+    const housing = await prisma.housingListing.findFirst({
+      where: { isAvailable: true },
+      include: { landlord: true },
+    });
+    if (!housing) throw new Error('Housing listings missing');
+
+    const viewingReq = await prisma.housingViewingRequest.create({
+      data: {
+        listingId: housing.id,
+        studentId: student.id,
+        preferredDate: new Date(Date.now() + 86400000),
+        studentPhone: student.phone || '+251911223344',
+        message: 'E2E testing room viewing inspection',
+        status: 'pending',
+      },
+    });
+    console.log(`[PASS] 10. Student Housing Viewing Requested: "${housing.title}" (${housing.location})`);
+    console.log(`        Landlord: ${housing.landlord.displayName} | Status: ${viewingReq.status}`);
+
+    // 9. Verify Campus Events & Passes (Service 06)
+    const event = await prisma.campusEvent.findFirst({
+      where: { campusId: campus.id },
+      include: { organizer: true },
+    });
+    if (!event) throw new Error('Campus events missing');
+
+    const eventRsvp = await prisma.eventRsvp.create({
+      data: {
+        eventId: event.id,
+        userId: student.id,
+        ticketCode: `TKT-EVT-E2E-${Date.now().toString().slice(-4)}`,
+        status: 'registered',
+      },
+    });
+    console.log(`[PASS] 11. Campus Event RSVP Confirmed: "${event.title}"`);
+    console.log(`        Venue: ${event.venue} | Ticket Code: ${eventRsvp.ticketCode}`);
+
+    // 10. Verify Academic Hub & Course Resource Bank (Service 07)
+    const resource = await prisma.learningResource.findFirst({
+      where: { campusId: campus.id },
+      include: { uploader: true },
+    });
+    if (!resource) throw new Error('Learning resources missing');
+
+    const initialDownloads = resource.downloadCount;
+    const updatedResource = await prisma.learningResource.update({
+      where: { id: resource.id },
+      data: { downloadCount: { increment: 1 } },
+    });
+    console.log(`[PASS] 12. Academic Learning Resource Downloaded: "${resource.title}" (${resource.courseCode})`);
+    console.log(`        Department: ${resource.department} | Downloads: ${updatedResource.downloadCount} (incremented from ${initialDownloads})`);
+
     // Cleanup test records
     await prisma.payment.delete({ where: { id: payment.id } });
     await prisma.orderItem.deleteMany({ where: { orderId: testOrder.id } });
     await prisma.order.delete({ where: { id: testOrder.id } });
     await prisma.ticketReservation.delete({ where: { id: ticket.id } });
     await prisma.trip.update({ where: { id: trip.id }, data: { availableSeats: initialSeats } });
+    await prisma.housingViewingRequest.delete({ where: { id: viewingReq.id } });
+    await prisma.eventRsvp.delete({ where: { id: eventRsvp.id } });
+    await prisma.learningResource.update({ where: { id: resource.id }, data: { downloadCount: initialDownloads } });
 
     console.log('\n[CLEANUP] Test records cleaned up successfully.');
     console.log('\n====================================================');
-    console.log('🎉 ALL END-TO-END VERIFICATION CHECKS PASSED (10/10)');
+    console.log('🎉 ALL END-TO-END VERIFICATION CHECKS PASSED (13/13)');
     console.log('====================================================\n');
   } catch (error) {
     console.error('❌ E2E Test Failure:', error);

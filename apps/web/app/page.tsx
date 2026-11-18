@@ -45,7 +45,7 @@ export default function HomePage() {
           </div>
         </header>
 
-        {/* Feature Grids */}
+        {/* Feature Grids - All 10 Services */}
         <section id="explore" className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
           <Link
             href="/directory"
@@ -75,7 +75,7 @@ export default function HomePage() {
               </div>
               <h2 className="text-xl font-bold text-slate-900 mb-2">Transport & Ticketing</h2>
               <p className="text-slate-600 text-sm mb-4 leading-relaxed">
-                Daily student bus shuttles and minibuses to Dire Dawa and Harar, plus weekend Selam Bus coaches to Addis Ababa with digital QR boarding passes.
+                Daily student bus shuttles to Dire Dawa & Harar, plus Selam Bus express coaches to Addis Ababa with digital QR boarding passes.
               </p>
             </div>
             <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md inline-block w-fit">
@@ -84,20 +84,74 @@ export default function HomePage() {
           </Link>
 
           <Link
-            href="/merchant/dashboard"
-            className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-indigo-400 hover:shadow-md transition flex flex-col justify-between"
+            href="/housing"
+            className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-teal-400 hover:shadow-md transition flex flex-col justify-between"
           >
             <div>
-              <div className="w-12 h-12 rounded-xl bg-violet-100 text-violet-600 flex items-center justify-center font-bold text-2xl mb-4">
-                🏪
+              <div className="w-12 h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-2xl mb-4">
+                🏠
               </div>
-              <h2 className="text-xl font-bold text-slate-900 mb-2">Merchant Portal</h2>
+              <h2 className="text-xl font-bold text-slate-900 mb-2">Student Housing & Rooms</h2>
               <p className="text-slate-600 text-sm mb-4 leading-relaxed">
-                Zero-cost dashboard for campus businesses: live audio-alert order queue, catalog management, and Telebirr transaction reconciliation.
+                Search verified off-campus rooms in Bate and Main Gate with verified water, electricity, and WiFi. Schedule in-person viewings.
               </p>
             </div>
-            <span className="text-xs font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-md inline-block w-fit">
-              Merchant Tools
+            <span className="text-xs font-bold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-md inline-block w-fit">
+              ✓ Service 05 Available
+            </span>
+          </Link>
+
+          <Link
+            href="/events"
+            className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-violet-400 hover:shadow-md transition flex flex-col justify-between"
+          >
+            <div>
+              <div className="w-12 h-12 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center font-bold text-2xl mb-4">
+                🎯
+              </div>
+              <h2 className="text-xl font-bold text-slate-900 mb-2">Campus Events & Passes</h2>
+              <p className="text-slate-600 text-sm mb-4 leading-relaxed">
+                Haramaya Hackathons, technology summits, and campus workshops. Get instant 1-click digital QR entry passes.
+              </p>
+            </div>
+            <span className="text-xs font-bold text-violet-700 bg-violet-50 px-2.5 py-1 rounded-md inline-block w-fit">
+              ✓ Service 06 Available
+            </span>
+          </Link>
+
+          <Link
+            href="/learning"
+            className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-cyan-400 hover:shadow-md transition flex flex-col justify-between"
+          >
+            <div>
+              <div className="w-12 h-12 rounded-xl bg-cyan-100 text-cyan-700 flex items-center justify-center font-bold text-2xl mb-4">
+                📚
+              </div>
+              <h2 className="text-xl font-bold text-slate-900 mb-2">Academic Resource Bank</h2>
+              <p className="text-slate-600 text-sm mb-4 leading-relaxed">
+                Open student repository of lecture notes, past exams, lab manuals, and course summaries for all faculties and departments.
+              </p>
+            </div>
+            <span className="text-xs font-bold text-cyan-700 bg-cyan-50 px-2.5 py-1 rounded-md inline-block w-fit">
+              ✓ Service 07 Available
+            </span>
+          </Link>
+
+          <Link
+            href="/merchant/dashboard"
+            className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-slate-400 hover:shadow-md transition flex flex-col justify-between"
+          >
+            <div>
+              <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-2xl mb-4">
+                🏪
+              </div>
+              <h2 className="text-xl font-bold text-slate-900 mb-2">Merchant & Admin Portal</h2>
+              <p className="text-slate-600 text-sm mb-4 leading-relaxed">
+                Live audio order queues, business verifications, catalog stock toggles, dispute resolution, and Telebirr payment reconciliation.
+              </p>
+            </div>
+            <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md inline-block w-fit">
+              ✓ Services 08-10 Active
             </span>
           </Link>
         </section>

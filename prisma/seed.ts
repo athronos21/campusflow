@@ -264,6 +264,110 @@ async function main() {
     ],
   });
 
+  // 7. Create Housing Listings (Service 05)
+  console.log('Seeding Housing & Accommodation listings...');
+  await prisma.housingListing.createMany({
+    data: [
+      {
+        campusId: haramaya.id,
+        landlordId: merchantUser.id,
+        title: 'Furnished Student Room near Gate 2, Bate',
+        description: 'Clean, quiet student room with study table, secure compound wall, and reliable water reservoir.',
+        location: 'Bate Town, 5 min walk to Main Gate 2',
+        propertyType: 'room',
+        rentMinor: BigInt(250000), // 2,500.00 ETB / month
+        currency: 'ETB',
+        hasWater: true,
+        hasElectricity: true,
+        hasWifi: true,
+        contactPhone: '+251911223344',
+        isAvailable: true,
+      },
+      {
+        campusId: haramaya.id,
+        landlordId: merchantUser.id,
+        title: '2-Bed Shared Student Apartment, Bate Center',
+        description: 'Spacious apartment ideal for 2 university students. Independent electric meter and kitchen sink.',
+        location: 'Bate Market Square',
+        propertyType: 'apartment',
+        rentMinor: BigInt(360000), // 3,600.00 ETB / month
+        currency: 'ETB',
+        hasWater: true,
+        hasElectricity: true,
+        hasWifi: false,
+        contactPhone: '+251911223344',
+        isAvailable: true,
+      },
+    ],
+  });
+
+  // 8. Create Campus Events (Service 06)
+  console.log('Seeding Campus Events & Hackathons...');
+  const nextFriday = new Date(now);
+  nextFriday.setDate(nextFriday.getDate() + 5);
+  nextFriday.setHours(14, 0, 0, 0);
+
+  await prisma.campusEvent.createMany({
+    data: [
+      {
+        campusId: haramaya.id,
+        organizerId: adminUser.id,
+        title: 'Haramaya University Annual Hackathon 2026',
+        description: 'Build real-world software and hardware prototypes solving agricultural, healthcare, and educational challenges in Ethiopia. Prizes funded by tech alumni!',
+        venue: 'Afras Hall, Main Campus',
+        startsAt: nextFriday,
+        endsAt: new Date(nextFriday.getTime() + 6 * 60 * 60 * 1000),
+        category: 'Technology & Innovation',
+        entryFeeMinor: BigInt(0), // Free
+        currency: 'ETB',
+        maxAttendees: 200,
+      },
+      {
+        campusId: haramaya.id,
+        organizerId: adminUser.id,
+        title: 'Agricultural Biotechnology & Crop Science Symposium',
+        description: 'Keynote lectures from senior Ethiopian research fellows on drought-tolerant crops and post-harvest preservation.',
+        venue: 'Auditorium 1, College of Agriculture',
+        startsAt: new Date(nextFriday.getTime() + 24 * 60 * 60 * 1000),
+        category: 'Academic & Science',
+        entryFeeMinor: BigInt(0),
+        currency: 'ETB',
+        maxAttendees: 150,
+      },
+    ],
+  });
+
+  // 9. Create Learning Resources (Service 07)
+  console.log('Seeding Academic Learning Resources...');
+  await prisma.learningResource.createMany({
+    data: [
+      {
+        campusId: haramaya.id,
+        uploaderId: studentUser.id,
+        title: 'Data Structures & Algorithms Complete Lecture Summary',
+        description: 'Comprehensive handwritten & typed notes covering Binary Trees, Graph Traversal, Dynamic Programming, and Big-O notation.',
+        department: 'Computer Science & Engineering',
+        courseCode: 'COSC-2041',
+        resourceType: 'lecture_note',
+        fileUrl: '/uploads/resources/cosc2041-notes.pdf',
+        downloadCount: 42,
+        isApproved: true,
+      },
+      {
+        campusId: haramaya.id,
+        uploaderId: studentUser.id,
+        title: 'Agro-Economics & Farming Systems Midterm 2025 Past Exam',
+        description: 'Official 2025 midterm exam questions with detailed solution walk-throughs and marking scheme.',
+        department: 'Agricultural Economics',
+        courseCode: 'AGEC-1011',
+        resourceType: 'past_exam',
+        fileUrl: '/uploads/resources/agec1011-exam.pdf',
+        downloadCount: 88,
+        isApproved: true,
+      },
+    ],
+  });
+
   console.log('Database seed completed successfully! 🚀');
 }
 

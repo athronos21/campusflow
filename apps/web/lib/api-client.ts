@@ -31,3 +31,27 @@ export async function apiClient<T>(
 
   return response.json();
 }
+
+apiClient.get = function <T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  return apiClient<T>(endpoint, { ...options, method: 'GET' });
+};
+
+apiClient.post = function <T>(endpoint: string, body?: any, options: RequestInit = {}): Promise<T> {
+  return apiClient<T>(endpoint, {
+    ...options,
+    method: 'POST',
+    body: body ? JSON.stringify(body) : undefined,
+  });
+};
+
+apiClient.put = function <T>(endpoint: string, body?: any, options: RequestInit = {}): Promise<T> {
+  return apiClient<T>(endpoint, {
+    ...options,
+    method: 'PUT',
+    body: body ? JSON.stringify(body) : undefined,
+  });
+};
+
+apiClient.delete = function <T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  return apiClient<T>(endpoint, { ...options, method: 'DELETE' });
+};

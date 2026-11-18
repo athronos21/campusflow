@@ -14,18 +14,27 @@ export function Navbar() {
           Campus<span className="text-indigo-600">Flow</span>
         </Link>
 
-        <div className="flex items-center gap-6 text-sm font-medium text-slate-600">
+        <div className="flex items-center gap-5 text-sm font-medium text-slate-600">
           <Link href="/directory" className="hover:text-indigo-600 transition">
             Directory
           </Link>
           <Link href="/transport" className="hover:text-indigo-600 transition flex items-center gap-1">
             <span>🚌</span> Transport
           </Link>
+          <Link href="/housing" className="hover:text-indigo-600 transition flex items-center gap-1">
+            <span>🏠</span> Housing
+          </Link>
+          <Link href="/events" className="hover:text-indigo-600 transition flex items-center gap-1">
+            <span>🎯</span> Events
+          </Link>
+          <Link href="/learning" className="hover:text-indigo-600 transition flex items-center gap-1">
+            <span>📚</span> Academic
+          </Link>
           <Link href="/bookings" className="hover:text-indigo-600 transition">
             Services
           </Link>
           <Link href="/orders" className="hover:text-indigo-600 transition">
-            My Orders
+            Orders
           </Link>
           <Link href="/merchant/dashboard" className="hover:text-indigo-600 transition">
             Merchant
