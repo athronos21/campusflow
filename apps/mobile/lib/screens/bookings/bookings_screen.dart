@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/booking.dart';
+import '../../models/business.dart';
 import '../../services/booking_service.dart';
+import '../../services/business_service.dart';
 
 class BookingsScreen extends StatefulWidget {
   const BookingsScreen({super.key});
@@ -13,6 +15,7 @@ class BookingsScreen extends StatefulWidget {
 class _BookingsScreenState extends State<BookingsScreen> {
   final BookingService _bookingService = BookingService();
   List<Booking> _bookings = [];
+  List<Business> _businesses = [];
   bool _isLoading = true;
 
   final List<String> _availableServices = [
@@ -31,9 +34,11 @@ class _BookingsScreenState extends State<BookingsScreen> {
   Future<void> _loadBookings() async {
     setState(() => _isLoading = true);
     final results = await _bookingService.getMyBookings();
+    final bizList = await BusinessService.getBusinesses();
     if (!mounted) return;
     setState(() {
       _bookings = results;
+      _businesses = bizList;
       _isLoading = false;
     });
   }
@@ -159,8 +164,11 @@ class _BookingsScreenState extends State<BookingsScreen> {
                     child: ElevatedButton(
                       onPressed: () async {
                         try {
+                          final targetBizId = _businesses.isNotEmpty
+                              ? _businesses.first.id
+                              : '0bf3972e-20a4-4b29-b190-e67fb185118f';
                           await _bookingService.createBooking(
-                            businessId: '0bf3972e-20a4-4b29-b190-e67fb185118f',
+                            businessId: targetBizId,
                             serviceName: selectedService,
                             startsAt: selectedDateTime.toIso8601String(),
                           );

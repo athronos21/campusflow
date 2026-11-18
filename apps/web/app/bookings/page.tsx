@@ -21,6 +21,8 @@ interface Booking {
 export default function BookingsPage() {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [businesses, setBusinesses] = useState<{ id: string; name: string }[]>([]);
+  const [selectedBusinessId, setSelectedBusinessId] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [serviceName, setServiceName] = useState('Thesis Printing & Hardcover Binding');
@@ -28,14 +30,18 @@ export default function BookingsPage() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Seeded business ID
-  const businessId = '0bf3972e-20a4-4b29-b190-e67fb185118f';
-
   const fetchBookings = async () => {
     try {
       setIsLoading(true);
-      const data = await apiClient<Booking[]>('/bookings/my-bookings');
-      setBookings(data);
+      const [bookingsData, bizData] = await Promise.all([
+        apiClient<Booking[]>('/bookings/my-bookings').catch(() => []),
+        apiClient<{ id: string; name: string }[]>('/businesses').catch(() => []),
+      ]);
+      setBookings(bookingsData);
+      setBusinesses(bizData);
+      if (bizData.length > 0 && !selectedBusinessId) {
+        setSelectedBusinessId(bizData[0].id);
+      }
     } catch (err) {
       console.error('Failed to load appointments:', err);
     } finally {
@@ -58,13 +64,19 @@ export default function BookingsPage() {
       return;
     }
 
+    const targetBizId = selectedBusinessId || (businesses.length > 0 ? businesses[0].id : '');
+    if (!targetBizId) {
+      setErrorMsg('No verified service merchant available for bookings.');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       setErrorMsg(null);
       await apiClient('/bookings', {
         method: 'POST',
         body: JSON.stringify({
-          businessId,
+          businessId: targetBizId,
           serviceName,
           startsAt: bookingDate,
         }),
@@ -100,6 +112,25 @@ export default function BookingsPage() {
               </div>
             )}
             <form onSubmit={handleCreateBooking} className="space-y-4 max-w-lg">
+              {businesses.length > 0 && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                    Select Campus Merchant / Provider
+                  </label>
+                  <select
+                    value={selectedBusinessId}
+                    onChange={(e) => setSelectedBusinessId(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-medium"
+                  >
+                    {businesses.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        🏪 {b.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Service</label>
                 <select

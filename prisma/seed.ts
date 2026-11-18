@@ -143,6 +143,88 @@ async function main() {
     console.log(`Pilot business seeded: ${business.name}`);
   }
 
+  let stationeryBiz = await prisma.business.findFirst({
+    where: { name: 'Afras Campus Stationery & Thesis Binding', campusId: haramaya.id },
+  });
+
+  if (!stationeryBiz) {
+    stationeryBiz = await prisma.business.create({
+      data: {
+        campusId: haramaya.id,
+        ownerId: merchantUser.id,
+        name: 'Afras Campus Stationery & Thesis Binding',
+        description: 'Official academic printing, color photocopying, spiral and hardcover thesis binding.',
+        status: BusinessStatus.verified,
+        products: {
+          create: [
+            {
+              name: 'A4 Double-Sided Thesis Printing & Spiral Binding',
+              description: 'Laser high-speed printing with protective transparent cover.',
+              priceMinor: BigInt(6000), // 60.00 ETB
+              currency: 'ETB',
+              isAvailable: true,
+              categoryId: printingCategory.id,
+            },
+            {
+              name: 'Casio Scientific Calculator FX-991ES',
+              description: 'Essential calculator for engineering and science faculties.',
+              priceMinor: BigInt(45000), // 450.00 ETB
+              currency: 'ETB',
+              isAvailable: true,
+              categoryId: printingCategory.id,
+            },
+            {
+              name: 'Examination Pen & Highlighter 5-Pack',
+              description: 'Smooth writing ballpoint pens approved for university exams.',
+              priceMinor: BigInt(5000), // 50.00 ETB
+              currency: 'ETB',
+              isAvailable: true,
+              categoryId: printingCategory.id,
+            },
+          ],
+        },
+      },
+    });
+    console.log(`Stationery business seeded: ${stationeryBiz.name}`);
+  }
+
+  let techBiz = await prisma.business.findFirst({
+    where: { name: 'Haramaya Campus Tech & Electronics', campusId: haramaya.id },
+  });
+
+  if (!techBiz) {
+    techBiz = await prisma.business.create({
+      data: {
+        campusId: haramaya.id,
+        ownerId: merchantUser.id,
+        name: 'Haramaya Campus Tech & Electronics',
+        description: 'Student laptop diagnostics, software reinstallation, phone repairs, and charger sales.',
+        status: BusinessStatus.verified,
+        products: {
+          create: [
+            {
+              name: 'Laptop OS & Software Diagnostics',
+              description: 'Virus removal, Windows/Linux dual boot, and driver restoration.',
+              priceMinor: BigInt(15000), // 150.00 ETB
+              currency: 'ETB',
+              isAvailable: true,
+              categoryId: printingCategory.id,
+            },
+            {
+              name: 'Fast Charging USB-C Data Cable (65W)',
+              description: 'Braided durable cable for laptops and smartphones.',
+              priceMinor: BigInt(18000), // 180.00 ETB
+              currency: 'ETB',
+              isAvailable: true,
+              categoryId: printingCategory.id,
+            },
+          ],
+        },
+      },
+    });
+    console.log(`Tech repair business seeded: ${techBiz.name}`);
+  }
+
   // 5. Create Welcome Announcement
   await prisma.announcement.create({
     data: {
