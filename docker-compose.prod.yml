@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: campusflow-postgres-prod
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-campusflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-campusflow_secure_prod_pwd}
+      POSTGRES_DB: ${POSTGRES_DB:-campusflow_db}
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U campusflow -d campusflow_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: campusflow-api-prod
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-campusflow}:${POSTGRES_PASSWORD:-campusflow_secure_prod_pwd}@postgres:5432/${POSTGRES_DB:-campusflow_db}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-campusflow_prod_super_secret_min32chars}
+    ports:
+      - '4000:4000'
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: campusflow-web-prod
+    restart: always
+    depends_on:
+      - api
+    environment:
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api/v1}
+    ports:
+      - '3000:3000'
+
+volumes:
+  postgres_prod_data:
