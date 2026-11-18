@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatETB(minorUnits: number | bigint): string {
+export function formatETB(minorUnits: number | bigint | string): string {
   const amount = Number(minorUnits) / 100;
   return new Intl.NumberFormat('en-ET', {
     style: 'currency',

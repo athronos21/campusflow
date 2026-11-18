@@ -18,11 +18,17 @@ export function Navbar() {
           <Link href="/directory" className="hover:text-indigo-600 transition">
             Directory
           </Link>
+          <Link href="/transport" className="hover:text-indigo-600 transition flex items-center gap-1">
+            <span>🚌</span> Transport
+          </Link>
+          <Link href="/bookings" className="hover:text-indigo-600 transition">
+            Services
+          </Link>
           <Link href="/orders" className="hover:text-indigo-600 transition">
             My Orders
           </Link>
           <Link href="/merchant/dashboard" className="hover:text-indigo-600 transition">
-            Merchant Portal
+            Merchant
           </Link>
           <Link href="/admin/verifications" className="hover:text-indigo-600 transition">
             Admin

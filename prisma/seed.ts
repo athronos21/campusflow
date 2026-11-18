@@ -149,9 +149,119 @@ async function main() {
       campusId: haramaya.id,
       authorId: adminUser.id,
       title: 'Welcome to CampusFlow Pilot at Haramaya University!',
-      body: 'CampusFlow is live for testing. Browse campus food, discover verified campus merchants, and place pickup orders directly.',
+      body: 'CampusFlow is live for testing. Browse campus food, discover verified campus merchants, book intercity transport, and place pickup orders directly.',
       publishedAt: new Date(),
     },
+  });
+
+  // 6. Create Transport Operators & Routes (Service 02)
+  console.log('Seeding Transport routes and trips...');
+  const studentShuttle = await prisma.transportOperator.create({
+    data: {
+      name: 'Haramaya Student Union Express',
+      phone: '+251915001122',
+      email: 'transport@haramaya.edu.et',
+      isActive: true,
+    },
+  });
+
+  const selamBus = await prisma.transportOperator.create({
+    data: {
+      name: 'Selam Bus Line',
+      phone: '+251115512244',
+      email: 'info@selambus.et',
+      isActive: true,
+    },
+  });
+
+  const routeDireDawa = await prisma.transportRoute.create({
+    data: {
+      campusId: haramaya.id,
+      origin: 'Haramaya Main Campus',
+      destination: 'Dire Dawa',
+      departureStation: 'Main Campus Terminal Gate 1',
+      arrivalStation: 'Gada Square Station, Dire Dawa',
+      distanceKm: 45,
+      estimatedDurationMin: 50,
+      isActive: true,
+    },
+  });
+
+  const routeHarar = await prisma.transportRoute.create({
+    data: {
+      campusId: haramaya.id,
+      origin: 'Haramaya Main Campus',
+      destination: 'Harar',
+      departureStation: 'Main Campus Terminal Gate 1',
+      arrivalStation: 'Ras Makonnen Square, Harar',
+      distanceKm: 20,
+      estimatedDurationMin: 30,
+      isActive: true,
+    },
+  });
+
+  const routeAddis = await prisma.transportRoute.create({
+    data: {
+      campusId: haramaya.id,
+      origin: 'Haramaya Main Campus',
+      destination: 'Addis Ababa',
+      departureStation: 'Haramaya Administration Gate',
+      arrivalStation: 'Meskel Square Terminal, Addis Ababa',
+      distanceKm: 510,
+      estimatedDurationMin: 540,
+      isActive: true,
+    },
+  });
+
+  const now = new Date();
+  const tripTime1 = new Date(now.getTime() + 2 * 60 * 60 * 1000); // in 2 hours
+  const tripTime2 = new Date(now.getTime() + 4 * 60 * 60 * 1000); // in 4 hours
+  const tomorrowMorning = new Date(now);
+  tomorrowMorning.setDate(tomorrowMorning.getDate() + 1);
+  tomorrowMorning.setHours(6, 0, 0, 0);
+
+  await prisma.trip.createMany({
+    data: [
+      {
+        operatorId: studentShuttle.id,
+        routeId: routeDireDawa.id,
+        vehicleNumber: 'HU-BUS-04',
+        vehicleType: 'Student Campus Coaster (30 Seats)',
+        departureTime: tripTime1,
+        arrivalTime: new Date(tripTime1.getTime() + 50 * 60 * 1000),
+        totalSeats: 30,
+        availableSeats: 26,
+        priceMinor: BigInt(8000), // 80.00 ETB
+        currency: 'ETB',
+        status: 'scheduled',
+      },
+      {
+        operatorId: studentShuttle.id,
+        routeId: routeHarar.id,
+        vehicleNumber: 'HU-MINI-08',
+        vehicleType: 'Campus HiAce Van (16 Seats)',
+        departureTime: tripTime2,
+        arrivalTime: new Date(tripTime2.getTime() + 30 * 60 * 1000),
+        totalSeats: 16,
+        availableSeats: 12,
+        priceMinor: BigInt(5000), // 50.00 ETB
+        currency: 'ETB',
+        status: 'scheduled',
+      },
+      {
+        operatorId: selamBus.id,
+        routeId: routeAddis.id,
+        vehicleNumber: 'ET-SELAM-912',
+        vehicleType: 'Luxury AC Coach (54 Seats)',
+        departureTime: tomorrowMorning,
+        arrivalTime: new Date(tomorrowMorning.getTime() + 9 * 60 * 60 * 1000),
+        totalSeats: 54,
+        availableSeats: 38,
+        priceMinor: BigInt(95000), // 950.00 ETB
+        currency: 'ETB',
+        status: 'scheduled',
+      },
+    ],
   });
 
   console.log('Database seed completed successfully! 🚀');

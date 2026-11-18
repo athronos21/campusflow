@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import 'explore/explore_screen.dart';
+import 'transport/transport_screen.dart';
 import 'orders/orders_screen.dart';
 import 'profile/profile_screen.dart';
 
@@ -16,6 +17,7 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
 
   final List<Widget> _screens = const [
     ExploreScreen(),
+    TransportScreen(),
     OrdersScreen(),
     ProfileScreen(),
   ];
@@ -33,11 +35,17 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
         unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 12),
         backgroundColor: Colors.white,
         elevation: 8,
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.storefront_outlined),
             activeIcon: Icon(Icons.storefront),
             label: 'Explore',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.directions_bus_outlined),
+            activeIcon: Icon(Icons.directions_bus),
+            label: 'Transport',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.receipt_long_outlined),

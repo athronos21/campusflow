@@ -2,10 +2,32 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto, UpdateOrderStatusDto } from '@campusflow/contracts';
 import { OrderStatus } from '@prisma/client';
+import { Subject, Observable } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
+
+export interface OrderEvent {
+  type: 'order_created' | 'order_updated';
+  order: any;
+}
 
 @Injectable()
 export class OrdersService {
+  private orderEvents$ = new Subject<OrderEvent>();
+
   constructor(private readonly prisma: PrismaService) {}
+
+  getOrderStream(businessId?: string, customerId?: string): Observable<any> {
+    return this.orderEvents$.asObservable().pipe(
+      filter((e) => {
+        if (businessId && e.order.businessId !== businessId) return false;
+        if (customerId && e.order.customerId !== customerId) return false;
+        return true;
+      }),
+      map((e) => ({
+        data: e,
+      })),
+    );
+  }
 
   async createOrder(customerId: string, dto: CreateOrderDto) {
     // 1. Fetch products to get authoritative server-side prices and snapshot names
@@ -61,7 +83,7 @@ export class OrdersService {
       },
     });
 
-    return {
+    const formattedOrder = {
       ...order,
       subtotalMinor: Number(order.subtotalMinor),
       feeMinor: Number(order.feeMinor),
@@ -71,6 +93,14 @@ export class OrdersService {
         unitPriceMinor: Number(i.unitPriceMinor),
       })),
     };
+
+    // Emit live event for connected merchants and customers
+    this.orderEvents$.next({
+      type: 'order_created',
+      order: formattedOrder,
+    });
+
+    return formattedOrder;
   }
 
   async findUserOrders(customerId: string) {
@@ -124,10 +154,17 @@ export class OrdersService {
       include: { items: true },
     });
 
-    return {
+    const formattedOrder = {
       ...order,
       subtotalMinor: Number(order.subtotalMinor),
       totalMinor: Number(order.totalMinor),
     };
+
+    this.orderEvents$.next({
+      type: 'order_updated',
+      order: formattedOrder,
+    });
+
+    return formattedOrder;
   }
 }
