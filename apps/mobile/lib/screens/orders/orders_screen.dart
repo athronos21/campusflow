@@ -5,7 +5,7 @@ import '../../models/order.dart';
 import '../../services/order_service.dart';
 
 class OrdersScreen extends StatefulWidget {
-  const OrdersScreen({Key? key}) : super(key: key);
+  const OrdersScreen({super.key});
 
   @override
   State<OrdersScreen> createState() => _OrdersScreenState();
@@ -127,7 +127,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                 children: [
                                   Text(
                                     Formatters.formatETB(order.totalMinor),
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.extrabold, color: AppColors.textPrimary),
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                                   ),
                                   const Text('Pay at pickup', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
                                 ],

@@ -8,7 +8,7 @@ import '../../services/business_service.dart';
 class ShopDetailScreen extends StatefulWidget {
   final Business business;
 
-  const ShopDetailScreen({Key? key, required this.business}) : super(key: key);
+  const ShopDetailScreen({super.key, required this.business});
 
   @override
   State<ShopDetailScreen> createState() => _ShopDetailScreenState();
@@ -168,7 +168,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
                         const Text('Total (Pickup)', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                         Text(
                           Formatters.formatETB(_cartTotalMinor),
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.extrabold, color: AppColors.textPrimary),
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                         ),
                       ],
                     ),

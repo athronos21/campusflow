@@ -15,7 +15,7 @@ void main() {
 }
 
 class CampusFlowApp extends StatelessWidget {
-  const CampusFlowApp({Key? key}) : super(key: key);
+  const CampusFlowApp({super.key});
 
   @override
   Widget build(BuildContext context) {

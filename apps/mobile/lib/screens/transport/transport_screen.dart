@@ -5,7 +5,7 @@ import '../../models/transport.dart';
 import '../../services/transport_service.dart';
 
 class TransportScreen extends StatefulWidget {
-  const TransportScreen({Key? key}) : super(key: key);
+  const TransportScreen({super.key});
 
   @override
   State<TransportScreen> createState() => _TransportScreenState();
@@ -18,7 +18,7 @@ class _TransportScreenState extends State<TransportScreen> with SingleTickerProv
   List<Trip> _trips = [];
   List<TicketReservation> _myTickets = [];
   bool _isLoading = true;
-  String _selectedDestination = 'all';
+  final String _selectedDestination = 'all';
 
   @override
   void initState() {
@@ -32,16 +32,20 @@ class _TransportScreenState extends State<TransportScreen> with SingleTickerProv
     try {
       final trips = await _transportService.getTrips(destination: _selectedDestination);
       final tickets = await _transportService.getMyTickets();
+      if (!mounted) return;
       setState(() {
         _trips = trips;
         _myTickets = tickets;
       });
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to load transport: $e')),
       );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -78,7 +82,7 @@ class _TransportScreenState extends State<TransportScreen> with SingleTickerProv
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.between,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -129,7 +133,7 @@ class _TransportScreenState extends State<TransportScreen> with SingleTickerProv
                   // Grid of seats
                   Expanded(
                     child: GridView.builder(
-                      gridDelegate: const GridDelegateWithFixedCrossAxisCount(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 4,
                         childAspectRatio: 1.2,
                         crossAxisSpacing: 8,
@@ -212,12 +216,16 @@ class _TransportScreenState extends State<TransportScreen> with SingleTickerProv
                                   passengerName: nameController.text.trim(),
                                   passengerPhone: phoneController.text.trim(),
                                 );
-                                Navigator.pop(ctx);
+                                if (ctx.mounted) {
+                                  Navigator.pop(ctx);
+                                }
+                                if (!mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text('Seat #$selectedSeat reserved successfully!')),
                                 );
                                 _loadData();
                               } catch (e) {
+                                if (!mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text('Reservation failed: $e')),
                                 );
@@ -314,12 +322,12 @@ class _TransportScreenState extends State<TransportScreen> with SingleTickerProv
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.between,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -364,11 +372,11 @@ class _TransportScreenState extends State<TransportScreen> with SingleTickerProv
                 const Divider(height: 24),
 
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.between,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       Formatters.formatETB(trip.priceMinor),
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.black),
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
                     ),
                     ElevatedButton(
                       onPressed: () => _showSeatBookingDialog(trip),
@@ -412,11 +420,11 @@ class _TransportScreenState extends State<TransportScreen> with SingleTickerProv
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.between,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       'SEAT #${ticket.seatNumber}',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.black, color: AppColors.primary),
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.primary),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

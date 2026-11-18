@@ -5,7 +5,7 @@ import '../../services/business_service.dart';
 import 'shop_detail_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
-  const ExploreScreen({Key? key}) : super(key: key);
+  const ExploreScreen({super.key});
 
   @override
   State<ExploreScreen> createState() => _ExploreScreenState();
@@ -153,10 +153,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 12),
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('📍 Near Student Lounge', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                  Text('📍 Near Student Lounge', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
                   Text(
                     'View Menu →',
                     style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13),

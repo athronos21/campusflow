@@ -6,7 +6,7 @@ import 'orders/orders_screen.dart';
 import 'profile/profile_screen.dart';
 
 class HomeNavigationScreen extends StatefulWidget {
-  const HomeNavigationScreen({Key? key}) : super(key: key);
+  const HomeNavigationScreen({super.key});
 
   @override
   State<HomeNavigationScreen> createState() => _HomeNavigationScreenState();
