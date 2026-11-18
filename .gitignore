@@ -8,6 +8,7 @@ dist/
 out/
 build/
 .expo/
+.dart_tool/
 *.tsbuildinfo
 
 # Environment variables
