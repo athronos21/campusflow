@@ -73,7 +73,13 @@ campusflow/
 pnpm install
 ```
 
-### 3. Start Database & Seed Data
+### 3. Verify Environment Health & Diagnostics
+Run the automated health and toolchain doctor:
+```bash
+pnpm check:health
+```
+
+### 4. Start Database & Seed Data
 ```bash
 # Start Docker PostgreSQL container
 docker compose up -d
@@ -86,14 +92,14 @@ pnpm db:push
 pnpm db:seed
 ```
 
-### 4. Run Automated End-to-End Test Suite
+### 5. Run Automated End-to-End Test Suite
 Verify all 10 services and database operations:
 ```bash
 pnpm test:e2e
 ```
 *Expected Output:* `🎉 ALL END-TO-END VERIFICATION CHECKS PASSED (13/13)`
 
-### 5. Launch Development Servers
+### 6. Launch Development Servers
 ```bash
 pnpm dev
 ```
@@ -101,7 +107,7 @@ pnpm dev
 * **API Documentation (Swagger):** [http://localhost:4000/api/docs](http://localhost:4000/api/docs)
 * **Prisma Studio:** `pnpm db:studio` (available at [http://localhost:5555](http://localhost:5555))
 
-### 6. Run Flutter Mobile App (Android)
+### 7. Run Flutter Mobile App (Android)
 ```bash
 cd apps/mobile
 flutter pub get
