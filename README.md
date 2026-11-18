@@ -1,19 +1,37 @@
-# CampusFlow — Monorepo
+# CampusFlow (CampusPro) — Monorepo
 
 <p align="center">
   <strong>Unified Campus Super-App & Digital Services Platform</strong><br>
-  <em>Haramaya University Pilot MVP → Ethiopian University Network</em>
+  <em>Haramaya University Pilot MVP → Nationwide Ethiopian University Network</em>
 </p>
 
 ---
 
-## 📌 Project Overview
+## 📌 Executive Overview
 
-**CampusFlow** provides a single trusted digital platform for campus service discovery, marketplace orders, verified merchant catalogs, and service bookings.
+**CampusFlow** is an enterprise-grade digital super-app designed for university campuses across Ethiopia, piloted at **Haramaya University Main Campus**. It consolidates essential student life, food orders, intercity bus ticketing, off-campus accommodation, campus events, academic resources, and local service appointments into a single, high-performance platform.
 
-* **Product Blueprint:** See [campusflow_blueprint.md](./campusflow_blueprint.md) for the complete 16-week execution specification.
-* **Target Audience:** Haramaya University students, campus cafes, stationery shops, and campus administration.
-* **Legal Compliance:** Compliant with Ethiopia's **Personal Data Protection Proclamation No. 1321/2024** (data minimization, privacy notices, user consent).
+* **Product Blueprint:** Built against the full 16-week execution specification in [campusflow_blueprint.md](./campusflow_blueprint.md).
+* **Target Audience:** Haramaya University students, campus cafes, stationery stores, transport operators, and campus administration.
+* **Legal Compliance:** Compliant with Ethiopia's **Personal Data Protection Proclamation No. 1321/2024** (strict data minimization, explicit consent, user-controlled data rights).
+* **Financial Integrity:** Zero floating-point rounding errors. All prices, rents, and payments are stored strictly as integer minor units (`BigInt` in Ethiopian Birr cents).
+
+---
+
+## 🎯 The 10 Core CampusFlow Services
+
+| Service # | Domain | Key Capabilities | Client Access |
+| :--- | :--- | :--- | :--- |
+| **01** | **Digital Campus & Directory** | Verified campus directory, administrative notices, student profiles, and multi-campus support. | `/directory` (Web & Mobile) |
+| **02** | **Transport & Bus Ticketing** | Daily bus shuttles to Dire Dawa & Harar, weekend Selam Bus coaches to Addis Ababa. Seat selection grid & digital QR boarding passes. | `/transport` (Web & Mobile) |
+| **03** | **Student Marketplace** | Verified campus merchant shops, real-time stock toggling, categorized catalog items. | `/shop/[id]` (Web & Mobile) |
+| **04** | **Food Pre-orders & Pickup** | Fast cafeteria pickup ordering between lectures. Real-time SSE order tracking with Web Audio chimes. | `/orders` (Web & Mobile) |
+| **05** | **Housing & Accommodations** | Off-campus rooms & apartments in Bate & Main Gate. Filters for water, electricity, and WiFi. In-person viewing scheduler. | `/housing` (Web & Mobile) |
+| **06** | **Campus Events & Passes** | University hackathons, guest lectures, and student festivals. 1-click RSVP with verified digital QR pass generation. | `/events` (Web & Mobile) |
+| **07** | **Academic Resource Bank** | Community course repository for lecture slides, past final exams, and lab manuals with live download tracking. | `/learning` (Web & Mobile) |
+| **08** | **Digital Payments (Telebirr/CBE)** | Telebirr USSD quick-dial code generation (`*127*1*251911223344*...#`), CBE Birr instructions, and webhook verification. | Orders & Transport Drawers |
+| **09** | **Local Services & Appointments** | Thesis printing & hardcover binding, laptop diagnostics & OS repair, campus laundry, barbershop bookings. | `/bookings` (Web & Mobile) |
+| **10** | **Business Admin & Trust** | Zero-cost merchant order queue with audio chimes, admin merchant verification reviews, dispute resolution. | `/merchant/*`, `/admin/*` |
 
 ---
 
@@ -22,62 +40,66 @@
 ```text
 campusflow/
 ├── apps/
-│   ├── api/                     # 🛡️ NestJS REST API with Swagger (TypeScript)
-│   ├── web/                     # 💻 Next.js 14 App Router (Web - TypeScript)
-│   └── mobile/                  # 📱 Flutter Android App (Mobile - Dart)
+│   ├── api/                     # 🛡️ NestJS 10 REST API with OpenAPI Swagger docs
+│   ├── web/                     # 💻 Next.js 14 App Router (React, Tailwind CSS, Lucide)
+│   └── mobile/                  # 📱 Flutter 3.x Mobile App (Android & iOS with Dio HTTP client)
 ├── packages/
-│   ├── contracts/               # 📜 Shared Zod schemas & DTO types
+│   ├── contracts/               # 📜 Shared Zod schemas, DTOs & TypeScript types
 │   ├── config/                  # ⚙️ Shared TypeScript, ESLint, Prettier configs
-│   └── design-system/           # 🎨 Shared brand tokens & color palettes
+│   └── design-system/           # 🎨 Brand tokens and Ethiopian theme palettes
 ├── prisma/
-│   ├── schema.prisma            # 🗄️ PostgreSQL multi-tenant schema
-│   └── seed.ts                  # 🌱 Synthetic test data for Haramaya University
-├── docker-compose.yml           # 🐳 Local PostgreSQL 16 container
-├── package.json                 # 📦 Monorepo root script runner
-├── pnpm-workspace.yaml          # 🔗 Workspace definitions
-└── turbo.json                   # ⚡ Build and pipeline caching
+│   ├── schema.prisma            # 🗄️ Multi-tenant PostgreSQL schema
+│   └── seed.ts                  # 🌱 Seed script (campuses, merchants, buses, housing, events, notes)
+├── scripts/
+│   └── test-e2e-flow.ts         # 🧪 13-point automated End-to-End integration test suite
+├── docker-compose.yml           # 🐳 Local PostgreSQL 16 container definition
+├── package.json                 # 📦 Monorepo workspace configuration
+├── pnpm-workspace.yaml          # 🔗 pnpm workspace mapping
+└── turbo.json                   # ⚡ Turborepo pipeline orchestration
 ```
 
 ---
 
-## 🚀 Quickstart for Developers
+## 🚀 Quickstart Guide
 
 ### 1. Prerequisites
-Install the following on your machine:
-* **Node.js**: v20 LTS or v22 ([Download](https://nodejs.org/))
+* **Node.js**: v20 LTS or v22
 * **pnpm**: `npm install -g pnpm`
 * **Docker Desktop**: For running PostgreSQL locally
-* **Flutter SDK**: [flutter.dev](https://flutter.dev) (for mobile app development)
+* **Flutter SDK**: v3.22+ (for mobile app)
 
-### 2. Install Web & API Dependencies
+### 2. Install Monorepo Dependencies
 ```bash
 pnpm install
 ```
 
-### 3. Start Local PostgreSQL Database
+### 3. Start Database & Seed Data
 ```bash
+# Start Docker PostgreSQL container
 docker compose up -d
-```
 
-### 4. Setup Database Schema & Seed Data
-```bash
-# Generate Prisma Client
+# Push schema to database and generate Prisma Client
 pnpm db:generate
+pnpm db:push
 
-# Run migrations
-pnpm db:migrate
-
-# Seed Haramaya University sample data
+# Seed Haramaya University sample dataset
 pnpm db:seed
 ```
 
-### 5. Start Backend API & Web App
+### 4. Run Automated End-to-End Test Suite
+Verify all 10 services and database operations:
+```bash
+pnpm test:e2e
+```
+*Expected Output:* `🎉 ALL END-TO-END VERIFICATION CHECKS PASSED (13/13)`
+
+### 5. Launch Development Servers
 ```bash
 pnpm dev
 ```
-* **Web Application:** [http://localhost:3000](http://localhost:3000)
-* **REST API & Swagger Docs:** [http://localhost:4000/api/docs](http://localhost:4000/api/docs)
-* **Prisma Studio:** `pnpm db:studio` (opens at [http://localhost:5555](http://localhost:5555))
+* **Web Portal:** [http://localhost:3000](http://localhost:3000)
+* **API Documentation (Swagger):** [http://localhost:4000/api/docs](http://localhost:4000/api/docs)
+* **Prisma Studio:** `pnpm db:studio` (available at [http://localhost:5555](http://localhost:5555))
 
 ### 6. Run Flutter Mobile App (Android)
 ```bash
@@ -85,16 +107,25 @@ cd apps/mobile
 flutter pub get
 flutter run
 ```
-* *Note: The Android Emulator automatically communicates with the local NestJS backend at `http://10.0.2.2:4000/api/v1`.*
+*Note: Android Emulator communicates automatically with the local API at `http://10.0.2.2:4000/api/v1`.*
 
 ---
 
-## 👥 5-Person Team Ownership
+## 🔑 Seeded Demo Credentials
 
-| Role | Focus Area | Primary Workspace |
-|---|---|---|
-| **Developer 1 (Lead)** | System architecture, security, CI/CD, contracts | `packages/contracts`, `apps/api`, `.github/` |
-| **Developer 2** | Student storefront, merchant dashboard, admin UI | `apps/web` |
-| **Developer 3** | Flutter Android app, offline caching, device testing | `apps/mobile` |
-| **Developer 4** | Database schema, order lifecycle, migrations | `prisma/`, `apps/api/src/orders` |
-| **Developer 5** | Product management, merchant onboarding, QA | Testing, seed data, user feedback |
+Use these pre-configured accounts to test role-based access:
+
+| Role | Email | Password | Access Capabilities |
+| :--- | :--- | :--- | :--- |
+| **Student** | `student@haramaya.edu.et` | `password123` | Order pickup meals, book bus seats, request housing viewings, RSVP for hackathons, download study notes. |
+| **Merchant** | `merchant@haramayacafe.et` | `password123` | Merchant dashboard, live audio-alert order queue, catalog stock toggles, transaction reconciliation. |
+| **Admin** | `admin@campusflow.et` | `password123` | Campus verification portal, approve/reject merchants, dispute moderation, campus announcements. |
+
+---
+
+## 🛡️ Security & Ethiopian Data Compliance
+
+* **Proclamation No. 1321/2024:** Student data is collected strictly on an opt-in basis with data minimization principles. Personal phone numbers and student identifiers are protected from public scraping.
+* **JWT Authentication:** Stateful user sessions signed with RS256/HS256 tokens and injected automatically into `apiClient` and Dio HTTP interceptors.
+* **Server-Sent Events (SSE):** Merchant live order queues update without polling via `GET /api/v1/orders/stream`, accompanied by instant client-side Web Audio synthesis alerts.
+* **No Direct DB Access:** Client applications (Next.js and Flutter) communicate exclusively via versioned REST API endpoints (`/api/v1`).
