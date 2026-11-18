@@ -107,6 +107,9 @@ export default function DirectoryPage() {
     if (selectedCategory === 'stationery') {
       return b.name.toLowerCase().includes('print') || b.name.toLowerCase().includes('stationery') || b.name.toLowerCase().includes('book');
     }
+    if (selectedCategory === 'tech') {
+      return b.name.toLowerCase().includes('tech') || b.name.toLowerCase().includes('electronic') || b.name.toLowerCase().includes('laptop') || b.name.toLowerCase().includes('phone') || b.name.toLowerCase().includes('repair');
+    }
     return true;
   });
 
@@ -200,6 +203,16 @@ export default function DirectoryPage() {
             }`}
           >
             🖨️ Printing & Stationery
+          </button>
+          <button
+            onClick={() => setSelectedCategory('tech')}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition ${
+              selectedCategory === 'tech'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            💻 Tech & Electronics
           </button>
           <Link
             href="/transport"
