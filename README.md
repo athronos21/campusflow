@@ -92,12 +92,19 @@ pnpm db:push
 pnpm db:seed
 ```
 
-### 5. Run Automated End-to-End Test Suite
-Verify all 10 services and database operations:
+### 5. Run Automated Test Suites
+Verify all 10 services, database operations, and mobile unit tests:
 ```bash
+# End-to-End integration test suite (Database & Services)
 pnpm test:e2e
+
+# Flutter mobile unit tests (Currency formatters & precision)
+pnpm test:mobile
+
+# Flutter mobile static analyzer check
+pnpm analyze:mobile
 ```
-*Expected Output:* `🎉 ALL END-TO-END VERIFICATION CHECKS PASSED (13/13)`
+*Expected Output:* `🎉 ALL END-TO-END VERIFICATION CHECKS PASSED (13/13)` and `All tests passed! (2/2)`
 
 ### 6. Launch Development Servers
 ```bash

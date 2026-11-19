@@ -16,6 +16,8 @@
     "db:seed": "prisma db seed",
     "check:health": "ts-node scripts/doctor.ts",
     "test:e2e": "ts-node scripts/test-e2e-flow.ts",
+    "test:mobile": "node -e \"const { execSync } = require('child_process'); execSync('flutter test', { cwd: 'apps/mobile', stdio: 'inherit' });\"",
+    "analyze:mobile": "node -e \"const { execSync } = require('child_process'); execSync('flutter analyze', { cwd: 'apps/mobile', stdio: 'inherit' });\"",
     "db:studio": "prisma studio",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\""
   },
