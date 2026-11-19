@@ -70,7 +70,14 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
             ),
             const SizedBox(height: 6),
-            Text('📍 $venue', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.location_on, size: 14, color: AppColors.textSecondary),
+                const SizedBox(width: 4),
+                Text(venue, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              ],
+            ),
             const SizedBox(height: 16),
 
             // Simulated QR box
@@ -200,8 +207,21 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 6),
-                Text('📍 ${evt.venue}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                Text('🗓️ Starts: ${evt.startsAt}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on, size: 14, color: AppColors.textSecondary),
+                    const SizedBox(width: 4),
+                    Text(evt.venue, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    const Icon(Icons.calendar_today, size: 14, color: AppColors.textSecondary),
+                    const SizedBox(width: 4),
+                    Text('Starts: ${evt.startsAt}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  ],
+                ),
                 const SizedBox(height: 8),
                 Text(
                   evt.description,
@@ -214,7 +234,13 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('👥 ${evt.rsvpCount} registered', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                    Row(
+                      children: [
+                        const Icon(Icons.people, size: 14, color: AppColors.textSecondary),
+                        const SizedBox(width: 4),
+                        Text('${evt.rsvpCount} registered', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                      ],
+                    ),
                     if (isBooked)
                       OutlinedButton.icon(
                         icon: const Icon(Icons.qr_code, size: 16),

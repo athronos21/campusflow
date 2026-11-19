@@ -7,6 +7,18 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { apiClient } from '@/lib/api-client';
 import Link from 'next/link';
+import {
+  Megaphone,
+  Coffee,
+  Printer,
+  Laptop,
+  Bus,
+  Home,
+  Calendar,
+  BookOpen,
+  CalendarCheck,
+  MapPin,
+} from 'lucide-react';
 
 interface Product {
   id: string;
@@ -120,7 +132,7 @@ export default function DirectoryPage() {
         {/* Campus Announcement Banner */}
         {announcements.length > 0 && (
           <div className="mb-6 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-start gap-3 shadow-sm">
-            <span className="text-xl">📢</span>
+            <Megaphone className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded">
@@ -157,7 +169,7 @@ export default function DirectoryPage() {
             >
               {campuses.map((c) => (
                 <option key={c.id} value={c.id}>
-                  🏛️ {c.name}
+                  {c.name}
                 </option>
               ))}
             </select>
@@ -186,63 +198,63 @@ export default function DirectoryPage() {
           </button>
           <button
             onClick={() => setSelectedCategory('food')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition ${
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition ${
               selectedCategory === 'food'
                 ? 'bg-indigo-600 text-white shadow-sm'
                 : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
             }`}
           >
-            ☕ Food & Cafeteria
+            <Coffee className="w-3.5 h-3.5" /> Food & Cafeteria
           </button>
           <button
             onClick={() => setSelectedCategory('stationery')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition ${
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition ${
               selectedCategory === 'stationery'
                 ? 'bg-indigo-600 text-white shadow-sm'
                 : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
             }`}
           >
-            🖨️ Printing & Stationery
+            <Printer className="w-3.5 h-3.5" /> Printing & Stationery
           </button>
           <button
             onClick={() => setSelectedCategory('tech')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition ${
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition ${
               selectedCategory === 'tech'
                 ? 'bg-indigo-600 text-white shadow-sm'
                 : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
             }`}
           >
-            💻 Tech & Electronics
+            <Laptop className="w-3.5 h-3.5" /> Tech & Electronics
           </button>
           <Link
             href="/transport"
-            className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition flex items-center gap-1"
+            className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition inline-flex items-center gap-1.5"
           >
-            <span>🚌</span> Bus Shuttles →
+            <Bus className="w-3.5 h-3.5" /> Bus Shuttles →
           </Link>
           <Link
             href="/housing"
-            className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 transition flex items-center gap-1"
+            className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 transition inline-flex items-center gap-1.5"
           >
-            <span>🏠</span> Off-Campus Housing →
+            <Home className="w-3.5 h-3.5" /> Off-Campus Housing →
           </Link>
           <Link
             href="/events"
-            className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 transition flex items-center gap-1"
+            className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 transition inline-flex items-center gap-1.5"
           >
-            <span>🎯</span> Events & Passes →
+            <Calendar className="w-3.5 h-3.5" /> Events & Passes →
           </Link>
           <Link
             href="/learning"
-            className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200 hover:bg-cyan-100 transition flex items-center gap-1"
+            className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200 hover:bg-cyan-100 transition inline-flex items-center gap-1.5"
           >
-            <span>📚</span> Academic Bank →
+            <BookOpen className="w-3.5 h-3.5" /> Academic Bank →
           </Link>
           <Link
             href="/bookings"
-            className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition flex items-center gap-1"
+            className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition inline-flex items-center gap-1.5"
           >
-            <span>📅</span> Appointments →
+            <CalendarCheck className="w-3.5 h-3.5" /> Appointments →
           </Link>
         </div>
 
@@ -286,7 +298,9 @@ export default function DirectoryPage() {
                 </div>
 
                 <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-xs text-slate-500 font-medium">📍 Main Campus · Student Lounge</span>
+                  <span className="inline-flex items-center gap-1 text-xs text-slate-500 font-medium">
+                    <MapPin className="w-3.5 h-3.5 text-slate-400" /> Main Campus · Student Lounge
+                  </span>
                   <Link
                     href={`/shop/${b.id}`}
                     className="text-xs font-bold px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-sm"

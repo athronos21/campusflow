@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { useCart } from '@/lib/cart-context';
+import { Bus, Home, Calendar, BookOpen, ShoppingCart, User } from 'lucide-react';
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -20,17 +21,21 @@ export function Navbar() {
           <Link href="/directory" className="hover:text-indigo-600 transition">
             Directory
           </Link>
-          <Link href="/transport" className="hover:text-indigo-600 transition flex items-center gap-1">
-            <span>🚌</span> Transport
+          <Link href="/transport" className="hover:text-indigo-600 transition flex items-center gap-1.5">
+            <Bus className="w-4 h-4 text-slate-500" />
+            <span>Transport</span>
           </Link>
-          <Link href="/housing" className="hover:text-indigo-600 transition flex items-center gap-1">
-            <span>🏠</span> Housing
+          <Link href="/housing" className="hover:text-indigo-600 transition flex items-center gap-1.5">
+            <Home className="w-4 h-4 text-slate-500" />
+            <span>Housing</span>
           </Link>
-          <Link href="/events" className="hover:text-indigo-600 transition flex items-center gap-1">
-            <span>🎯</span> Events
+          <Link href="/events" className="hover:text-indigo-600 transition flex items-center gap-1.5">
+            <Calendar className="w-4 h-4 text-slate-500" />
+            <span>Events</span>
           </Link>
-          <Link href="/learning" className="hover:text-indigo-600 transition flex items-center gap-1">
-            <span>📚</span> Academic
+          <Link href="/learning" className="hover:text-indigo-600 transition flex items-center gap-1.5">
+            <BookOpen className="w-4 h-4 text-slate-500" />
+            <span>Academic</span>
           </Link>
           <Link href="/bookings" className="hover:text-indigo-600 transition">
             Services
@@ -39,7 +44,7 @@ export function Navbar() {
             Orders
           </Link>
           <Link href="/cart" className="hover:text-indigo-600 transition flex items-center gap-1.5 font-semibold text-slate-700">
-            <span>🛒</span>
+            <ShoppingCart className="w-4 h-4 text-slate-600" />
             <span>Cart</span>
             {itemCount > 0 && (
               <span className="bg-indigo-600 text-white text-[11px] px-1.5 py-0.5 rounded-full font-bold">
@@ -56,8 +61,9 @@ export function Navbar() {
 
           {user ? (
             <div className="flex items-center gap-3 pl-2 border-l border-slate-200">
-              <span className="text-xs font-semibold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-md">
-                👤 {user.displayName}
+              <span className="text-xs font-semibold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-md flex items-center gap-1">
+                <User className="w-3.5 h-3.5 text-slate-500" />
+                {user.displayName}
               </span>
               <button
                 onClick={logout}

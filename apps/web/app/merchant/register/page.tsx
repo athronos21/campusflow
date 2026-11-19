@@ -106,7 +106,7 @@ export default function MerchantRegisterPage() {
             >
               {campuses.map((c) => (
                 <option key={c.id} value={c.id}>
-                  🏛️ {c.name}
+                  {c.name}
                 </option>
               ))}
             </select>

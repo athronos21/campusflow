@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatETB } from '@/lib/utils';
 import Link from 'next/link';
+import { Calendar, MapPin, Users, Ticket, Sparkles } from 'lucide-react';
 
 interface Organizer {
   displayName: string;
@@ -212,8 +213,8 @@ export default function EventsPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-5xl bg-gradient-to-tr from-indigo-100 to-violet-200">
-                          🎯
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-tr from-indigo-100 to-violet-200">
+                          <Sparkles className="w-10 h-10 text-indigo-500" />
                         </div>
                       )}
                       <div className="absolute top-2 left-2">
@@ -233,8 +234,8 @@ export default function EventsPage() {
 
                     <div className="space-y-2">
                       <h3 className="font-bold text-slate-900 text-lg leading-tight">{evt.title}</h3>
-                      <p className="text-xs text-indigo-700 font-semibold flex items-center gap-1">
-                        <span>🗓️</span> {new Date(evt.startsAt).toLocaleDateString('en-US', {
+                      <p className="text-xs text-indigo-700 font-semibold flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-indigo-600" /> {new Date(evt.startsAt).toLocaleDateString('en-US', {
                           weekday: 'short',
                           month: 'short',
                           day: 'numeric',
@@ -242,8 +243,8 @@ export default function EventsPage() {
                           minute: '2-digit',
                         })}
                       </p>
-                      <p className="text-xs text-slate-500 flex items-center gap-1">
-                        <span>📍</span> {evt.venue}
+                      <p className="text-xs text-slate-500 flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-slate-400" /> {evt.venue}
                       </p>
                       <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed mt-2">
                         {evt.description}
@@ -251,7 +252,9 @@ export default function EventsPage() {
                     </div>
 
                     <div className="mt-4 flex items-center justify-between text-xs text-slate-500 bg-slate-50 p-2.5 rounded-lg">
-                      <span>👥 Attendees: <strong>{rsvpCount}</strong> {evt.maxAttendees ? `/ ${evt.maxAttendees}` : ''}</span>
+                      <span className="flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5 text-slate-400" /> Attendees: <strong>{rsvpCount}</strong> {evt.maxAttendees ? `/ ${evt.maxAttendees}` : ''}
+                      </span>
                       <span>By: {evt.organizer?.displayName || 'Campus Council'}</span>
                     </div>
                   </div>
@@ -267,7 +270,7 @@ export default function EventsPage() {
                         })}
                         className="w-full py-2 bg-emerald-50 text-emerald-700 border border-emerald-300 rounded-lg text-xs font-bold hover:bg-emerald-100 transition flex items-center justify-center gap-1.5"
                       >
-                        <span>🎟️</span> View Boarding Pass ({ticketCode})
+                        <Ticket className="w-3.5 h-3.5 text-emerald-600" /> View Boarding Pass ({ticketCode})
                       </button>
                     ) : user ? (
                       <button
@@ -310,11 +313,11 @@ export default function EventsPage() {
                       <Badge variant="success">CONFIRMED PASS</Badge>
                     </div>
                     <h4 className="font-bold text-slate-900 text-lg leading-tight">{rsvp.event?.title}</h4>
-                    <p className="text-xs text-indigo-700 font-semibold mt-1">
-                      🗓️ {new Date(rsvp.event?.startsAt).toLocaleString()}
+                    <p className="text-xs text-indigo-700 font-semibold mt-1 flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-indigo-600" /> {new Date(rsvp.event?.startsAt).toLocaleString()}
                     </p>
-                    <p className="text-xs text-slate-600 mt-1">
-                      📍 {rsvp.event?.venue}
+                    <p className="text-xs text-slate-600 mt-1 flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-slate-400" /> {rsvp.event?.venue}
                     </p>
                   </div>
 
@@ -352,8 +355,8 @@ export default function EventsPage() {
               ✕
             </button>
 
-            <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto text-2xl">
-              🎟️
+            <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto">
+              <Ticket className="w-6 h-6 text-indigo-600" />
             </div>
 
             <div>
@@ -387,9 +390,13 @@ export default function EventsPage() {
                 {activeTicket.ticketCode}
               </div>
 
-              <div className="text-[11px] text-slate-500 space-y-0.5">
-                <p>📍 {activeTicket.venue}</p>
-                <p>🗓️ {activeTicket.date}</p>
+              <div className="text-[11px] text-slate-500 space-y-1">
+                <p className="flex items-center justify-center gap-1">
+                  <MapPin className="w-3 h-3 text-slate-400" /> {activeTicket.venue}
+                </p>
+                <p className="flex items-center justify-center gap-1">
+                  <Calendar className="w-3 h-3 text-slate-400" /> {activeTicket.date}
+                </p>
               </div>
             </div>
 

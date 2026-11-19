@@ -91,9 +91,15 @@ class _HousingScreenState extends State<HousingScreen> with SingleTickerProvider
                     listing.title,
                     style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, fontWeight: FontWeight.w600),
                   ),
-                  Text(
-                    '📍 ${listing.location} • ${Formatters.formatETB(listing.rentMinor)}/mo',
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on, size: 14, color: AppColors.textSecondary),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${listing.location} • ${Formatters.formatETB(listing.rentMinor)}/mo',
+                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      ),
+                    ],
                   ),
                   const Divider(height: 24),
 
@@ -263,9 +269,15 @@ class _HousingScreenState extends State<HousingScreen> with SingleTickerProvider
                               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              '📍 ${item.location}',
-                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            Row(
+                              children: [
+                                const Icon(Icons.location_on, size: 14, color: AppColors.textSecondary),
+                                const SizedBox(width: 4),
+                                Text(
+                                  item.location,
+                                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                ),
+                              ],
                             ),
                             if (item.description != null) ...[
                               const SizedBox(height: 6),
@@ -283,11 +295,11 @@ class _HousingScreenState extends State<HousingScreen> with SingleTickerProvider
                               spacing: 6,
                               children: [
                                 if (item.hasWater)
-                                  _buildAmenityBadge('💧 Water'),
+                                  _buildAmenityBadge(Icons.water_drop, 'Water'),
                                 if (item.hasElectricity)
-                                  _buildAmenityBadge('⚡ Power'),
+                                  _buildAmenityBadge(Icons.bolt, 'Power'),
                                 if (item.hasWifi)
-                                  _buildAmenityBadge('📶 WiFi'),
+                                  _buildAmenityBadge(Icons.wifi, 'WiFi'),
                               ],
                             ),
                             const Divider(height: 20),
@@ -295,9 +307,15 @@ class _HousingScreenState extends State<HousingScreen> with SingleTickerProvider
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
-                                  '📞 ${item.contactPhone}',
-                                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.phone, size: 14, color: AppColors.textSecondary),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      item.contactPhone,
+                                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                    ),
+                                  ],
                                 ),
                                 ElevatedButton(
                                   onPressed: () => _showViewingBookingDialog(item),
@@ -363,9 +381,21 @@ class _HousingScreenState extends State<HousingScreen> with SingleTickerProvider
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text('📍 ${req.listing?.location ?? 'Near Campus'}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on, size: 14, color: AppColors.textSecondary),
+                    const SizedBox(width: 4),
+                    Text(req.listing?.location ?? 'Near Campus', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  ],
+                ),
                 const SizedBox(height: 6),
-                Text('📅 Preferred Date: ${req.preferredDate}', style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                Row(
+                  children: [
+                    const Icon(Icons.calendar_today, size: 14, color: AppColors.textMuted),
+                    const SizedBox(width: 4),
+                    Text('Preferred Date: ${req.preferredDate}', style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                  ],
+                ),
                 if (req.message != null && req.message!.isNotEmpty)
                   Text('Note: "${req.message}"', style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic)),
               ],
@@ -401,7 +431,7 @@ class _HousingScreenState extends State<HousingScreen> with SingleTickerProvider
     );
   }
 
-  Widget _buildAmenityBadge(String label) {
+  Widget _buildAmenityBadge(IconData icon, String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
@@ -409,7 +439,14 @@ class _HousingScreenState extends State<HousingScreen> with SingleTickerProvider
         borderRadius: BorderRadius.circular(4),
         border: Border.all(color: Colors.grey.shade300),
       ),
-      child: Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: AppColors.textSecondary),
+          const SizedBox(width: 3),
+          Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+        ],
+      ),
     );
   }
 }

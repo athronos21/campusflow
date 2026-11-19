@@ -7,6 +7,7 @@ import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import { formatETB } from '@/lib/utils';
 import { TripDto, TicketReservationDto } from '@campusflow/contracts';
+import { Bus, Ticket, MapPin, Navigation, Clock, Smartphone } from 'lucide-react';
 
 export default function TransportPage() {
   const { user } = useAuth();
@@ -194,7 +195,7 @@ export default function TransportPage() {
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            <span>🚌</span> Available Trips & Schedules
+            <Bus className="w-4 h-4 text-amber-600" /> Available Trips & Schedules
           </button>
           <button
             onClick={() => setActiveTab('tickets')}
@@ -204,7 +205,7 @@ export default function TransportPage() {
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            <span>🎟️</span> My Boarding Passes ({userTickets.length})
+            <Ticket className="w-4 h-4 text-indigo-600" /> My Boarding Passes ({userTickets.length})
           </button>
         </div>
 
@@ -265,10 +266,16 @@ export default function TransportPage() {
                           <span className="text-indigo-600">{trip.route.destination}</span>
                         </div>
 
-                        <div className="text-xs text-slate-500 mb-4 space-y-1">
-                          <div>📍 Departure: <span className="text-slate-700 font-medium">{trip.route.departureStation}</span></div>
-                          <div>🏁 Arrival: <span className="text-slate-700 font-medium">{trip.route.arrivalStation}</span></div>
-                          <div>⏱️ Duration: ~{trip.route.estimatedDurationMin} mins {trip.route.distanceKm ? `(${trip.route.distanceKm} km)` : ''}</div>
+                        <div className="text-xs text-slate-500 mb-4 space-y-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5 text-slate-400" /> Departure: <span className="text-slate-700 font-medium">{trip.route.departureStation}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Navigation className="w-3.5 h-3.5 text-slate-400" /> Arrival: <span className="text-slate-700 font-medium">{trip.route.arrivalStation}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Clock className="w-3.5 h-3.5 text-slate-400" /> Duration: ~{trip.route.estimatedDurationMin} mins {trip.route.distanceKm ? `(${trip.route.distanceKm} km)` : ''}
+                          </div>
                         </div>
 
                         {/* Vehicle Info & Schedule */}
@@ -401,7 +408,7 @@ export default function TransportPage() {
                               onClick={() => handleInitiateTicketPayment(ticket)}
                               className="px-3.5 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 transition shadow-sm flex items-center gap-1.5"
                             >
-                              <span>📱</span> Pay with Telebirr
+                              <Smartphone className="w-3.5 h-3.5" /> Pay with Telebirr
                             </button>
                           )}
                           {!isCancelled && (
@@ -512,8 +519,8 @@ export default function TransportPage() {
                   </div>
 
                   {/* Driver Header */}
-                  <div className="bg-slate-100 rounded-t-lg p-2 text-center text-xs text-slate-500 font-medium mb-2 border border-slate-200">
-                    🚌 Driver Cabin (Front)
+                  <div className="bg-slate-100 rounded-t-lg p-2 text-center text-xs text-slate-500 font-medium mb-2 border border-slate-200 flex items-center justify-center gap-1.5">
+                    <Bus className="w-3.5 h-3.5 text-slate-500" /> Driver Cabin (Front)
                   </div>
 
                   {/* Grid */}
@@ -623,7 +630,9 @@ export default function TransportPage() {
             </div>
 
             <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-xs text-emerald-900 mb-6 space-y-2">
-              <div className="font-bold">📱 USSD Quick-Dial Instruction:</div>
+              <div className="font-bold flex items-center gap-1.5">
+                <Smartphone className="w-4 h-4 text-emerald-700" /> USSD Quick-Dial Instruction:
+              </div>
               <div className="bg-white p-2.5 rounded-lg border border-emerald-200 font-mono text-center font-bold text-emerald-700 text-sm">
                 {payData.ussdDial}
               </div>

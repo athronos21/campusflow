@@ -122,9 +122,15 @@ class _BookingsScreenState extends State<BookingsScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          '📅 ${selectedDateTime.toLocal().toString().substring(0, 16)}',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                        Row(
+                          children: [
+                            const Icon(Icons.calendar_today, size: 14, color: AppColors.primary),
+                            const SizedBox(width: 6),
+                            Text(
+                              selectedDateTime.toLocal().toString().substring(0, 16),
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                            ),
+                          ],
                         ),
                         TextButton(
                           onPressed: () async {
@@ -293,14 +299,26 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                   ],
                                 ),
                                 const SizedBox(height: 6),
-                                Text(
-                                  '🏛️ ${b.businessName ?? 'Campus Partner Shop'}',
-                                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.store, size: 14, color: AppColors.textSecondary),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      b.businessName ?? 'Campus Partner Shop',
+                                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                    ),
+                                  ],
                                 ),
                                 const SizedBox(height: 4),
-                                Text(
-                                  '⏰ Slot: ${b.startsAt}',
-                                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.access_time, size: 14, color: AppColors.textSecondary),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Slot: ${b.startsAt}',
+                                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),

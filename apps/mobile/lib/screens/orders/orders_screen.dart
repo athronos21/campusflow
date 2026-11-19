@@ -252,9 +252,16 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                     color: AppColors.success,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: const Text(
-                                    'Ready for Pickup! 🔔',
-                                    style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      Text(
+                                        'Ready for Pickup!',
+                                        style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                      ),
+                                      SizedBox(width: 4),
+                                      Icon(Icons.notifications_active, color: Colors.white, size: 14),
+                                    ],
                                   ),
                                 )
                               else
@@ -264,9 +271,16 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                     color: Colors.green.shade50,
                                     borderRadius: BorderRadius.circular(6),
                                   ),
-                                  child: Text(
-                                    'PAID ✓',
-                                    style: TextStyle(color: Colors.green.shade800, fontSize: 11, fontWeight: FontWeight.bold),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.check_circle, color: Colors.green.shade800, size: 13),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        'PAID',
+                                        style: TextStyle(color: Colors.green.shade800, fontSize: 11, fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
                                   ),
                                 ),
                             ],

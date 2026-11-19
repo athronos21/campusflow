@@ -2,6 +2,20 @@ import React from 'react';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import Link from 'next/link';
+import {
+  Bus,
+  FileCode,
+  Coffee,
+  Home,
+  Calendar,
+  BookOpen,
+  CalendarCheck,
+  ShoppingCart,
+  Store,
+  GraduationCap,
+  ShieldCheck,
+  ArrowRight,
+} from 'lucide-react';
 
 export default function HomePage() {
   return (
@@ -24,23 +38,23 @@ export default function HomePage() {
           <div className="flex flex-wrap justify-center gap-3 pt-4">
             <Link
               href="/directory"
-              className="px-6 py-3 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition shadow-sm text-sm"
+              className="px-6 py-3 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition shadow-sm text-sm inline-flex items-center gap-2"
             >
-              Explore Campus Directory →
+              Explore Campus Directory <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
               href="/transport"
               className="px-6 py-3 rounded-xl bg-white border border-slate-300 text-slate-800 font-bold hover:bg-slate-50 transition text-sm flex items-center gap-2"
             >
-              <span>🚌</span> Book Campus Bus
+              <Bus className="w-4 h-4 text-amber-600" /> Book Campus Bus
             </Link>
             <a
               href="http://localhost:4000/api/docs"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-5 py-3 rounded-xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition text-sm"
+              className="px-5 py-3 rounded-xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition text-sm flex items-center gap-2"
             >
-              📑 OpenAPI Specs
+              <FileCode className="w-4 h-4 text-slate-600" /> OpenAPI Specs
             </a>
           </div>
         </header>
@@ -52,8 +66,8 @@ export default function HomePage() {
             className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-indigo-400 hover:shadow-md transition flex flex-col justify-between"
           >
             <div>
-              <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xl mb-3">
-                ☕
+              <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold mb-3">
+                <Coffee className="w-5 h-5" />
               </div>
               <h2 className="text-base font-bold text-slate-900 mb-1.5">Cafeteria & Food Pre-orders</h2>
               <p className="text-slate-600 text-xs mb-3 leading-relaxed">
@@ -70,8 +84,8 @@ export default function HomePage() {
             className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-amber-400 hover:shadow-md transition flex flex-col justify-between"
           >
             <div>
-              <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xl mb-3">
-                🚌
+              <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold mb-3">
+                <Bus className="w-5 h-5" />
               </div>
               <h2 className="text-base font-bold text-slate-900 mb-1.5">Transport & Bus Ticketing</h2>
               <p className="text-slate-600 text-xs mb-3 leading-relaxed">
@@ -88,8 +102,8 @@ export default function HomePage() {
             className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-teal-400 hover:shadow-md transition flex flex-col justify-between"
           >
             <div>
-              <div className="w-10 h-10 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-xl mb-3">
-                🏠
+              <div className="w-10 h-10 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center font-bold mb-3">
+                <Home className="w-5 h-5" />
               </div>
               <h2 className="text-base font-bold text-slate-900 mb-1.5">Student Housing & Rooms</h2>
               <p className="text-slate-600 text-xs mb-3 leading-relaxed">
@@ -106,8 +120,8 @@ export default function HomePage() {
             className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-violet-400 hover:shadow-md transition flex flex-col justify-between"
           >
             <div>
-              <div className="w-10 h-10 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center font-bold text-xl mb-3">
-                🎯
+              <div className="w-10 h-10 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center font-bold mb-3">
+                <Calendar className="w-5 h-5" />
               </div>
               <h2 className="text-base font-bold text-slate-900 mb-1.5">Campus Events & Passes</h2>
               <p className="text-slate-600 text-xs mb-3 leading-relaxed">
@@ -124,8 +138,8 @@ export default function HomePage() {
             className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-cyan-400 hover:shadow-md transition flex flex-col justify-between"
           >
             <div>
-              <div className="w-10 h-10 rounded-xl bg-cyan-100 text-cyan-700 flex items-center justify-center font-bold text-xl mb-3">
-                📚
+              <div className="w-10 h-10 rounded-xl bg-cyan-100 text-cyan-700 flex items-center justify-center font-bold mb-3">
+                <BookOpen className="w-5 h-5" />
               </div>
               <h2 className="text-base font-bold text-slate-900 mb-1.5">Academic Resource Bank</h2>
               <p className="text-slate-600 text-xs mb-3 leading-relaxed">
@@ -142,8 +156,8 @@ export default function HomePage() {
             className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-purple-400 hover:shadow-md transition flex flex-col justify-between"
           >
             <div>
-              <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xl mb-3">
-                📅
+              <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold mb-3">
+                <CalendarCheck className="w-5 h-5" />
               </div>
               <h2 className="text-base font-bold text-slate-900 mb-1.5">Local Services & Appointments</h2>
               <p className="text-slate-600 text-xs mb-3 leading-relaxed">
@@ -160,8 +174,8 @@ export default function HomePage() {
             className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-rose-400 hover:shadow-md transition flex flex-col justify-between"
           >
             <div>
-              <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-xl mb-3">
-                🛒
+              <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold mb-3">
+                <ShoppingCart className="w-5 h-5" />
               </div>
               <h2 className="text-base font-bold text-slate-900 mb-1.5">Pickup Cart & Telebirr Pay</h2>
               <p className="text-slate-600 text-xs mb-3 leading-relaxed">
@@ -178,8 +192,8 @@ export default function HomePage() {
             className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-slate-400 hover:shadow-md transition flex flex-col justify-between"
           >
             <div>
-              <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xl mb-3">
-                🏪
+              <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold mb-3">
+                <Store className="w-5 h-5" />
               </div>
               <h2 className="text-base font-bold text-slate-900 mb-1.5">Merchant & Admin Portal</h2>
               <p className="text-slate-600 text-xs mb-3 leading-relaxed">
@@ -202,17 +216,23 @@ export default function HomePage() {
           <h3 className="font-bold text-slate-900 text-base mb-2">Ready-to-Test Seeded Accounts</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
             <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-              <span className="font-bold text-slate-800 block mb-1">👨‍🎓 Student Account</span>
+              <span className="font-bold text-slate-800 flex items-center gap-1.5 mb-1">
+                <GraduationCap className="w-4 h-4 text-indigo-600" /> Student Account
+              </span>
               <div className="text-slate-600 font-mono">student@haramaya.edu.et</div>
               <div className="text-slate-400 mt-0.5">Password: password123</div>
             </div>
             <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-              <span className="font-bold text-slate-800 block mb-1">☕ Merchant Account</span>
+              <span className="font-bold text-slate-800 flex items-center gap-1.5 mb-1">
+                <Store className="w-4 h-4 text-amber-600" /> Merchant Account
+              </span>
               <div className="text-slate-600 font-mono">merchant@haramayacafe.et</div>
               <div className="text-slate-400 mt-0.5">Password: password123</div>
             </div>
             <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-              <span className="font-bold text-slate-800 block mb-1">🛡️ Admin / Moderator</span>
+              <span className="font-bold text-slate-800 flex items-center gap-1.5 mb-1">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" /> Admin / Moderator
+              </span>
               <div className="text-slate-600 font-mono">admin@campusflow.et</div>
               <div className="text-slate-400 mt-0.5">Password: password123</div>
             </div>

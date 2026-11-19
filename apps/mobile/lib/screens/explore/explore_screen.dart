@@ -212,11 +212,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 12),
-              const Row(
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('📍 Near Student Lounge', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
-                  Text(
+                  Row(
+                    children: const [
+                      Icon(Icons.location_on, size: 14, color: AppColors.textMuted),
+                      SizedBox(width: 4),
+                      Text('Near Student Lounge', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                    ],
+                  ),
+                  const Text(
                     'View Menu →',
                     style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13),
                   ),

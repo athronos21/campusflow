@@ -89,18 +89,36 @@ class ProfileScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
               side: const BorderSide(color: AppColors.border),
             ),
-            child: const Padding(
-              padding: EdgeInsets.all(16),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Tigist Haile', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-                  SizedBox(height: 6),
-                  Text('🏛️ Haramaya University (Main Campus)', style: TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w600)),
-                  SizedBox(height: 4),
-                  Text('📱 +251 92 233 4455', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-                  SizedBox(height: 4),
-                  Text('✉️ student@haramaya.edu.et', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                  const Text('Tigist Haile', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: const [
+                      Icon(Icons.account_balance, size: 14, color: AppColors.primary),
+                      SizedBox(width: 6),
+                      Text('Haramaya University (Main Campus)', style: TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: const [
+                      Icon(Icons.phone_android, size: 14, color: AppColors.textSecondary),
+                      SizedBox(width: 6),
+                      Text('+251 92 233 4455', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: const [
+                      Icon(Icons.email_outlined, size: 14, color: AppColors.textSecondary),
+                      SizedBox(width: 6),
+                      Text('student@haramaya.edu.et', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                    ],
+                  ),
                 ],
               ),
             ),

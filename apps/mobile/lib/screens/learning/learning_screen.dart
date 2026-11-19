@@ -167,9 +167,15 @@ class _LearningScreenState extends State<LearningScreen> {
                                             ),
                                           ),
                                         ),
-                                        Text(
-                                          '📥 ${res.downloadCount} downloads',
-                                          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.download, size: 13, color: AppColors.textSecondary),
+                                            const SizedBox(width: 3),
+                                            Text(
+                                              '${res.downloadCount} downloads',
+                                              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
@@ -179,9 +185,15 @@ class _LearningScreenState extends State<LearningScreen> {
                                       style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                                     ),
                                     const SizedBox(height: 4),
-                                    Text(
-                                      '🏛️ ${res.department} • By ${res.uploaderName ?? 'Senior Student'}',
-                                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.account_balance, size: 14, color: AppColors.textSecondary),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          '${res.department} • By ${res.uploaderName ?? 'Senior Student'}',
+                                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                        ),
+                                      ],
                                     ),
                                     if (res.description != null) ...[
                                       const SizedBox(height: 6),

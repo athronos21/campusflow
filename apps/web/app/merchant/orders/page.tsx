@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { OrderStatusBadge } from '@/components/commerce/order-status-badge';
 import { formatETB } from '@/lib/utils';
 import { apiClient, API_BASE_URL } from '@/lib/api-client';
+import { Bell } from 'lucide-react';
 
 interface OrderItem {
   id: string;
@@ -136,7 +137,7 @@ export default function MerchantOrdersQueuePage() {
       {newOrderAlert && (
         <div className="mb-6 p-4 bg-emerald-500 text-white rounded-xl shadow-lg flex items-center justify-between animate-pulse">
           <div className="flex items-center gap-2 font-bold text-sm">
-            <span className="text-xl">🔔</span> NEW ORDER RECEIVED! Update queue below.
+            <Bell className="w-5 h-5 text-white" /> NEW ORDER RECEIVED! Update queue below.
           </div>
           <button
             onClick={() => setNewOrderAlert(false)}
@@ -246,11 +247,11 @@ export default function MerchantOrdersQueuePage() {
                     {order.status === 'preparing' && (
                       <Button
                         size="sm"
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-1.5"
                         disabled={updatingId === order.id}
                         onClick={() => handleUpdateStatus(order.id, 'ready')}
                       >
-                        🔔 Mark Ready for Pickup
+                        <Bell className="w-3.5 h-3.5" /> Mark Ready for Pickup
                       </Button>
                     )}
 

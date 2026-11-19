@@ -12,6 +12,7 @@ import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import { useCart } from '@/lib/cart-context';
 import Link from 'next/link';
+import { ShoppingCart } from 'lucide-react';
 
 interface Product {
   id: string;
@@ -242,8 +243,8 @@ export default function ShopDetailPage() {
 
             <div className="flex items-center gap-3">
               <Link href="/cart">
-                <Button variant="outline" size="lg" className="font-semibold border-slate-300">
-                  Review Cart ({cartCount}) 🛒
+                <Button variant="outline" size="lg" className="font-semibold border-slate-300 flex items-center gap-1.5">
+                  <ShoppingCart className="w-4 h-4 text-indigo-600" /> Review Cart ({cartCount})
                 </Button>
               </Link>
               <Button

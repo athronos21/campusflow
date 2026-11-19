@@ -7,7 +7,7 @@
 
 ---
 
-## 📌 Executive Overview
+## Executive Overview
 
 **CampusFlow** is an enterprise-grade digital super-app designed for university campuses across Ethiopia, piloted at **Haramaya University Main Campus**. It consolidates essential student life, food orders, intercity bus ticketing, off-campus accommodation, campus events, academic resources, and local service appointments into a single, high-performance platform.
 
@@ -18,7 +18,7 @@
 
 ---
 
-## 🎯 The 10 Core CampusFlow Services
+## The 10 Core CampusFlow Services
 
 | Service # | Domain | Key Capabilities | Client Access |
 | :--- | :--- | :--- | :--- |
@@ -35,32 +35,32 @@
 
 ---
 
-## 🏗️ Architecture & Monorepo Layout
+## Architecture & Monorepo Layout
 
 ```text
 campusflow/
 ├── apps/
-│   ├── api/                     # 🛡️ NestJS 10 REST API with OpenAPI Swagger docs
-│   ├── web/                     # 💻 Next.js 14 App Router (React, Tailwind CSS, Lucide)
-│   └── mobile/                  # 📱 Flutter 3.x Mobile App (Android & iOS with Dio HTTP client)
+│   ├── api/                     # NestJS 10 REST API with OpenAPI Swagger docs
+│   ├── web/                     # Next.js 14 App Router (React, Tailwind CSS, Lucide)
+│   └── mobile/                  # Flutter 3.x Mobile App (Android & iOS with Dio HTTP client)
 ├── packages/
-│   ├── contracts/               # 📜 Shared Zod schemas, DTOs & TypeScript types
-│   ├── config/                  # ⚙️ Shared TypeScript, ESLint, Prettier configs
-│   └── design-system/           # 🎨 Brand tokens and Ethiopian theme palettes
+│   ├── contracts/               # Shared Zod schemas, DTOs & TypeScript types
+│   ├── config/                  # Shared TypeScript, ESLint, Prettier configs
+│   └── design-system/           # Brand tokens and Ethiopian theme palettes
 ├── prisma/
-│   ├── schema.prisma            # 🗄️ Multi-tenant PostgreSQL schema
-│   └── seed.ts                  # 🌱 Seed script (campuses, merchants, buses, housing, events, notes)
+│   ├── schema.prisma            # Multi-tenant PostgreSQL schema
+│   └── seed.ts                  # Seed script (campuses, merchants, buses, housing, events, notes)
 ├── scripts/
-│   └── test-e2e-flow.ts         # 🧪 13-point automated End-to-End integration test suite
-├── docker-compose.yml           # 🐳 Local PostgreSQL 16 container definition
-├── package.json                 # 📦 Monorepo workspace configuration
-├── pnpm-workspace.yaml          # 🔗 pnpm workspace mapping
-└── turbo.json                   # ⚡ Turborepo pipeline orchestration
+│   └── test-e2e-flow.ts         # 13-point automated End-to-End integration test suite
+├── docker-compose.yml           # Local PostgreSQL 16 container definition
+├── package.json                 # Monorepo workspace configuration
+├── pnpm-workspace.yaml          # pnpm workspace mapping
+└── turbo.json                   # Turborepo pipeline orchestration
 ```
 
 ---
 
-## 🚀 Quickstart Guide
+## Quickstart Guide
 
 ### 1. Prerequisites
 * **Node.js**: v20 LTS or v22
@@ -104,7 +104,7 @@ pnpm test:mobile
 # Flutter mobile static analyzer check
 pnpm analyze:mobile
 ```
-*Expected Output:* `🎉 ALL END-TO-END VERIFICATION CHECKS PASSED (13/13)` and `All tests passed! (2/2)`
+*Expected Output:* `ALL END-TO-END VERIFICATION CHECKS PASSED (13/13)` and `All tests passed! (2/2)`
 
 ### 6. Launch Development Servers
 ```bash
@@ -124,7 +124,7 @@ flutter run
 
 ---
 
-## 🔑 Seeded Demo Credentials
+## Seeded Demo Credentials
 
 Use these pre-configured accounts to test role-based access:
 
@@ -136,7 +136,7 @@ Use these pre-configured accounts to test role-based access:
 
 ---
 
-## 🛡️ Security & Ethiopian Data Compliance
+## Security & Ethiopian Data Compliance
 
 * **Proclamation No. 1321/2024:** Student data is collected strictly on an opt-in basis with data minimization principles. Personal phone numbers and student identifiers are protected from public scraping.
 * **JWT Authentication:** Stateful user sessions signed with RS256/HS256 tokens and injected automatically into `apiClient` and Dio HTTP interceptors.
@@ -145,7 +145,7 @@ Use these pre-configured accounts to test role-based access:
 
 ---
 
-## 📚 Strategic Playbooks & Operational Documentation
+## Strategic Playbooks & Operational Documentation
 
 Comprehensive operational and strategic guides for executing the live campus rollout:
 

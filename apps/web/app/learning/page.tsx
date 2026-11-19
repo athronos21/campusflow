@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { BookOpen, Search, Building2, Download } from 'lucide-react';
 
 interface LearningResource {
   id: string;
@@ -178,7 +179,7 @@ export default function LearningPage() {
       {successNotice && (
         <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-sm font-medium flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span>📚</span> {successNotice}
+            <BookOpen className="w-4 h-4 text-emerald-600" /> {successNotice}
           </div>
           <button onClick={() => setSuccessNotice(null)} className="text-emerald-600 hover:text-emerald-900 font-bold">✕</button>
         </div>
@@ -188,7 +189,7 @@ export default function LearningPage() {
       <div className="space-y-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         <div className="flex flex-col md:flex-row items-center gap-3">
           <div className="relative flex-1 w-full">
-            <span className="absolute left-3 top-2.5 text-slate-400 text-sm">🔍</span>
+            <Search className="absolute left-3 top-2.5 text-slate-400 w-4 h-4" />
             <input
               type="text"
               placeholder="Search by course code (e.g. CoSc201, AG-102) or topic..."
@@ -246,7 +247,9 @@ export default function LearningPage() {
                 </div>
 
                 <h3 className="font-bold text-slate-900 text-base leading-snug">{res.title}</h3>
-                <p className="text-xs text-cyan-800 font-semibold mt-1">🏛️ {res.department}</p>
+                <p className="text-xs text-cyan-800 font-semibold mt-1 flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-cyan-700" /> {res.department}
+                </p>
                 {res.description && (
                   <p className="text-xs text-slate-600 mt-2 line-clamp-2 leading-relaxed">
                     {res.description}
@@ -256,7 +259,9 @@ export default function LearningPage() {
 
               <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
                 <div className="text-xs text-slate-500">
-                  <span className="block font-medium text-slate-700">📥 {res.downloadCount} downloads</span>
+                  <span className="flex items-center gap-1 font-medium text-slate-700">
+                    <Download className="w-3.5 h-3.5 text-slate-500" /> {res.downloadCount} downloads
+                  </span>
                   <span className="text-[11px]">By {res.uploader?.displayName || 'Contributor'}</span>
                 </div>
 
@@ -264,7 +269,7 @@ export default function LearningPage() {
                   onClick={() => handleDownload(res)}
                   className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
                 >
-                  <span>⬇️</span> Download
+                  <Download className="w-3.5 h-3.5" /> Download
                 </button>
               </div>
             </Card>

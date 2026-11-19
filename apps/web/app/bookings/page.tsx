@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
+import { MapPin } from 'lucide-react';
 
 interface Booking {
   id: string;
@@ -124,7 +125,7 @@ export default function BookingsPage() {
                   >
                     {businesses.map((b) => (
                       <option key={b.id} value={b.id}>
-                        🏪 {b.name}
+                        {b.name}
                       </option>
                     ))}
                   </select>
@@ -195,7 +196,9 @@ export default function BookingsPage() {
                     Scheduled for: {new Date(b.startsAt).toLocaleString()}
                   </span>
                 </div>
-                <span className="text-xs text-slate-400">📍 Haramaya Campus Hub</span>
+                <span className="text-xs text-slate-400 flex items-center">
+                  <MapPin className="w-3.5 h-3.5 inline mr-1 text-slate-400" /> Haramaya Campus Hub
+                </span>
               </Card>
             ))}
           </div>

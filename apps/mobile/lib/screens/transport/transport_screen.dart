@@ -124,8 +124,15 @@ class _TransportScreenState extends State<TransportScreen> with SingleTickerProv
                       color: Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Center(
-                      child: Text('🚌 Front / Driver Cabin', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    child: Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.directions_bus, size: 14, color: Colors.grey),
+                          SizedBox(width: 4),
+                          Text('Front / Driver Cabin', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -361,13 +368,26 @@ class _TransportScreenState extends State<TransportScreen> with SingleTickerProv
                 ),
                 const SizedBox(height: 8),
 
-                Text(
-                  '📍 Terminal: ${trip.route.departureStation}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on, size: 14, color: AppColors.textSecondary),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Terminal: ${trip.route.departureStation}',
+                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    ),
+                  ],
                 ),
-                Text(
-                  '⏱️ Duration: ~${trip.route.estimatedDurationMin} mins • ${trip.vehicleType}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    const Icon(Icons.access_time, size: 14, color: AppColors.textSecondary),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Duration: ~${trip.route.estimatedDurationMin} mins • ${trip.vehicleType}',
+                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    ),
+                  ],
                 ),
                 const Divider(height: 24),
 

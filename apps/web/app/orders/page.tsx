@@ -7,6 +7,7 @@ import { formatETB } from '@/lib/utils';
 import { apiClient, API_BASE_URL } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
+import { Smartphone, Bell, Check } from 'lucide-react';
 
 interface OrderItem {
   id: string;
@@ -178,7 +179,7 @@ export default function StudentOrdersPage() {
                   
                   {isPaid ? (
                     <span className="text-xs text-emerald-600 font-bold mt-1 flex items-center gap-1">
-                      <span>✓</span> Paid via Digital Payment
+                      <Check className="w-3.5 h-3.5" /> Paid via Digital Payment
                     </span>
                   ) : (
                     <div className="mt-2 flex gap-1.5">
@@ -186,7 +187,7 @@ export default function StudentOrdersPage() {
                         onClick={() => handleInitiatePayment(order, 'telebirr')}
                         className="px-2.5 py-1 bg-emerald-600 text-white text-xs font-bold rounded hover:bg-emerald-700 transition flex items-center gap-1"
                       >
-                        <span>📱</span> Pay Telebirr
+                        <Smartphone className="w-3.5 h-3.5" /> Pay Telebirr
                       </button>
                       <button
                         onClick={() => handleInitiatePayment(order, 'cbe_birr')}
@@ -198,8 +199,8 @@ export default function StudentOrdersPage() {
                   )}
 
                   {order.status === 'ready' && (
-                    <span className="inline-block mt-2 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md animate-bounce">
-                      Ready for Pickup! 🔔
+                    <span className="inline-flex items-center gap-1.5 mt-2 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md animate-bounce">
+                      Ready for Pickup! <Bell className="w-3.5 h-3.5 text-emerald-600" />
                     </span>
                   )}
                 </div>
@@ -242,7 +243,9 @@ export default function StudentOrdersPage() {
             </div>
 
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-800 mb-6 space-y-2">
-              <div className="font-bold text-slate-900">📲 Payment Instruction:</div>
+              <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                <Smartphone className="w-4 h-4 text-indigo-600" /> Payment Instruction:
+              </div>
               <div className="bg-white p-2.5 rounded-lg border border-slate-200 font-mono text-center font-bold text-indigo-700 text-sm">
                 {payData.ussdDial}
               </div>
