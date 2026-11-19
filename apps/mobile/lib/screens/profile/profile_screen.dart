@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
+import '../wallet/wallet_screen.dart';
+import '../emergency/emergency_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -123,7 +125,34 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
+
+          // Campus Wallet & Emergency Direct Actions
+          ListTile(
+            tileColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: AppColors.border)),
+            leading: const Icon(Icons.account_balance_wallet, color: Colors.green),
+            title: const Text('Campus Pay & Student Wallet', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+            subtitle: const Text('Balance: ETB 1,250.00 · Telebirr / CBE Birr', style: TextStyle(fontSize: 11)),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textMuted),
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const WalletScreen()));
+            },
+          ),
+          const SizedBox(height: 8),
+
+          ListTile(
+            tileColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: AppColors.border)),
+            leading: const Icon(Icons.emergency, color: Colors.red),
+            title: const Text('Campus Safety & Emergency Contacts', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+            subtitle: const Text('Security patrol, Clinic, & 24/7 SOS alert', style: TextStyle(fontSize: 11)),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textMuted),
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const EmergencyScreen()));
+            },
+          ),
+          const SizedBox(height: 20),
 
           // Settings List
           ListTile(

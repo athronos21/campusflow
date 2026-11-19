@@ -8,6 +8,10 @@ import '../housing/housing_screen.dart';
 import '../events/events_screen.dart';
 import '../learning/learning_screen.dart';
 import '../bookings/bookings_screen.dart';
+import '../announcements/announcements_screen.dart';
+import '../marketplace/marketplace_screen.dart';
+import '../emergency/emergency_screen.dart';
+import '../wallet/wallet_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -94,6 +98,42 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
+                        _buildQuickServiceButton(
+                          context,
+                          icon: Icons.campaign,
+                          color: Colors.blue.shade700,
+                          bgColor: Colors.blue.shade50,
+                          label: 'Notices',
+                          screen: const AnnouncementsScreen(),
+                        ),
+                        const SizedBox(width: 14),
+                        _buildQuickServiceButton(
+                          context,
+                          icon: Icons.storefront,
+                          color: Colors.purple.shade700,
+                          bgColor: Colors.purple.shade50,
+                          label: 'Marketplace',
+                          screen: const MarketplaceScreen(),
+                        ),
+                        const SizedBox(width: 14),
+                        _buildQuickServiceButton(
+                          context,
+                          icon: Icons.account_balance_wallet,
+                          color: Colors.green.shade700,
+                          bgColor: Colors.green.shade50,
+                          label: 'Campus Pay',
+                          screen: const WalletScreen(),
+                        ),
+                        const SizedBox(width: 14),
+                        _buildQuickServiceButton(
+                          context,
+                          icon: Icons.medical_services,
+                          color: Colors.red.shade700,
+                          bgColor: Colors.red.shade50,
+                          label: 'Emergency',
+                          screen: const EmergencyScreen(),
+                        ),
+                        const SizedBox(width: 14),
                         _buildQuickServiceButton(
                           context,
                           icon: Icons.directions_bus,
