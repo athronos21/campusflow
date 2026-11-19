@@ -1,0 +1,14 @@
+{
+  "extends": "./packages/config/base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@campusflow/contracts": ["./packages/contracts/src"],
+      "@campusflow/design-system": ["./packages/design-system/src"]
+    }
+  },
+  "ts-node": {
+    "transpileOnly": true
+  },
+  "include": ["scripts/**/*", "prisma/**/*"]
+}
