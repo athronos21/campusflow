@@ -1,6 +1,6 @@
-# 🏛️ University Systems & Institutional IT Integration Architecture
+# University Systems & Institutional IT Integration Architecture
 
-## 📌 Strategic Vision
+## Strategic Vision
 
 CampusFlow is designed as an interoperable digital services layer for Ethiopian higher education. While the pilot begins as a standalone, zero-friction web and mobile application, deep institutional integration ensures long-term defensibility, administrative endorsement, and campus-wide ubiquity.
 
@@ -8,7 +8,7 @@ This document outlines the architectural roadmap for integrating with University
 
 ---
 
-## 🔐 1. Identity & Single Sign-On (SSO) Integration
+## 1. Identity & Single Sign-On (SSO) Integration
 
 ```mermaid
 sequenceDiagram
@@ -39,7 +39,7 @@ sequenceDiagram
 
 ---
 
-## 📡 2. Campus Wi-Fi Captive Portal & Zero-Rating
+## 2. Campus Wi-Fi Captive Portal & Zero-Rating
 
 ### The Problem
 During peak hours, university bandwidth limits or captive network logins can interrupt student internet access, preventing order placement.
@@ -58,7 +58,7 @@ ipset add walled_garden cdn.campusflow.et
 
 ---
 
-## 🎓 3. Academic Registrar & SIS Synchronization
+## 3. Academic Registrar & SIS Synchronization
 
 Integrating with the University Registrar's system enables:
 
@@ -68,7 +68,7 @@ Integrating with the University Registrar's system enables:
 
 ---
 
-## 💳 4. National Payment Gateway Integrations
+## 4. National Payment Gateway Integrations
 
 ```text
 Student Checkout (App)
@@ -83,7 +83,7 @@ Student Checkout (App)
 
 ---
 
-## ⚖️ 5. Regulatory & Governance Framework
+## 5. Regulatory & Governance Framework
 
 All integrations are built in strict compliance with:
 * **Federal Proclamation No. 1321/2024:** Ethiopian Personal Data Protection Proclamation (data minimization, encrypted transit, local data retention).

@@ -1,6 +1,6 @@
-# 🚀 CampusFlow Pilot Launch Sprint Plan (Haramaya University)
+# CampusFlow Pilot Launch Sprint Plan (Haramaya University)
 
-## 📌 Executive Summary
+## Executive Summary
 
 This 14-day sprint plan guides the founding team from local monorepo validation to a live, operational pilot at **Haramaya University (Main Campus, Bate)**. 
 
@@ -10,7 +10,7 @@ This 14-day sprint plan guides the founding team from local monorepo validation 
 
 ---
 
-## 🗓️ 14-Day Sprint Calendar
+## 14-Day Sprint Calendar
 
 ### Phase 1: Cloud Staging & Production Deployment (Days 1 – 4)
 
@@ -54,7 +54,7 @@ This 14-day sprint plan guides the founding team from local monorepo validation 
 
 ---
 
-## 📊 Key Performance Indicators (KPIs)
+## Key Performance Indicators (KPIs)
 
 1. **Active Student Accounts:** > 250 verified accounts within first 7 days.
 2. **Order Volume:** > 60 daily orders during peak 12:00 – 14:00 lunch rush.

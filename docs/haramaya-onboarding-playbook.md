@@ -1,6 +1,6 @@
-# 📖 Haramaya University Merchant & Student Onboarding Playbook
+# Haramaya University Merchant & Student Onboarding Playbook
 
-## 📌 Context & Objectives
+## Context & Objectives
 
 Haramaya University Main Campus is situated near the town of Bate in Eastern Ethiopia, serving over 20,000 students and academic staff. During peak class changes (10:00 AM coffee break, 12:00 PM lunch, and 5:00 PM tea), campus cafeterias and stationery stores experience extreme overcrowding, long wait times, and cash bottlenecks.
 
@@ -8,7 +8,7 @@ This playbook provides actionable, step-by-step procedures for signing up and su
 
 ---
 
-## ☕ 1. Merchant Onboarding & Acquisition
+## 1. Merchant Onboarding & Acquisition
 
 ### Target Pilot Merchants (Cohort 1)
 
@@ -39,7 +39,7 @@ This playbook provides actionable, step-by-step procedures for signing up and su
 
 ---
 
-## 📱 2. Student Activation & Growth Playbook
+## 2. Student Activation & Growth Playbook
 
 ### Core Student Value Proposition
 
@@ -61,7 +61,7 @@ This playbook provides actionable, step-by-step procedures for signing up and su
 
 ---
 
-## 🛠️ 3. Operational Protocols & Issue Escalation
+## 3. Operational Protocols & Issue Escalation
 
 ### Out-of-Stock Item Protocol
 If a cafe runs out of a popular item (e.g., Ful or Sambusa):
