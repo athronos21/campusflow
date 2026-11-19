@@ -46,112 +46,148 @@ export default function HomePage() {
         </header>
 
         {/* Feature Grids - All 10 Services */}
-        <section id="explore" className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+        <section id="explore" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-16">
           <Link
             href="/directory"
-            className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-indigo-400 hover:shadow-md transition flex flex-col justify-between"
+            className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-indigo-400 hover:shadow-md transition flex flex-col justify-between"
           >
             <div>
-              <div className="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-2xl mb-4">
+              <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xl mb-3">
                 ☕
               </div>
-              <h2 className="text-xl font-bold text-slate-900 mb-2">Student Marketplace & Food</h2>
-              <p className="text-slate-600 text-sm mb-4 leading-relaxed">
-                Browse verified campus cafes, print shops, and stationery stores. Order meals for pickup between lectures with Telebirr pay.
+              <h2 className="text-base font-bold text-slate-900 mb-1.5">Cafeteria & Food Pre-orders</h2>
+              <p className="text-slate-600 text-xs mb-3 leading-relaxed">
+                Order fresh Buna, Ful, and snacks for pickup between lectures. Real-time kitchen queue updates with audio chimes.
               </p>
             </div>
-            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md inline-block w-fit">
-              ✓ Active in Pilot MVP
+            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded w-fit">
+              ✓ Service 01, 03, 04
             </span>
           </Link>
 
           <Link
             href="/transport"
-            className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-indigo-400 hover:shadow-md transition flex flex-col justify-between"
+            className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-amber-400 hover:shadow-md transition flex flex-col justify-between"
           >
             <div>
-              <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-2xl mb-4">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xl mb-3">
                 🚌
               </div>
-              <h2 className="text-xl font-bold text-slate-900 mb-2">Transport & Ticketing</h2>
-              <p className="text-slate-600 text-sm mb-4 leading-relaxed">
-                Daily student bus shuttles to Dire Dawa & Harar, plus Selam Bus express coaches to Addis Ababa with digital QR boarding passes.
+              <h2 className="text-base font-bold text-slate-900 mb-1.5">Transport & Bus Ticketing</h2>
+              <p className="text-slate-600 text-xs mb-3 leading-relaxed">
+                Daily shuttles to Dire Dawa & Harar, plus Selam Bus coaches to Addis Ababa with seat selection and QR boarding passes.
               </p>
             </div>
-            <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md inline-block w-fit">
-              ✓ Live in Phase 2
+            <span className="text-[11px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded w-fit">
+              ✓ Service 02 Live
             </span>
           </Link>
 
           <Link
             href="/housing"
-            className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-teal-400 hover:shadow-md transition flex flex-col justify-between"
+            className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-teal-400 hover:shadow-md transition flex flex-col justify-between"
           >
             <div>
-              <div className="w-12 h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-2xl mb-4">
+              <div className="w-10 h-10 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-xl mb-3">
                 🏠
               </div>
-              <h2 className="text-xl font-bold text-slate-900 mb-2">Student Housing & Rooms</h2>
-              <p className="text-slate-600 text-sm mb-4 leading-relaxed">
-                Search verified off-campus rooms in Bate and Main Gate with verified water, electricity, and WiFi. Schedule in-person viewings.
+              <h2 className="text-base font-bold text-slate-900 mb-1.5">Student Housing & Rooms</h2>
+              <p className="text-slate-600 text-xs mb-3 leading-relaxed">
+                Search verified off-campus rooms in Bate & Main Gate. Filter water, electricity, and WiFi amenities and schedule viewings.
               </p>
             </div>
-            <span className="text-xs font-bold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-md inline-block w-fit">
+            <span className="text-[11px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded w-fit">
               ✓ Service 05 Available
             </span>
           </Link>
 
           <Link
             href="/events"
-            className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-violet-400 hover:shadow-md transition flex flex-col justify-between"
+            className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-violet-400 hover:shadow-md transition flex flex-col justify-between"
           >
             <div>
-              <div className="w-12 h-12 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center font-bold text-2xl mb-4">
+              <div className="w-10 h-10 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center font-bold text-xl mb-3">
                 🎯
               </div>
-              <h2 className="text-xl font-bold text-slate-900 mb-2">Campus Events & Passes</h2>
-              <p className="text-slate-600 text-sm mb-4 leading-relaxed">
-                Haramaya Hackathons, technology summits, and campus workshops. Get instant 1-click digital QR entry passes.
+              <h2 className="text-base font-bold text-slate-900 mb-1.5">Campus Events & Passes</h2>
+              <p className="text-slate-600 text-xs mb-3 leading-relaxed">
+                Haramaya Hackathon 2026, technology workshops, and guest lectures. Get instant verified digital QR entry passes.
               </p>
             </div>
-            <span className="text-xs font-bold text-violet-700 bg-violet-50 px-2.5 py-1 rounded-md inline-block w-fit">
+            <span className="text-[11px] font-bold text-violet-700 bg-violet-50 px-2 py-0.5 rounded w-fit">
               ✓ Service 06 Available
             </span>
           </Link>
 
           <Link
             href="/learning"
-            className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-cyan-400 hover:shadow-md transition flex flex-col justify-between"
+            className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-cyan-400 hover:shadow-md transition flex flex-col justify-between"
           >
             <div>
-              <div className="w-12 h-12 rounded-xl bg-cyan-100 text-cyan-700 flex items-center justify-center font-bold text-2xl mb-4">
+              <div className="w-10 h-10 rounded-xl bg-cyan-100 text-cyan-700 flex items-center justify-center font-bold text-xl mb-3">
                 📚
               </div>
-              <h2 className="text-xl font-bold text-slate-900 mb-2">Academic Resource Bank</h2>
-              <p className="text-slate-600 text-sm mb-4 leading-relaxed">
-                Open student repository of lecture notes, past exams, lab manuals, and course summaries for all faculties and departments.
+              <h2 className="text-base font-bold text-slate-900 mb-1.5">Academic Resource Bank</h2>
+              <p className="text-slate-600 text-xs mb-3 leading-relaxed">
+                Open student repository of past exams, lecture notes, and lab manuals across Agriculture, Computing, and Health Sciences.
               </p>
             </div>
-            <span className="text-xs font-bold text-cyan-700 bg-cyan-50 px-2.5 py-1 rounded-md inline-block w-fit">
+            <span className="text-[11px] font-bold text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded w-fit">
               ✓ Service 07 Available
             </span>
           </Link>
 
           <Link
-            href="/merchant/dashboard"
-            className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-slate-400 hover:shadow-md transition flex flex-col justify-between"
+            href="/bookings"
+            className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-purple-400 hover:shadow-md transition flex flex-col justify-between"
           >
             <div>
-              <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-2xl mb-4">
-                🏪
+              <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xl mb-3">
+                📅
               </div>
-              <h2 className="text-xl font-bold text-slate-900 mb-2">Merchant & Admin Portal</h2>
-              <p className="text-slate-600 text-sm mb-4 leading-relaxed">
-                Live audio order queues, business verifications, catalog stock toggles, dispute resolution, and Telebirr payment reconciliation.
+              <h2 className="text-base font-bold text-slate-900 mb-1.5">Local Services & Appointments</h2>
+              <p className="text-slate-600 text-xs mb-3 leading-relaxed">
+                Schedule thesis hardcover binding at Afras Stationery, laptop OS diagnostics at Campus Tech, grooming, and laundry.
               </p>
             </div>
-            <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md inline-block w-fit">
-              ✓ Services 08-10 Active
+            <span className="text-[11px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded w-fit">
+              ✓ Service 09 Available
+            </span>
+          </Link>
+
+          <Link
+            href="/cart"
+            className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-rose-400 hover:shadow-md transition flex flex-col justify-between"
+          >
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-xl mb-3">
+                🛒
+              </div>
+              <h2 className="text-base font-bold text-slate-900 mb-1.5">Pickup Cart & Telebirr Pay</h2>
+              <p className="text-slate-600 text-xs mb-3 leading-relaxed">
+                Counter pickup vs dorm handoff fulfillment, zero floating-point Birr calculations, and Telebirr USSD quick-dial code generation.
+              </p>
+            </div>
+            <span className="text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded w-fit">
+              ✓ Service 08 Active
+            </span>
+          </Link>
+
+          <Link
+            href="/merchant/dashboard"
+            className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-slate-400 hover:shadow-md transition flex flex-col justify-between"
+          >
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xl mb-3">
+                🏪
+              </div>
+              <h2 className="text-base font-bold text-slate-900 mb-1.5">Merchant & Admin Portal</h2>
+              <p className="text-slate-600 text-xs mb-3 leading-relaxed">
+                Live audio kitchen queues, catalog stock toggles, merchant verification approvals, and student dispute moderation.
+              </p>
+            </div>
+            <span className="text-[11px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded w-fit">
+              ✓ Service 10 Active
             </span>
           </Link>
         </section>
