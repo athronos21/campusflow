@@ -124,10 +124,10 @@ class _TransportScreenState extends State<TransportScreen> with SingleTickerProv
                       color: Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Center(
+                    child: const Center(
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
+                        children: [
                           Icon(Icons.directions_bus, size: 14, color: Colors.grey),
                           SizedBox(width: 4),
                           Text('Front / Driver Cabin', style: TextStyle(fontSize: 12, color: Colors.grey)),

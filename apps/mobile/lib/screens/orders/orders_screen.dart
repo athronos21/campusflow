@@ -252,9 +252,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                     color: AppColors.success,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: Row(
+                                  child: const Row(
                                     mainAxisSize: MainAxisSize.min,
-                                    children: const [
+                                    children: [
                                       Text(
                                         'Ready for Pickup!',
                                         style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),

@@ -19,15 +19,17 @@ async function main() {
   console.log(`Campus established: ${haramaya.name} (${haramaya.id})`);
 
   // 2. Create Users
-  // In production use Argon2id/bcrypt. Here we store placeholder hashes for dev.
+  // Valid bcrypt hash for demo password 'password123'
+  const defaultPasswordHash = '$2b$10$PkLoAcKyfZkPM1XVwq7lX.LPxXvyTTJuWNdEOsk4RriXbqSBhdWEG';
+
   const adminUser = await prisma.user.upsert({
     where: { email: 'admin@campusflow.et' },
-    update: {},
+    update: { passwordHash: defaultPasswordHash },
     create: {
       email: 'admin@campusflow.et',
       displayName: 'System Admin',
       status: 'active',
-      passwordHash: '$2b$10$devPlaceholderPasswordHashForDevelopmentOnly12345',
+      passwordHash: defaultPasswordHash,
       memberships: {
         create: {
           campusId: haramaya.id,
@@ -39,13 +41,13 @@ async function main() {
 
   const merchantUser = await prisma.user.upsert({
     where: { email: 'merchant@haramayacafe.et' },
-    update: {},
+    update: { passwordHash: defaultPasswordHash },
     create: {
       email: 'merchant@haramayacafe.et',
       phone: '+251911223344',
       displayName: 'Abebe Merchant',
       status: 'active',
-      passwordHash: '$2b$10$devPlaceholderPasswordHashForDevelopmentOnly12345',
+      passwordHash: defaultPasswordHash,
       memberships: {
         create: {
           campusId: haramaya.id,
@@ -57,13 +59,13 @@ async function main() {
 
   const studentUser = await prisma.user.upsert({
     where: { email: 'student@haramaya.edu.et' },
-    update: {},
+    update: { passwordHash: defaultPasswordHash },
     create: {
       email: 'student@haramaya.edu.et',
       phone: '+251922334455',
       displayName: 'Tigist Haile',
       status: 'active',
-      passwordHash: '$2b$10$devPlaceholderPasswordHashForDevelopmentOnly12345',
+      passwordHash: defaultPasswordHash,
       memberships: {
         create: {
           campusId: haramaya.id,

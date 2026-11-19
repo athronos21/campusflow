@@ -6,8 +6,8 @@ class ApiClient {
   static final Dio _dio = Dio(
     BaseOptions(
       baseUrl: ApiEndpoints.baseUrl,
-      connectTimeout: const Duration(seconds: 12),
-      receiveTimeout: const Duration(seconds: 12),
+      connectTimeout: const Duration(seconds: 2),
+      receiveTimeout: const Duration(seconds: 2),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -15,24 +15,28 @@ class ApiClient {
     ),
   );
 
+  static bool _interceptorAdded = false;
+
   static Dio get client {
-    // Interceptor to inject JWT token dynamically
-    _dio.interceptors.clear();
-    _dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          final token = await StorageService.getToken();
-          if (token != null && token.isNotEmpty) {
-            options.headers['Authorization'] = 'Bearer $token';
-          }
-          return handler.next(options);
-        },
-        onError: (DioException e, handler) {
-          print('Dio Error: ${e.response?.statusCode} - ${e.response?.data}');
-          return handler.next(e);
-        },
-      ),
-    );
+    if (!_interceptorAdded) {
+      _interceptorAdded = true;
+      _dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) async {
+            try {
+              final token = await StorageService.getToken().timeout(const Duration(milliseconds: 500), onTimeout: () => null);
+              if (token != null && token.isNotEmpty) {
+                options.headers['Authorization'] = 'Bearer $token';
+              }
+            } catch (_) {}
+            return handler.next(options);
+          },
+          onError: (DioException e, handler) {
+            return handler.next(e);
+          },
+        ),
+      );
+    }
     return _dio;
   }
 
