@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart';
+
 class ApiEndpoints {
-  // 10.0.2.2 is the localhost alias for the standard Android Emulator.
-  // When testing on a physical phone via Wi-Fi, replace with your PC's local LAN IP (e.g. 192.168.1.X)
-  static const String baseUrl = 'http://10.0.2.2:4000/api/v1';
+  // Uses localhost for Chrome/Web and 10.0.2.2 for Android Emulator
+  static const String baseUrl = kIsWeb
+      ? 'http://localhost:4000/api/v1'
+      : 'http://10.0.2.2:4000/api/v1';
 
   // Auth
   static const String login = '/auth/login';
