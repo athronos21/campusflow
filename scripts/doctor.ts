@@ -60,8 +60,12 @@ async function runDoctor() {
     const content = fs.readFileSync(envPath, 'utf-8');
     const hasDb = content.includes('DATABASE_URL');
     const hasJwt = content.includes('JWT_SECRET');
-    if (hasDb && hasJwt) {
-      results.push({ name: 'Environment Config (.env)', status: 'PASS', detail: 'Database URL and JWT configured' });
+    const hasAuth = content.includes('BETTER_AUTH_SECRET');
+    const hasPay = content.includes('PAYMENT_GATEWAY_MODE');
+    if (hasDb && hasJwt && hasAuth && hasPay) {
+      results.push({ name: 'Environment Config (.env)', status: 'PASS', detail: 'Database, JWT, Better Auth, and Payment Gateway configured' });
+    } else if (hasDb && hasJwt) {
+      results.push({ name: 'Environment Config (.env)', status: 'PASS', detail: 'Core Database & JWT configured' });
     } else {
       results.push({ name: 'Environment Config (.env)', status: 'WARN', detail: 'Missing required keys in .env' });
     }
