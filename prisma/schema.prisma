@@ -140,10 +140,14 @@ model User {
   phone        String?            @unique
   displayName  String             @map("display_name")
   passwordHash String?            @map("password_hash")
+  emailVerified Boolean           @default(false) @map("email_verified")
+  image        String?
   status       UserStatus         @default(active)
   createdAt    DateTime           @default(now()) @map("created_at")
   updatedAt    DateTime           @updatedAt @map("updated_at")
 
+  sessions      Session[]
+  accounts      Account[]
   memberships   CampusMembership[]
   ownedBusinesses Business[]      @relation("BusinessOwner")
   staffRoles    BusinessStaff[]
@@ -555,4 +559,54 @@ model LearningResource {
   @@index([campusId, department], name: "idx_learning_campus_dept")
   @@index([courseCode], name: "idx_learning_course")
   @@map("learning_resources")
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], name: "idx_session_user")
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id @default(uuid()) @db.Uuid
+  userId                String    @map("user_id") @db.Uuid
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId], name: "idx_account_user")
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id @default(uuid()) @db.Uuid
+  identifier String
+  value      String
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([identifier], name: "idx_verification_identifier")
+  @@map("verifications")
 }

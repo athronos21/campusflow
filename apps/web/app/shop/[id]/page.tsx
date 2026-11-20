@@ -12,7 +12,7 @@ import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import { useCart } from '@/lib/cart-context';
 import Link from 'next/link';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, CheckCircle2, ChevronLeft, Plus, Minus, Store } from 'lucide-react';
 
 interface Product {
   id: string;
@@ -50,7 +50,7 @@ export default function ShopDetailPage() {
         setIsLoading(true);
         const data = await apiClient<Business>(`/businesses/${businessId}`);
         setBusiness(data);
-      } catch (err: any) {
+      } catch (err) {
         console.error('Shop fetch error:', err);
       } finally {
         setIsLoading(false);
@@ -86,7 +86,7 @@ export default function ShopDetailPage() {
           businessName: business.name,
           campusId: business.campusId,
         },
-        1
+        1,
       );
     }
   };
@@ -132,8 +132,9 @@ export default function ShopDetailPage() {
 
       clearCart();
       router.push('/orders');
-    } catch (err: any) {
-      setOrderError(err.message || 'Error creating order');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error creating order';
+      setOrderError(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -141,9 +142,9 @@ export default function ShopDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col justify-between bg-slate-50">
+      <div className="min-h-screen flex flex-col justify-between bg-slate-50 text-slate-900 font-sans">
         <Navbar />
-        <div className="text-center py-24 text-slate-500 font-medium">Loading shop details...</div>
+        <div className="text-center py-24 text-slate-500 font-medium">Loading shop menu...</div>
         <Footer />
       </div>
     );
@@ -151,13 +152,14 @@ export default function ShopDetailPage() {
 
   if (!business) {
     return (
-      <div className="min-h-screen flex flex-col justify-between bg-slate-50">
+      <div className="min-h-screen flex flex-col justify-between bg-slate-50 text-slate-900 font-sans">
         <Navbar />
         <div className="text-center py-24">
+          <Store className="w-10 h-10 text-slate-300 mx-auto mb-2" />
           <h2 className="text-xl font-bold text-slate-900">Shop Not Found</h2>
-          <Link href="/directory" className="text-indigo-600 text-sm mt-2 inline-block">
-            ← Return to Directory
-          </Link>
+          <Button variant="outline" size="sm" asChild className="mt-3">
+            <Link href="/directory">Return to Directory</Link>
+          </Button>
         </div>
         <Footer />
       </div>
@@ -165,64 +167,81 @@ export default function ShopDetailPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-slate-50">
+    <div className="min-h-screen flex flex-col justify-between bg-slate-50 text-slate-900 font-sans">
       <Navbar />
-      <main className="max-w-4xl mx-auto px-4 py-8 flex-1 w-full pb-32">
-        <div className="mb-6">
-          <Link href="/directory" className="text-xs font-semibold text-slate-500 hover:text-slate-800">
-            ← Back to Directory
+
+      <main className="max-w-4xl mx-auto px-4 py-8 flex-1 w-full pb-32 space-y-6">
+        <div>
+          <Link
+            href="/directory"
+            className="text-xs font-semibold text-slate-500 hover:text-slate-900 flex items-center gap-1 transition"
+          >
+            <ChevronLeft className="w-4 h-4" /> Back to Directory
           </Link>
-          <div className="flex items-center justify-between mt-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-3 gap-2">
             <div>
-              <h1 className="text-3xl font-extrabold text-slate-900">{business.name}</h1>
-              <p className="text-slate-600 text-sm mt-1">{business.description}</p>
+              <h1 className="text-3xl font-black tracking-tight text-slate-900">{business.name}</h1>
+              <p className="text-slate-600 text-sm mt-0.5">{business.description}</p>
             </div>
-            <Badge variant="success">✓ VERIFIED PARTNER</Badge>
+            <Badge variant="success" className="text-[10px] font-bold flex items-center gap-1 self-start sm:self-center">
+              <CheckCircle2 className="w-3.5 h-3.5" /> VERIFIED PARTNER
+            </Badge>
           </div>
         </div>
 
         {orderError && (
-          <div className="mb-6 p-4 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 text-sm">
+          <div className="p-4 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 text-xs font-semibold">
             {orderError}
           </div>
         )}
 
-        <h2 className="text-xl font-bold text-slate-900 mb-4">Available Menu & Items</h2>
+        <div className="border-b border-slate-200 pb-2">
+          <h2 className="text-xl font-bold text-slate-900">Available Menu & Items</h2>
+          <p className="text-xs text-slate-500">Fast pickup ordering between lectures with audio alerts</p>
+        </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           {business.products.map((product) => {
             const qty = cart[product.id] || 0;
 
             return (
-              <Card key={product.id} className="flex items-center justify-between shadow-sm p-5">
-                <div>
+              <Card
+                key={product.id}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 border-slate-200 hover:border-slate-300 transition"
+              >
+                <div className="space-y-1">
                   <h3 className="font-bold text-slate-900 text-base">{product.name}</h3>
                   {product.description && (
-                    <p className="text-sm text-slate-500 mt-0.5">{product.description}</p>
+                    <p className="text-xs text-slate-500 font-normal leading-relaxed">{product.description}</p>
                   )}
-                  <span className="font-black text-indigo-600 text-lg mt-2 block">
+                  <span className="font-black text-primary text-base font-mono block mt-1">
                     {formatETB(product.priceMinor)}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 self-end sm:self-center">
                   {qty > 0 && (
-                    <>
-                      <button
+                    <div className="flex items-center gap-2 mr-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => handleRemoveItem(product)}
-                        className="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center justify-center font-bold text-lg transition"
+                        className="h-8 w-8 p-0 rounded-lg"
                       >
-                        -
-                      </button>
-                      <span className="font-bold text-slate-900 w-6 text-center">{qty}</span>
-                    </>
+                        <Minus className="w-3.5 h-3.5" />
+                      </Button>
+                      <span className="font-bold text-slate-900 w-6 text-center text-sm font-mono">
+                        {qty}
+                      </span>
+                    </div>
                   )}
-                  <button
+                  <Button
+                    size="sm"
                     onClick={() => handleAddItem(product)}
-                    className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition shadow-sm"
+                    className="h-8 px-3 font-bold text-xs flex items-center gap-1"
                   >
-                    {qty > 0 ? '+ Add More' : 'Add to Cart'}
-                  </button>
+                    <Plus className="w-3.5 h-3.5" /> {qty > 0 ? 'Add' : 'Add to Cart'}
+                  </Button>
                 </div>
               </Card>
             );
@@ -235,23 +254,23 @@ export default function ShopDetailPage() {
         <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-slate-200 shadow-xl p-4 z-50">
           <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
             <div>
-              <div className="text-xs text-slate-500 uppercase font-semibold">
+              <div className="text-[11px] text-slate-500 uppercase font-bold tracking-wider">
                 {cartCount} {cartCount === 1 ? 'item' : 'items'} in pickup cart
               </div>
-              <div className="text-2xl font-black text-slate-900">{formatETB(totalMinor)}</div>
+              <div className="text-xl font-black text-slate-900 font-mono">{formatETB(totalMinor)}</div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <Link href="/cart">
-                <Button variant="outline" size="lg" className="font-semibold border-slate-300 flex items-center gap-1.5">
-                  <ShoppingCart className="w-4 h-4 text-indigo-600" /> Review Cart ({cartCount})
-                </Button>
-              </Link>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" asChild className="h-9 font-semibold text-xs border-slate-300">
+                <Link href="/cart" className="flex items-center gap-1.5">
+                  <ShoppingCart className="w-4 h-4 text-primary" /> Review Cart ({cartCount})
+                </Link>
+              </Button>
               <Button
-                size="lg"
+                size="sm"
                 disabled={isSubmitting}
                 onClick={handlePlaceOrder}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 font-semibold shadow-md"
+                className="h-9 font-bold text-xs px-4"
               >
                 {isSubmitting ? 'Placing Order...' : 'Confirm Pickup Order →'}
               </Button>

@@ -3,11 +3,17 @@
 import React, { useEffect, useState } from 'react';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import { formatETB } from '@/lib/utils';
 import { TripDto, TicketReservationDto } from '@campusflow/contracts';
-import { Bus, Ticket, MapPin, Navigation, Clock, Smartphone } from 'lucide-react';
+import { Bus, Ticket, MapPin, Navigation, Clock, Smartphone, CheckCircle, X, ArrowRight, ShieldCheck } from 'lucide-react';
+import Link from 'next/link';
 
 export default function TransportPage() {
   const { user } = useAuth();
@@ -16,9 +22,9 @@ export default function TransportPage() {
   const [userTickets, setUserTickets] = useState<TicketReservationDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDestination, setSelectedDestination] = useState<string>('all');
-  
+
   // Seat Booking Modal State
-  const [selectedTrip, setSelectedTrip] = useState<any | null>(null);
+  const [selectedTrip, setSelectedTrip] = useState<TripDto | null>(null);
   const [tripDetails, setTripDetails] = useState<any | null>(null);
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
   const [passengerName, setPassengerName] = useState('');
@@ -80,12 +86,13 @@ export default function TransportPage() {
       alert('Please sign in to reserve a seat.');
       return;
     }
+    if (!selectedTrip) return;
     if (!selectedSeat) {
-      setErrorMsg('Please click on an available seat number.');
+      setErrorMsg('Please select an available seat number.');
       return;
     }
-    if (!passengerName || !passengerPhone) {
-      setErrorMsg('Please enter passenger full name and phone number.');
+    if (!passengerName.trim() || !passengerPhone.trim()) {
+      setErrorMsg('Please enter passenger full name and contact phone number.');
       return;
     }
 
@@ -170,18 +177,29 @@ export default function TransportPage() {
       <Navbar />
 
       <main className="flex-1 max-w-6xl mx-auto px-4 py-8 w-full">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 rounded-2xl p-8 text-white mb-8 shadow-sm">
-          <div className="max-w-3xl">
-            <span className="bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">
-              Service 02 • Transport & Ticketing
-            </span>
-            <h1 className="text-3xl font-extrabold mt-3 tracking-tight">
-              Haramaya Campus & Intercity Bus Shuttles
-            </h1>
-            <p className="mt-2 text-indigo-100 text-sm leading-relaxed">
-              Book scheduled student buses, local minibuses, and intercity coaches departing from Haramaya University to Dire Dawa, Harar, and Addis Ababa. Real-time seat selection with digital QR boarding passes.
-            </p>
+        {/* Editorial Header */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-white mb-8 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="max-w-2xl">
+              <div className="flex items-center gap-2 mb-2 text-indigo-400 text-xs font-semibold uppercase tracking-wider">
+                <Bus className="w-4 h-4" />
+                <span>Service 02 • Campus & Intercity Transport</span>
+              </div>
+              <h1 className="text-3xl font-black tracking-tight text-white">
+                Haramaya Shuttle & Regional Coaches
+              </h1>
+              <p className="mt-2 text-slate-300 text-sm leading-relaxed">
+                Book verified student buses, minibuses, and intercity coaches departing directly from Haramaya University terminal to Dire Dawa, Harar, and Addis Ababa. Real-time seat allocation with digital QR boarding passes.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 bg-slate-800/80 border border-slate-700/60 rounded-xl p-4 self-start md:self-auto">
+              <ShieldCheck className="w-8 h-8 text-indigo-400 shrink-0" />
+              <div className="text-xs">
+                <div className="font-bold text-white">Verified Carriers</div>
+                <div className="text-slate-400">Fixed student tariff • Cash or Telebirr</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -189,124 +207,133 @@ export default function TransportPage() {
         <div className="flex border-b border-slate-200 mb-6 gap-6">
           <button
             onClick={() => setActiveTab('trips')}
-            className={`pb-3 text-sm font-semibold transition border-b-2 flex items-center gap-2 ${
+            className={`pb-3 text-sm font-bold transition border-b-2 flex items-center gap-2 ${
               activeTab === 'trips'
                 ? 'border-indigo-600 text-indigo-600'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            <Bus className="w-4 h-4 text-amber-600" /> Available Trips & Schedules
+            <Bus className="w-4 h-4" /> Available Trips ({trips.length})
           </button>
           <button
             onClick={() => setActiveTab('tickets')}
-            className={`pb-3 text-sm font-semibold transition border-b-2 flex items-center gap-2 ${
+            className={`pb-3 text-sm font-bold transition border-b-2 flex items-center gap-2 ${
               activeTab === 'tickets'
                 ? 'border-indigo-600 text-indigo-600'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            <Ticket className="w-4 h-4 text-indigo-600" /> My Boarding Passes ({userTickets.length})
+            <Ticket className="w-4 h-4" /> My Boarding Passes ({userTickets.length})
           </button>
         </div>
 
         {activeTab === 'trips' && (
           <div>
             {/* Filter Controls */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200 mb-6 flex flex-wrap gap-4 items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-slate-700">Filter Destination:</span>
-                <select
-                  value={selectedDestination}
-                  onChange={(e) => setSelectedDestination(e.target.value)}
-                  className="text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="all">All Destinations</option>
-                  <option value="Dire Dawa">Dire Dawa (~50m)</option>
-                  <option value="Harar">Harar (~30m)</option>
-                  <option value="Addis Ababa">Addis Ababa (Coach)</option>
-                </select>
+            <div className="bg-white p-4 rounded-xl border border-slate-200 mb-6 flex flex-wrap gap-4 items-center justify-between shadow-sm">
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Destination:</span>
+                <div className="flex gap-1.5 flex-wrap">
+                  {[
+                    { id: 'all', label: 'All Routes' },
+                    { id: 'Dire Dawa', label: 'Dire Dawa (~50m)' },
+                    { id: 'Harar', label: 'Harar (~30m)' },
+                    { id: 'Addis Ababa', label: 'Addis Ababa (Coach)' },
+                  ].map((dest) => (
+                    <button
+                      key={dest.id}
+                      onClick={() => setSelectedDestination(dest.id)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                        selectedDestination.toLowerCase() === dest.id.toLowerCase()
+                          ? 'bg-indigo-600 text-white shadow-sm'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {dest.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="text-xs text-slate-500">
-                Showing <span className="font-semibold text-slate-800">{filteredTrips.length}</span> scheduled departures
+                Showing <span className="font-bold text-slate-900">{filteredTrips.length}</span> scheduled departures
               </div>
             </div>
 
             {/* Trips Grid */}
             {loading ? (
-              <div className="text-center py-16 text-slate-500">Loading scheduled trips...</div>
+              <div className="text-center py-20 text-slate-500 font-medium">Loading scheduled departures...</div>
             ) : filteredTrips.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-xl border border-slate-200 text-slate-500">
-                No trips scheduled for the selected destination.
-              </div>
+              <Card className="text-center py-16 text-slate-500">
+                <CardContent className="pt-6">
+                  <p className="font-medium">No trips scheduled for the selected destination.</p>
+                  <Button variant="outline" className="mt-4" onClick={() => setSelectedDestination('all')}>
+                    View All Destinations
+                  </Button>
+                </CardContent>
+              </Card>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
                 {filteredTrips.map((trip) => {
                   const depDate = new Date(trip.departureTime);
+                  const isLowSeats = trip.availableSeats <= 3;
                   return (
-                    <div
-                      key={trip.id}
-                      className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between"
-                    >
-                      <div>
-                        {/* Operator & Status */}
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md">
+                    <Card key={trip.id} className="flex flex-col justify-between hover:border-slate-300 transition shadow-sm">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <Badge variant="secondary" className="font-bold">
                             {trip.operator.name}
-                          </span>
-                          <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                          </Badge>
+                          <Badge variant={isLowSeats ? 'danger' : 'success'}>
                             {trip.availableSeats} seats left
-                          </span>
+                          </Badge>
                         </div>
-
-                        {/* Route Details */}
-                        <div className="flex items-center gap-2 text-slate-900 font-bold text-lg mb-1">
+                        <CardTitle className="text-lg flex items-center gap-2">
                           <span>{trip.route.origin}</span>
-                          <span className="text-slate-400">→</span>
+                          <ArrowRight className="w-4 h-4 text-slate-400 shrink-0" />
                           <span className="text-indigo-600">{trip.route.destination}</span>
-                        </div>
+                        </CardTitle>
+                        <CardDescription className="text-xs space-y-1 pt-1">
+                          <span className="flex items-center gap-1.5 text-slate-600">
+                            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" /> {trip.route.departureStation}
+                          </span>
+                          <span className="flex items-center gap-1.5 text-slate-600">
+                            <Navigation className="w-3.5 h-3.5 text-slate-400 shrink-0" /> {trip.route.arrivalStation}
+                          </span>
+                          <span className="flex items-center gap-1.5 text-slate-500">
+                            <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" /> ~{trip.route.estimatedDurationMin} mins {trip.route.distanceKm ? `• ${trip.route.distanceKm} km` : ''}
+                          </span>
+                        </CardDescription>
+                      </CardHeader>
 
-                        <div className="text-xs text-slate-500 mb-4 space-y-1.5">
-                          <div className="flex items-center gap-1.5">
-                            <MapPin className="w-3.5 h-3.5 text-slate-400" /> Departure: <span className="text-slate-700 font-medium">{trip.route.departureStation}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <Navigation className="w-3.5 h-3.5 text-slate-400" /> Arrival: <span className="text-slate-700 font-medium">{trip.route.arrivalStation}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <Clock className="w-3.5 h-3.5 text-slate-400" /> Duration: ~{trip.route.estimatedDurationMin} mins {trip.route.distanceKm ? `(${trip.route.distanceKm} km)` : ''}
-                          </div>
-                        </div>
-
-                        {/* Vehicle Info & Schedule */}
-                        <div className="bg-slate-50 rounded-lg p-3 text-xs mb-4">
+                      <CardContent className="py-2">
+                        <div className="bg-slate-50 rounded-lg p-3 text-xs border border-slate-100">
                           <div className="flex justify-between text-slate-600 mb-1">
-                            <span>Vehicle:</span>
+                            <span className="text-slate-500">Vehicle Type</span>
                             <span className="font-semibold text-slate-800">{trip.vehicleType}</span>
                           </div>
                           <div className="flex justify-between text-slate-600">
-                            <span>Departure Time:</span>
-                            <span className="font-semibold text-indigo-700">
-                              {depDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {depDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                            <span className="text-slate-500">Departure</span>
+                            <span className="font-bold text-indigo-700">
+                              {depDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} • {depDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
                         </div>
-                      </div>
+                      </CardContent>
 
-                      {/* Pricing & CTA */}
-                      <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                      <CardFooter className="pt-3 border-t border-slate-100 flex items-center justify-between">
                         <div>
                           <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Fare per seat</div>
                           <div className="text-xl font-black text-slate-900">{formatETB(trip.priceMinor)}</div>
                         </div>
-                        <button
+                        <Button
+                          disabled={trip.availableSeats === 0}
                           onClick={() => openSeatPicker(trip)}
-                          className="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition shadow-sm"
                         >
-                          Select Seat
-                        </button>
-                      </div>
-                    </div>
+                          {trip.availableSeats === 0 ? 'Sold Out' : 'Select Seat'}
+                        </Button>
+                      </CardFooter>
+                    </Card>
                   );
                 })}
               </div>
@@ -318,14 +345,25 @@ export default function TransportPage() {
         {activeTab === 'tickets' && (
           <div>
             {!user ? (
-              <div className="bg-white p-8 rounded-xl border border-slate-200 text-center">
-                <p className="text-slate-600 mb-4">Please sign in to view your tickets and boarding passes.</p>
-                <a href="/login" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold">Sign In</a>
-              </div>
+              <Card className="text-center py-16">
+                <CardContent>
+                  <p className="text-slate-600 font-medium mb-4">Please sign in to view your tickets and boarding passes.</p>
+                  <Link href="/login">
+                    <Button>Sign In</Button>
+                  </Link>
+                </CardContent>
+              </Card>
             ) : userTickets.length === 0 ? (
-              <div className="bg-white p-12 rounded-xl border border-slate-200 text-center text-slate-500">
-                You have not booked any transport tickets yet.
-              </div>
+              <Card className="text-center py-16 text-slate-500">
+                <CardContent>
+                  <Ticket className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                  <p className="font-medium text-slate-700">You have no booked transport tickets yet.</p>
+                  <p className="text-xs text-slate-500 mt-1">Select an upcoming departure above to reserve a campus shuttle seat.</p>
+                  <Button variant="outline" className="mt-4" onClick={() => setActiveTab('trips')}>
+                    Browse Scheduled Trips
+                  </Button>
+                </CardContent>
+              </Card>
             ) : (
               <div className="space-y-4">
                 {userTickets.map((ticket) => {
@@ -334,94 +372,106 @@ export default function TransportPage() {
                   const isCancelled = ticket.status === 'cancelled';
 
                   return (
-                    <div
+                    <Card
                       key={ticket.id}
-                      className={`bg-white rounded-xl border p-6 shadow-sm transition ${
-                        isCancelled ? 'border-slate-200 opacity-60' : 'border-indigo-100'
-                      }`}
+                      className={`shadow-sm transition ${isCancelled ? 'opacity-60 bg-slate-50' : 'bg-white'}`}
                     >
-                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-4 mb-4">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs font-bold bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded">
-                              {ticket.trip?.operator.name || 'Campus Shuttle'}
-                            </span>
-                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                              isCancelled
-                                ? 'bg-rose-100 text-rose-700'
-                                : ticket.status === 'confirmed'
-                                ? 'bg-emerald-100 text-emerald-700'
-                                : 'bg-amber-100 text-amber-700'
-                            }`}>
-                              {ticket.status.toUpperCase()}
-                            </span>
-                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                              isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'
-                            }`}>
-                              {isPaid ? 'PAID' : 'PAYMENT PENDING'}
+                      <CardContent className="p-6">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-4 mb-4">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <Badge variant="outline" className="font-bold">
+                                {ticket.trip?.operator.name || 'Campus Shuttle'}
+                              </Badge>
+                              <Badge
+                                variant={
+                                  isCancelled
+                                    ? 'danger'
+                                    : ticket.status === 'confirmed'
+                                    ? 'success'
+                                    : 'warning'
+                                }
+                              >
+                                {ticket.status.toUpperCase()}
+                              </Badge>
+                              <Badge variant={isPaid ? 'success' : 'secondary'}>
+                                {isPaid ? 'PAID' : 'PAYMENT PENDING'}
+                              </Badge>
+                            </div>
+                            <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                              <span>{ticket.trip?.route.origin}</span>
+                              <ArrowRight className="w-4 h-4 text-slate-400" />
+                              <span className="text-indigo-600">{ticket.trip?.route.destination}</span>
+                            </h3>
+                          </div>
+
+                          <div className="text-left md:text-right">
+                            <div className="text-2xl font-black text-indigo-600">Seat #{ticket.seatNumber}</div>
+                            <div className="text-xs text-slate-400 font-mono tracking-wider">{ticket.qrCode}</div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-slate-600 mb-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                          <div>
+                            <span className="text-slate-400 block font-medium">Passenger</span>
+                            <span className="font-bold text-slate-800">{ticket.passengerName}</span>
+                            <div className="text-[11px] text-slate-500">{ticket.passengerPhone}</div>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block font-medium">Departure Terminal</span>
+                            <span className="font-bold text-slate-800">{ticket.trip?.route.departureStation}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block font-medium">Schedule</span>
+                            <span className="font-bold text-slate-800">
+                              {depDate
+                                ? depDate.toLocaleString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })
+                                : 'N/A'}
                             </span>
                           </div>
-                          <h3 className="text-lg font-black text-slate-900">
-                            {ticket.trip?.route.origin} → {ticket.trip?.route.destination}
-                          </h3>
+                          <div>
+                            <span className="text-slate-400 block font-medium">Total Fare</span>
+                            <span className="font-black text-slate-900 text-sm">{formatETB(ticket.amountMinor)}</span>
+                          </div>
                         </div>
 
-                        <div className="text-right">
-                          <div className="text-2xl font-black text-indigo-700">Seat #{ticket.seatNumber}</div>
-                          <div className="text-xs text-slate-400 font-mono tracking-wider">{ticket.qrCode}</div>
-                        </div>
-                      </div>
+                        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-slate-500">Boarding Token:</span>
+                            <code className="text-xs font-mono font-bold bg-slate-100 text-indigo-700 px-2 py-1 rounded border border-slate-200">
+                              {ticket.qrCode}
+                            </code>
+                          </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-slate-600 mb-4 bg-slate-50 p-4 rounded-lg">
-                        <div>
-                          <span className="text-slate-400 block">Passenger</span>
-                          <span className="font-semibold text-slate-800">{ticket.passengerName}</span>
-                          <div className="text-[11px] text-slate-500">{ticket.passengerPhone}</div>
+                          <div className="flex items-center gap-2">
+                            {!isPaid && !isCancelled && (
+                              <Button
+                                size="sm"
+                                onClick={() => handleInitiateTicketPayment(ticket)}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                              >
+                                <Smartphone className="w-3.5 h-3.5 mr-1.5" /> Pay with Telebirr
+                              </Button>
+                            )}
+                            {!isCancelled && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleCancelTicket(ticket.id)}
+                                className="text-rose-600 border-rose-200 hover:bg-rose-50"
+                              >
+                                Cancel Seat
+                              </Button>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-slate-400 block">Departure Station</span>
-                          <span className="font-semibold text-slate-800">{ticket.trip?.route.departureStation}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 block">Schedule</span>
-                          <span className="font-semibold text-slate-800">
-                            {depDate ? depDate.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 block">Total Fare</span>
-                          <span className="font-bold text-slate-900 text-sm">{formatETB(ticket.amountMinor)}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-slate-500">Boarding Token:</span>
-                          <code className="text-xs font-mono font-bold bg-slate-100 text-indigo-600 px-2 py-1 rounded">
-                            {ticket.qrCode}
-                          </code>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          {!isPaid && !isCancelled && (
-                            <button
-                              onClick={() => handleInitiateTicketPayment(ticket)}
-                              className="px-3.5 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 transition shadow-sm flex items-center gap-1.5"
-                            >
-                              <Smartphone className="w-3.5 h-3.5" /> Pay with Telebirr
-                            </button>
-                          )}
-                          {!isCancelled && (
-                            <button
-                              onClick={() => handleCancelTicket(ticket.id)}
-                              className="px-3 py-1.5 border border-rose-200 text-rose-600 text-xs font-medium rounded-lg hover:bg-rose-50 transition"
-                            >
-                              Cancel Seat
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
                   );
                 })}
               </div>
@@ -436,8 +486,8 @@ export default function TransportPage() {
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             {confirmedReservation ? (
               <div className="text-center py-4">
-                <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
-                  ✓
+                <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="w-8 h-8" />
                 </div>
                 <h3 className="text-2xl font-black text-slate-900 mb-1">Seat Reserved!</h3>
                 <p className="text-slate-600 text-sm mb-6">
@@ -448,12 +498,12 @@ export default function TransportPage() {
                 <div className="border-2 border-dashed border-indigo-200 rounded-xl p-5 bg-indigo-50/50 mb-6 text-left">
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-xs font-bold uppercase tracking-wider text-indigo-700">CampusFlow Boarding Pass</span>
-                    <span className="text-xs bg-emerald-600 text-white font-bold px-2 py-0.5 rounded">
-                      SEAT #{confirmedReservation.seatNumber}
-                    </span>
+                    <Badge variant="success">SEAT #{confirmedReservation.seatNumber}</Badge>
                   </div>
-                  <div className="text-lg font-bold text-slate-900">
-                    {selectedTrip.route.origin} → {selectedTrip.route.destination}
+                  <div className="text-lg font-black text-slate-900 flex items-center gap-2">
+                    <span>{selectedTrip.route.origin}</span>
+                    <ArrowRight className="w-4 h-4 text-slate-400" />
+                    <span className="text-indigo-600">{selectedTrip.route.destination}</span>
                   </div>
                   <div className="text-xs text-slate-600 mt-1 mb-3">
                     Terminal: <span className="font-semibold text-slate-800">{selectedTrip.route.departureStation}</span>
@@ -463,26 +513,23 @@ export default function TransportPage() {
                       <div className="text-[10px] text-slate-400 uppercase font-bold">Verifiable Token</div>
                       <div className="font-mono text-sm font-bold text-indigo-700">{confirmedReservation.qrCode}</div>
                     </div>
-                    <div className="text-xs font-bold text-slate-900">{formatETB(confirmedReservation.amountMinor)}</div>
+                    <div className="text-sm font-black text-slate-900">{formatETB(confirmedReservation.amountMinor)}</div>
                   </div>
                 </div>
 
                 <div className="flex gap-3">
-                  <button
+                  <Button
+                    className="flex-1"
                     onClick={() => {
                       setSelectedTrip(null);
                       setActiveTab('tickets');
                     }}
-                    className="flex-1 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl text-sm hover:bg-indigo-700 transition"
                   >
                     View My Tickets
-                  </button>
-                  <button
-                    onClick={() => setSelectedTrip(null)}
-                    className="px-4 py-2.5 border border-slate-300 text-slate-700 font-semibold rounded-xl text-sm hover:bg-slate-50 transition"
-                  >
+                  </Button>
+                  <Button variant="outline" onClick={() => setSelectedTrip(null)}>
                     Close
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
@@ -490,7 +537,7 @@ export default function TransportPage() {
                 <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
                   <div>
                     <h3 className="font-bold text-slate-900 text-lg">
-                      Select Seat — {selectedTrip.route.destination}
+                      Select Seat • {selectedTrip.route.destination}
                     </h3>
                     <p className="text-xs text-slate-500">
                       {selectedTrip.vehicleType} • Fare: {formatETB(selectedTrip.priceMinor)}
@@ -498,14 +545,14 @@ export default function TransportPage() {
                   </div>
                   <button
                     onClick={() => setSelectedTrip(null)}
-                    className="text-slate-400 hover:text-slate-600 text-lg"
+                    className="text-slate-400 hover:text-slate-600"
                   >
-                    ✕
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
 
                 {errorMsg && (
-                  <div className="bg-rose-50 border border-rose-200 text-rose-700 px-3 py-2 rounded-lg text-xs mb-4">
+                  <div className="bg-rose-50 border border-rose-200 text-rose-700 px-3 py-2 rounded-lg text-xs font-semibold mb-4">
                     {errorMsg}
                   </div>
                 )}
@@ -552,33 +599,33 @@ export default function TransportPage() {
                 {/* Passenger Form */}
                 <div className="space-y-3 mb-6">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Passenger Name</label>
-                    <input
+                    <Label className="text-xs">Passenger Name</Label>
+                    <Input
                       type="text"
                       value={passengerName}
                       onChange={(e) => setPassengerName(e.target.value)}
                       placeholder="e.g. Tigist Haile"
-                      className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="mt-1"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Phone Number</label>
-                    <input
+                    <Label className="text-xs">Phone Number</Label>
+                    <Input
                       type="text"
                       value={passengerPhone}
                       onChange={(e) => setPassengerPhone(e.target.value)}
                       placeholder="+251 9..."
-                      className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="mt-1"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Payment Method</label>
+                    <Label className="text-xs">Payment Method</Label>
                     <select
                       value={paymentProvider}
                       onChange={(e) => setPaymentProvider(e.target.value as any)}
-                      className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 mt-1 font-medium"
                     >
                       <option value="telebirr">Telebirr (Instant mobile payment)</option>
                       <option value="cbe_birr">CBE Birr</option>
@@ -588,13 +635,15 @@ export default function TransportPage() {
                 </div>
 
                 {/* Submit Action */}
-                <button
+                <Button
                   disabled={bookingLoading}
                   onClick={handleBookSeat}
-                  className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl text-sm hover:bg-indigo-700 transition disabled:opacity-50 shadow-md"
+                  className="w-full py-3 h-auto text-sm font-bold"
                 >
-                  {bookingLoading ? 'Reserving Seat...' : `Confirm Seat ${selectedSeat ? `#${selectedSeat}` : ''} • ${formatETB(selectedTrip.priceMinor)}`}
-                </button>
+                  {bookingLoading
+                    ? 'Reserving Seat...'
+                    : `Confirm Seat ${selectedSeat ? `#${selectedSeat}` : ''} • ${formatETB(selectedTrip.priceMinor)}`}
+                </Button>
               </div>
             )}
           </div>
@@ -607,7 +656,7 @@ export default function TransportPage() {
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
               <div className="flex items-center gap-2">
-                <span className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">
+                <span className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs">
                   TB
                 </span>
                 <h3 className="font-bold text-slate-900 text-base">Telebirr Checkout</h3>
@@ -619,7 +668,7 @@ export default function TransportPage() {
                 }}
                 className="text-slate-400 hover:text-slate-600"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -642,22 +691,22 @@ export default function TransportPage() {
             </div>
 
             <div className="flex gap-3">
-              <button
+              <Button
                 disabled={payLoading}
                 onClick={() => handleConfirmMockPayment(payData.providerReference)}
-                className="flex-1 py-2.5 bg-emerald-600 text-white font-bold rounded-xl text-sm hover:bg-emerald-700 transition disabled:opacity-50 shadow-sm"
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
               >
                 {payLoading ? 'Verifying...' : 'Simulate Telebirr Payment'}
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="outline"
                 onClick={() => {
                   setPayModalTicket(null);
                   setPayData(null);
                 }}
-                className="px-4 py-2.5 border border-slate-300 text-slate-700 font-semibold rounded-xl text-sm hover:bg-slate-50 transition"
               >
                 Close
-              </button>
+              </Button>
             </div>
           </div>
         </div>

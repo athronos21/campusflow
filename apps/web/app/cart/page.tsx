@@ -3,16 +3,18 @@
 import React, { useState } from 'react';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { formatETB } from '@/lib/utils';
 import { useCart } from '@/lib/cart-context';
 import { useAuth } from '@/lib/auth-context';
 import { apiClient } from '@/lib/api-client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ShoppingCart, Bus, Package, Coffee, Printer, Footprints, Info, AlertTriangle } from 'lucide-react';
+import { ShoppingCart, Bus, Package, Coffee, Printer, Footprints, Info, AlertTriangle, ArrowRight, Trash2 } from 'lucide-react';
 
 export default function CartPage() {
   const router = useRouter();
@@ -66,27 +68,30 @@ export default function CartPage() {
   return (
     <div className="min-h-screen flex flex-col justify-between bg-slate-50">
       <Navbar />
-      <main className="max-w-4xl mx-auto px-4 py-10 flex-1 w-full">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+
+      <main className="max-w-5xl mx-auto px-4 py-8 flex-1 w-full">
+        {/* Editorial Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 pb-6 border-b border-slate-200">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 mb-2">
-              <Coffee className="w-3.5 h-3.5 text-indigo-600" /> Student Pickup Orders · Haramaya University
-            </div>
-            <h1 className="text-3xl font-extrabold text-slate-900">Your Pickup Cart</h1>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Your Pickup Cart</h1>
+            <p className="text-slate-600 text-sm mt-1">
+              Direct counter pickup & dorm handoff orders at Haramaya University.
+            </p>
           </div>
           {items.length > 0 && (
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={clearCart}
-              className="text-xs text-rose-600 font-semibold hover:underline border border-rose-200 bg-rose-50 px-3 py-1.5 rounded-lg"
+              className="text-rose-600 border-rose-200 hover:bg-rose-50 text-xs"
             >
-              Clear Cart
-            </button>
+              <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Clear Cart
+            </Button>
           )}
         </div>
 
         {errorMsg && (
-          <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium flex items-center gap-2">
+          <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-semibold flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
             <span>{errorMsg}</span>
           </div>
@@ -94,77 +99,79 @@ export default function CartPage() {
 
         {/* Empty State */}
         {items.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
-            <ShoppingCart className="w-12 h-12 mx-auto text-slate-300 mb-4" />
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">Your pickup cart is empty</h2>
-            <p className="text-slate-600 max-w-md mx-auto text-sm mb-8 leading-relaxed">
-              Explore verified campus cafes, stationery shops, or book shuttle buses to Harar and Dire Dawa.
-            </p>
+          <Card className="text-center py-16 shadow-sm">
+            <CardContent>
+              <ShoppingCart className="w-12 h-12 mx-auto text-slate-300 mb-4" />
+              <h2 className="text-2xl font-black text-slate-900 mb-2">Your pickup cart is empty</h2>
+              <p className="text-slate-600 max-w-md mx-auto text-sm mb-8 leading-relaxed">
+                Order fresh foods, buna, printing binding, or book scheduled bus shuttles across Harar and Dire Dawa.
+              </p>
 
-            <div className="flex flex-wrap justify-center gap-3">
-              <Link href="/directory">
-                <Button className="bg-indigo-600 hover:bg-indigo-700 font-semibold">
-                  Browse Campus Directory →
-                </Button>
-              </Link>
-              <Link href="/transport">
-                <Button variant="outline" className="font-semibold flex items-center gap-1.5">
-                  <Bus className="w-4 h-4 text-amber-600" /> Bus Shuttles
-                </Button>
-              </Link>
-              <Link href="/orders">
-                <Button variant="outline" className="font-semibold flex items-center gap-1.5">
-                  <Package className="w-4 h-4 text-slate-600" /> View Past Orders
-                </Button>
-              </Link>
-            </div>
-
-            {/* Quick Merchant Recommendations */}
-            <div className="mt-12 pt-8 border-t border-slate-100 text-left">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
-                Popular Verified Campus Spots
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Link
-                  href="/directory"
-                  className="p-4 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/20 transition flex items-center justify-between"
-                >
-                  <div>
-                    <h4 className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                      <Coffee className="w-4 h-4 text-amber-600" /> Haramaya Campus Cafe & Snack
-                    </h4>
-                    <p className="text-xs text-slate-500">Fresh Buna, Ful, Sambusa, Tea</p>
-                  </div>
-                  <span className="text-indigo-600 text-sm font-semibold">Order →</span>
+              <div className="flex flex-wrap justify-center gap-3">
+                <Link href="/directory">
+                  <Button className="font-bold">
+                    Browse Campus Directory <ArrowRight className="w-4 h-4 ml-1.5" />
+                  </Button>
                 </Link>
-                <Link
-                  href="/directory"
-                  className="p-4 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/20 transition flex items-center justify-between"
-                >
-                  <div>
-                    <h4 className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                      <Printer className="w-4 h-4 text-indigo-600" /> Afras Campus Stationery
-                    </h4>
-                    <p className="text-xs text-slate-500">Thesis Binding, Hardcover, Printing</p>
-                  </div>
-                  <span className="text-indigo-600 text-sm font-semibold">Order →</span>
+                <Link href="/transport">
+                  <Button variant="outline" className="font-semibold">
+                    <Bus className="w-4 h-4 mr-1.5 text-amber-600" /> Bus Shuttles
+                  </Button>
+                </Link>
+                <Link href="/orders">
+                  <Button variant="outline" className="font-semibold">
+                    <Package className="w-4 h-4 mr-1.5 text-slate-600" /> View Past Orders
+                  </Button>
                 </Link>
               </div>
-            </div>
-          </div>
+
+              {/* Quick Merchant Recommendations */}
+              <div className="mt-12 pt-8 border-t border-slate-100 text-left max-w-2xl mx-auto">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
+                  Popular Verified Campus Spots
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Link
+                    href="/directory"
+                    className="p-4 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/20 transition flex items-center justify-between"
+                  >
+                    <div>
+                      <h4 className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+                        <Coffee className="w-4 h-4 text-amber-600" /> Haramaya Campus Cafe
+                      </h4>
+                      <p className="text-xs text-slate-500">Fresh Buna, Ful, Sambusa, Tea</p>
+                    </div>
+                    <span className="text-indigo-600 text-sm font-bold">Order →</span>
+                  </Link>
+                  <Link
+                    href="/directory"
+                    className="p-4 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/20 transition flex items-center justify-between"
+                  >
+                    <div>
+                      <h4 className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+                        <Printer className="w-4 h-4 text-indigo-600" /> Afras Campus Stationery
+                      </h4>
+                      <p className="text-xs text-slate-500">Thesis Binding, Hardcover, Print</p>
+                    </div>
+                    <span className="text-indigo-600 text-sm font-bold">Order →</span>
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left: Cart Items List */}
             <div className="lg:col-span-2 space-y-4">
               {/* Merchant Banner */}
-              <div className="bg-indigo-50/70 border border-indigo-100 p-4 rounded-xl flex items-center justify-between">
+              <div className="bg-slate-900 text-white p-4 rounded-xl flex items-center justify-between shadow-sm">
                 <div>
-                  <span className="text-xs text-indigo-700 font-semibold uppercase tracking-wider">
+                  <span className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider block">
                     Ordering From Verified Merchant
                   </span>
-                  <h3 className="text-base font-bold text-slate-900 mt-0.5">{businessName}</h3>
+                  <h3 className="text-base font-bold text-white mt-0.5">{businessName}</h3>
                 </div>
-                <Badge variant="default" className="bg-white text-indigo-700 border-indigo-200">
+                <Badge variant="secondary" className="bg-slate-800 text-indigo-300 font-bold">
                   {itemCount} {itemCount === 1 ? 'item' : 'items'}
                 </Badge>
               </div>
@@ -199,10 +206,10 @@ export default function CartPage() {
 
                       {/* Item Subtotal & Remove */}
                       <div className="text-right">
-                        <div className="font-bold text-slate-900 text-sm">{formatETB(lineTotal)}</div>
+                        <div className="font-black text-slate-900 text-sm">{formatETB(lineTotal)}</div>
                         <button
                           onClick={() => removeItem(item.id)}
-                          className="text-xs text-rose-500 hover:text-rose-700 mt-0.5 transition"
+                          className="text-xs text-rose-500 hover:text-rose-700 mt-0.5 font-medium transition"
                         >
                           Remove
                         </button>
@@ -213,7 +220,7 @@ export default function CartPage() {
               </Card>
 
               {/* Fulfillment Options */}
-              <Card className="p-5 space-y-3">
+              <Card className="p-5 space-y-4 shadow-sm">
                 <h3 className="font-bold text-slate-900 text-sm">Fulfillment Mode</h3>
                 <div className="grid grid-cols-2 gap-3">
                   <button
@@ -221,14 +228,14 @@ export default function CartPage() {
                     onClick={() => setFulfillmentType('pickup')}
                     className={`p-3.5 rounded-xl border text-left transition ${
                       fulfillmentType === 'pickup'
-                        ? 'border-indigo-600 bg-indigo-50/40 text-indigo-900 font-semibold ring-2 ring-indigo-500/20'
+                        ? 'border-indigo-600 bg-indigo-50/50 text-indigo-900 font-bold ring-2 ring-indigo-500/20'
                         : 'border-slate-200 hover:bg-slate-50 text-slate-700'
                     }`}
                   >
                     <div className="text-sm font-bold flex items-center gap-1.5">
                       <Coffee className="w-4 h-4 text-amber-600" /> Counter Pickup
                     </div>
-                    <div className="text-xs text-slate-500 mt-0.5">Collect at shop when notified</div>
+                    <div className="text-xs text-slate-500 mt-0.5 font-normal">Collect at shop counter</div>
                   </button>
 
                   <button
@@ -236,27 +243,25 @@ export default function CartPage() {
                     onClick={() => setFulfillmentType('express')}
                     className={`p-3.5 rounded-xl border text-left transition ${
                       fulfillmentType === 'express'
-                        ? 'border-indigo-600 bg-indigo-50/40 text-indigo-900 font-semibold ring-2 ring-indigo-500/20'
+                        ? 'border-indigo-600 bg-indigo-50/50 text-indigo-900 font-bold ring-2 ring-indigo-500/20'
                         : 'border-slate-200 hover:bg-slate-50 text-slate-700'
                     }`}
                   >
                     <div className="text-sm font-bold flex items-center gap-1.5">
                       <Footprints className="w-4 h-4 text-indigo-600" /> Dorm Handoff
                     </div>
-                    <div className="text-xs text-slate-500 mt-0.5">Meet at designated block gate</div>
+                    <div className="text-xs text-slate-500 mt-0.5 font-normal">Meet at designated dorm gate</div>
                   </button>
                 </div>
 
-                <div className="pt-2">
-                  <label className="text-xs font-semibold text-slate-600 block mb-1">
-                    Order Instructions / Special Requests (Optional)
-                  </label>
-                  <input
+                <div>
+                  <Label className="text-xs">Order Instructions / Special Requests (Optional)</Label>
+                  <Input
                     type="text"
                     value={specialInstructions}
                     onChange={(e) => setSpecialInstructions(e.target.value)}
-                    placeholder="e.g., Extra hot coffee, double sugar, or block 24 delivery"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                    placeholder="e.g. Extra hot coffee, double sugar, or block 24 gate"
+                    className="mt-1"
                   />
                 </div>
               </Card>
@@ -265,22 +270,22 @@ export default function CartPage() {
             {/* Right: Order Summary & Checkout */}
             <div className="space-y-4">
               <Card className="p-6 space-y-4 shadow-sm">
-                <h3 className="font-extrabold text-slate-900 text-base border-b border-slate-100 pb-3">
+                <h3 className="font-black text-slate-900 text-base border-b border-slate-100 pb-3">
                   Order Summary
                 </h3>
 
-                <div className="space-y-2 text-sm">
+                <div className="space-y-2.5 text-sm">
                   <div className="flex justify-between text-slate-600">
                     <span>Items Subtotal ({itemCount})</span>
-                    <span className="font-medium text-slate-900">{formatETB(totalMinor)}</span>
+                    <span className="font-bold text-slate-900">{formatETB(totalMinor)}</span>
                   </div>
                   <div className="flex justify-between text-slate-600">
                     <span>Campus Platform Fee</span>
-                    <span className="font-medium text-emerald-600">0.00 ETB (Free)</span>
+                    <span className="font-bold text-emerald-600">0.00 ETB (Free)</span>
                   </div>
                   <div className="flex justify-between text-slate-600">
                     <span>Estimated Prep Time</span>
-                    <span className="font-medium text-slate-900">10 – 15 mins</span>
+                    <span className="font-bold text-slate-900">10 – 15 mins</span>
                   </div>
                 </div>
 
@@ -292,7 +297,7 @@ export default function CartPage() {
                 <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 text-xs leading-relaxed flex items-start gap-2">
                   <Info className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
                   <div>
-                    <strong>Zero Floating-Point Calculations:</strong> All monetary values are settled directly as integer minor units in Ethiopian Birr.
+                    <strong>Precision ETB:</strong> All monetary values are settled directly as integer minor units in Ethiopian Birr.
                   </div>
                 </div>
 
@@ -322,6 +327,7 @@ export default function CartPage() {
           </div>
         )}
       </main>
+
       <Footer />
     </div>
   );

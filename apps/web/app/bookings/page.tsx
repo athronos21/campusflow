@@ -3,13 +3,15 @@
 import React, { useEffect, useState } from 'react';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
-import { MapPin } from 'lucide-react';
+import { MapPin, Calendar, Clock, Plus, ShieldCheck, Wrench, X } from 'lucide-react';
 
 interface Booking {
   id: string;
@@ -67,7 +69,7 @@ export default function BookingsPage() {
 
     const targetBizId = selectedBusinessId || (businesses.length > 0 ? businesses[0].id : '');
     if (!targetBizId) {
-      setErrorMsg('No verified service merchant available for bookings.');
+      setErrorMsg('No verified campus service merchant available for bookings.');
       return;
     }
 
@@ -95,115 +97,216 @@ export default function BookingsPage() {
   return (
     <div className="min-h-screen flex flex-col justify-between bg-slate-50">
       <Navbar />
-      <main className="max-w-4xl mx-auto px-4 py-8 flex-1 w-full">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-extrabold text-slate-900">Campus Appointments</h1>
-            <p className="text-slate-600 mt-1">Book services such as print binding, tech repairs, and laundry.</p>
+
+      <main className="max-w-5xl mx-auto px-4 py-8 flex-1 w-full">
+        {/* Editorial Header */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-white mb-8 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-2 mb-2 text-indigo-400 text-xs font-semibold uppercase tracking-wider">
+                <Wrench className="w-4 h-4" />
+                <span>Service 09 • Appointments & Campus Services</span>
+              </div>
+              <h1 className="text-3xl font-black tracking-tight text-white">
+                Campus Service Appointments
+              </h1>
+              <p className="mt-2 text-slate-300 text-sm leading-relaxed max-w-2xl">
+                Reserve timeslots for thesis printing, hardcover binding, dorm laundry, electronics repair, and document lamination with verified campus merchants.
+              </p>
+            </div>
+
+            <Button
+              onClick={() => setShowModal(true)}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white shrink-0 self-start md:self-auto"
+            >
+              <Plus className="w-4 h-4 mr-1.5" /> Book Appointment
+            </Button>
           </div>
-          <Button onClick={() => setShowModal(true)}>+ Request Service Appointment</Button>
         </div>
 
+        {/* Modal Dialog */}
         {showModal && (
-          <Card className="mb-8 p-6 border-indigo-200 bg-white shadow-md">
-            <h3 className="font-bold text-lg text-slate-900 mb-4">Request Service Appointment</h3>
-            {errorMsg && (
-              <div className="mb-4 p-3 bg-rose-50 text-rose-700 border border-rose-200 rounded-lg text-xs font-semibold">
-                {errorMsg}
-              </div>
-            )}
-            <form onSubmit={handleCreateBooking} className="space-y-4 max-w-lg">
-              {businesses.length > 0 && (
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <Card className="max-w-lg w-full shadow-2xl bg-white border-slate-200">
+              <CardHeader className="pb-4 border-b border-slate-100 flex flex-row items-center justify-between">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                    Select Campus Merchant / Provider
-                  </label>
-                  <select
-                    value={selectedBusinessId}
-                    onChange={(e) => setSelectedBusinessId(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-medium"
-                  >
-                    {businesses.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.name}
-                      </option>
-                    ))}
-                  </select>
+                  <CardTitle className="text-lg">Request Service Appointment</CardTitle>
+                  <CardDescription className="text-xs">
+                    Choose a provider and select your preferred timeslot
+                  </CardDescription>
                 </div>
-              )}
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Service</label>
-                <select
-                  value={serviceName}
-                  onChange={(e) => setServiceName(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="text-slate-400 hover:text-slate-600"
                 >
-                  <option value="Thesis Printing & Hardcover Binding">Thesis Printing & Hardcover Binding</option>
-                  <option value="Laptop Diagnostic & Software Repair">Laptop Diagnostic & Software Repair</option>
-                  <option value="Dorm Laundry & Ironing Service">Dorm Laundry & Ironing Service</option>
-                  <option value="ID Card & Document Lamination">ID Card & Document Lamination</option>
-                </select>
-              </div>
+                  <X className="w-5 h-5" />
+                </button>
+              </CardHeader>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Appointment Date & Time</label>
-                <input
-                  type="datetime-local"
-                  required
-                  onChange={(e) => setBookingDate(new Date(e.target.value).toISOString())}
-                  className="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                />
-              </div>
+              <form onSubmit={handleCreateBooking}>
+                <CardContent className="pt-5 space-y-4">
+                  {errorMsg && (
+                    <div className="p-3 bg-rose-50 text-rose-700 border border-rose-200 rounded-lg text-xs font-semibold">
+                      {errorMsg}
+                    </div>
+                  )}
 
-              <div className="flex gap-2 pt-2">
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Requesting...' : 'Submit Booking'}
-                </Button>
-                <Button type="button" variant="outline" onClick={() => setShowModal(false)}>
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </Card>
+                  {businesses.length > 0 && (
+                    <div>
+                      <Label className="text-xs">Select Campus Provider</Label>
+                      <select
+                        value={selectedBusinessId}
+                        onChange={(e) => setSelectedBusinessId(e.target.value)}
+                        className="w-full mt-1.5 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-medium"
+                      >
+                        {businesses.map((b) => (
+                          <option key={b.id} value={b.id}>
+                            {b.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  <div>
+                    <Label className="text-xs">Service Type</Label>
+                    <select
+                      value={serviceName}
+                      onChange={(e) => setServiceName(e.target.value)}
+                      className="w-full mt-1.5 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-medium"
+                    >
+                      <option value="Thesis Printing & Hardcover Binding">Thesis Printing & Hardcover Binding</option>
+                      <option value="Laptop Diagnostic & Software Repair">Laptop Diagnostic & Software Repair</option>
+                      <option value="Dorm Laundry & Ironing Service">Dorm Laundry & Ironing Service</option>
+                      <option value="ID Card & Document Lamination">ID Card & Document Lamination</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs">Appointment Date & Time</Label>
+                    <Input
+                      type="datetime-local"
+                      required
+                      defaultValue="2026-11-20T14:00"
+                      onChange={(e) => setBookingDate(new Date(e.target.value).toISOString())}
+                      className="mt-1.5"
+                    />
+                  </div>
+
+                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-600 flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Free reservation. Settlement occurs upon service delivery at the campus shop.</span>
+                  </div>
+                </CardContent>
+
+                <CardFooter className="pt-4 border-t border-slate-100 flex gap-2 justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowModal(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? 'Requesting...' : 'Confirm Appointment'}
+                  </Button>
+                </CardFooter>
+              </form>
+            </Card>
+          </div>
         )}
 
+        {/* Content Section */}
         {!user ? (
-          <Card className="text-center py-12">
-            <p className="text-slate-600 font-medium mb-3">Please sign in to view and manage your appointments.</p>
-            <Link href="/login" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold inline-block">
-              Sign In →
-            </Link>
+          <Card className="text-center py-16">
+            <CardContent>
+              <Wrench className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-700 font-bold mb-1">Sign in to view your appointments</p>
+              <p className="text-xs text-slate-500 mb-4">Keep track of your scheduled print jobs, repairs, and bookings.</p>
+              <Link href="/login">
+                <Button>Sign In</Button>
+              </Link>
+            </CardContent>
           </Card>
         ) : isLoading && bookings.length === 0 ? (
-          <div className="text-center py-12 text-slate-500 font-medium">Loading appointments...</div>
+          <div className="text-center py-16 text-slate-500 font-medium">Checking scheduled appointments...</div>
         ) : bookings.length === 0 ? (
-          <Card className="text-center py-12">
-            <p className="text-slate-600 font-medium">You don't have any booked appointments yet.</p>
+          <Card className="text-center py-16 text-slate-500">
+            <CardContent>
+              <Calendar className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+              <p className="font-bold text-slate-800">No scheduled appointments</p>
+              <p className="text-xs text-slate-500 mt-1 mb-4">
+                Schedule your thesis binding, electronics repair, or campus laundry ahead of time to skip the line.
+              </p>
+              <Button onClick={() => setShowModal(true)}>
+                <Plus className="w-4 h-4 mr-1.5" /> Book Your First Appointment
+              </Button>
+            </CardContent>
           </Card>
         ) : (
           <div className="space-y-4">
+            <div className="flex items-center justify-between text-xs text-slate-500 font-semibold px-1">
+              <span>{bookings.length} Appointment{bookings.length > 1 ? 's' : ''} on Record</span>
+            </div>
+
             {bookings.map((b) => (
-              <Card key={b.id} className="flex items-center justify-between shadow-sm p-5">
-                <div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-bold text-slate-900 text-base">{b.serviceName}</span>
-                    <Badge variant={b.status === 'confirmed' ? 'success' : 'warning'}>
-                      {b.status.toUpperCase()}
-                    </Badge>
+              <Card key={b.id} className="hover:border-slate-300 transition shadow-sm">
+                <CardContent className="p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2.5 mb-2">
+                        <Badge
+                          variant={
+                            b.status === 'confirmed'
+                              ? 'success'
+                              : b.status === 'completed'
+                              ? 'secondary'
+                              : 'warning'
+                          }
+                        >
+                          {b.status.toUpperCase()}
+                        </Badge>
+                        <span className="text-xs text-slate-500 font-medium">
+                          Ref: #{b.id.slice(0, 8)}
+                        </span>
+                      </div>
+                      <h3 className="font-bold text-slate-900 text-lg">{b.serviceName}</h3>
+                      <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 mt-2">
+                        <span className="flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                          {new Date(b.startsAt).toLocaleDateString('en-US', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          {new Date(b.startsAt).toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                          {b.business?.name || 'Haramaya Campus Hub'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex sm:flex-col items-center sm:items-end justify-between border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100">
+                      <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
+                        Guaranteed Slot
+                      </span>
+                    </div>
                   </div>
-                  <span className="text-xs text-slate-500 mt-1 block">
-                    Scheduled for: {new Date(b.startsAt).toLocaleString()}
-                  </span>
-                </div>
-                <span className="text-xs text-slate-400 flex items-center">
-                  <MapPin className="w-3.5 h-3.5 inline mr-1 text-slate-400" /> Haramaya Campus Hub
-                </span>
+                </CardContent>
               </Card>
             ))}
           </div>
         )}
       </main>
+
       <Footer />
     </div>
   );

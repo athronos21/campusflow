@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { apiClient } from '@/lib/api-client';
-import Link from 'next/link';
 import {
   Megaphone,
   Coffee,
@@ -18,6 +20,10 @@ import {
   BookOpen,
   CalendarCheck,
   MapPin,
+  Search,
+  CheckCircle2,
+  ChevronRight,
+  Store,
 } from 'lucide-react';
 
 interface Product {
@@ -62,14 +68,12 @@ export default function DirectoryPage() {
     async function loadData() {
       try {
         setIsLoading(true);
-        // 1. Fetch campuses
         const campusData = await apiClient<Campus[]>('/campuses');
         setCampuses(campusData);
 
         const activeCampus = campusData[0]?.id || '';
         setSelectedCampus(activeCampus);
 
-        // 2. Fetch businesses & announcements for primary campus
         if (activeCampus) {
           const [bizData, annData] = await Promise.all([
             apiClient<Business[]>(`/businesses?campusId=${activeCampus}`),
@@ -114,31 +118,47 @@ export default function DirectoryPage() {
     if (!matchesSearch) return false;
 
     if (selectedCategory === 'food') {
-      return b.name.toLowerCase().includes('cafe') || b.name.toLowerCase().includes('snack') || b.name.toLowerCase().includes('food') || b.name.toLowerCase().includes('restaurant');
+      return (
+        b.name.toLowerCase().includes('cafe') ||
+        b.name.toLowerCase().includes('snack') ||
+        b.name.toLowerCase().includes('food') ||
+        b.name.toLowerCase().includes('restaurant')
+      );
     }
     if (selectedCategory === 'stationery') {
-      return b.name.toLowerCase().includes('print') || b.name.toLowerCase().includes('stationery') || b.name.toLowerCase().includes('book');
+      return (
+        b.name.toLowerCase().includes('print') ||
+        b.name.toLowerCase().includes('stationery') ||
+        b.name.toLowerCase().includes('book')
+      );
     }
     if (selectedCategory === 'tech') {
-      return b.name.toLowerCase().includes('tech') || b.name.toLowerCase().includes('electronic') || b.name.toLowerCase().includes('laptop') || b.name.toLowerCase().includes('phone') || b.name.toLowerCase().includes('repair');
+      return (
+        b.name.toLowerCase().includes('tech') ||
+        b.name.toLowerCase().includes('electronic') ||
+        b.name.toLowerCase().includes('laptop') ||
+        b.name.toLowerCase().includes('phone') ||
+        b.name.toLowerCase().includes('repair')
+      );
     }
     return true;
   });
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-slate-50">
+    <div className="min-h-screen flex flex-col justify-between bg-slate-50 text-slate-900 font-sans">
       <Navbar />
-      <main className="max-w-6xl mx-auto px-4 py-8 flex-1 w-full">
+
+      <main className="max-w-6xl mx-auto px-4 py-8 flex-1 w-full space-y-8">
         {/* Campus Announcement Banner */}
         {announcements.length > 0 && (
-          <div className="mb-6 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-start gap-3 shadow-sm">
-            <Megaphone className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
+          <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl flex items-start gap-3 shadow-xs">
+            <Megaphone className="w-5 h-5 text-primary shrink-0 mt-0.5" />
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded">
+                <Badge variant="default" className="text-[10px] font-bold uppercase tracking-wider h-5">
                   Campus Notice
-                </span>
-                <span className="text-xs text-slate-400">
+                </Badge>
+                <span className="text-xs text-slate-500">
                   {new Date(announcements[0].createdAt).toLocaleDateString()}
                 </span>
               </div>
@@ -148,24 +168,29 @@ export default function DirectoryPage() {
           </div>
         )}
 
-        <div className="mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 mb-3">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            Live Pilot Directory · Haramaya University
+        {/* Header */}
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-xs font-bold text-slate-500 tracking-wide uppercase">
+              Haramaya University Pilot
+            </span>
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-900">Campus Directory</h1>
-          <p className="text-slate-600 mt-1">
-            Discover verified campus cafeterias, stationery shops, bus shuttles, and student services.
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
+            Campus Directory & Shops
+          </h1>
+          <p className="text-sm text-slate-600 max-w-2xl leading-relaxed">
+            Verified campus cafeterias, printing centers, and stationery stores serving students and faculty.
           </p>
         </div>
 
-        {/* Campus Selector & Search Bar */}
-        <div className="mb-6 flex flex-col md:flex-row gap-4">
+        {/* Filter Bar */}
+        <div className="flex flex-col sm:flex-row gap-3">
           {campuses.length > 0 && (
             <select
               value={selectedCampus}
               onChange={(e) => handleCampusChange(e.target.value)}
-              className="px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-medium shadow-sm"
+              className="h-11 px-3.5 rounded-lg border border-slate-300 text-sm font-semibold bg-white text-slate-800 shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
             >
               {campuses.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -175,119 +200,121 @@ export default function DirectoryPage() {
             </select>
           )}
 
-          <input
-            type="text"
-            placeholder="Search verified food, coffee, printing, stationery, books..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm"
-          />
+          <div className="relative flex-1 flex items-center">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />
+            <Input
+              type="text"
+              placeholder="Search verified food, coffee, printing, stationery, books..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10 h-11 bg-white border-slate-300 text-sm shadow-xs"
+            />
+          </div>
         </div>
 
         {/* Category Pills & Quick Shortcuts */}
-        <div className="mb-8 flex flex-wrap items-center gap-2">
-          <button
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant={selectedCategory === 'all' ? 'default' : 'outline'}
+            size="sm"
             onClick={() => setSelectedCategory('all')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition ${
-              selectedCategory === 'all'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-            }`}
+            className="h-8 rounded-full text-xs font-bold"
           >
             All Merchants ({businesses.length})
-          </button>
-          <button
+          </Button>
+          <Button
+            variant={selectedCategory === 'food' ? 'default' : 'outline'}
+            size="sm"
             onClick={() => setSelectedCategory('food')}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition ${
-              selectedCategory === 'food'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-            }`}
+            className="h-8 rounded-full text-xs font-bold flex items-center gap-1.5"
           >
             <Coffee className="w-3.5 h-3.5" /> Food & Cafeteria
-          </button>
-          <button
+          </Button>
+          <Button
+            variant={selectedCategory === 'stationery' ? 'default' : 'outline'}
+            size="sm"
             onClick={() => setSelectedCategory('stationery')}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition ${
-              selectedCategory === 'stationery'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-            }`}
+            className="h-8 rounded-full text-xs font-bold flex items-center gap-1.5"
           >
             <Printer className="w-3.5 h-3.5" /> Printing & Stationery
-          </button>
-          <button
+          </Button>
+          <Button
+            variant={selectedCategory === 'tech' ? 'default' : 'outline'}
+            size="sm"
             onClick={() => setSelectedCategory('tech')}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition ${
-              selectedCategory === 'tech'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-            }`}
+            className="h-8 rounded-full text-xs font-bold flex items-center gap-1.5"
           >
             <Laptop className="w-3.5 h-3.5" /> Tech & Electronics
-          </button>
-          <Link
-            href="/transport"
-            className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition inline-flex items-center gap-1.5"
-          >
-            <Bus className="w-3.5 h-3.5" /> Bus Shuttles →
+          </Button>
+
+          <span className="text-slate-300 mx-1 hidden lg:inline">|</span>
+
+          <Link href="/transport">
+            <Badge variant="outline" className="hover:border-primary transition cursor-pointer flex items-center gap-1">
+              <Bus className="w-3.5 h-3.5 text-amber-600" /> Shuttles
+            </Badge>
           </Link>
-          <Link
-            href="/housing"
-            className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 transition inline-flex items-center gap-1.5"
-          >
-            <Home className="w-3.5 h-3.5" /> Off-Campus Housing →
+          <Link href="/housing">
+            <Badge variant="outline" className="hover:border-teal-500 transition cursor-pointer flex items-center gap-1">
+              <Home className="w-3.5 h-3.5 text-teal-600" /> Housing
+            </Badge>
           </Link>
-          <Link
-            href="/events"
-            className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 transition inline-flex items-center gap-1.5"
-          >
-            <Calendar className="w-3.5 h-3.5" /> Events & Passes →
+          <Link href="/events">
+            <Badge variant="outline" className="hover:border-purple-500 transition cursor-pointer flex items-center gap-1">
+              <Calendar className="w-3.5 h-3.5 text-purple-600" /> Events
+            </Badge>
           </Link>
-          <Link
-            href="/learning"
-            className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200 hover:bg-cyan-100 transition inline-flex items-center gap-1.5"
-          >
-            <BookOpen className="w-3.5 h-3.5" /> Academic Bank →
+          <Link href="/learning">
+            <Badge variant="outline" className="hover:border-sky-500 transition cursor-pointer flex items-center gap-1">
+              <BookOpen className="w-3.5 h-3.5 text-sky-600" /> Exams
+            </Badge>
           </Link>
-          <Link
-            href="/bookings"
-            className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition inline-flex items-center gap-1.5"
-          >
-            <CalendarCheck className="w-3.5 h-3.5" /> Appointments →
+          <Link href="/bookings">
+            <Badge variant="outline" className="hover:border-indigo-500 transition cursor-pointer flex items-center gap-1">
+              <CalendarCheck className="w-3.5 h-3.5 text-indigo-600" /> Bookings
+            </Badge>
           </Link>
         </div>
 
         {/* Business Grid */}
         {isLoading ? (
-          <div className="text-center py-16 text-slate-500 font-medium">Loading verified campus shops...</div>
-        ) : filteredBusinesses.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
-            <p className="text-slate-600 font-medium">No verified businesses match your search filter.</p>
+          <div className="text-center py-20 text-slate-500 text-sm font-medium">
+            Loading verified campus shops...
           </div>
+        ) : filteredBusinesses.length === 0 ? (
+          <Card className="text-center py-16 p-6 border-slate-200">
+            <Store className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+            <p className="text-slate-600 font-semibold text-sm">No verified businesses match your search filter.</p>
+            <p className="text-slate-400 text-xs mt-1">Try another category or clear your search query.</p>
+          </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {filteredBusinesses.map((b) => (
-              <Card key={b.id} className="flex flex-col justify-between hover:border-indigo-300 transition shadow-sm p-6">
+              <Card
+                key={b.id}
+                className="flex flex-col justify-between border-slate-200 hover:border-primary/50 hover:shadow-xs transition p-6"
+              >
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-bold text-xl text-slate-900">{b.name}</h3>
-                    <Badge variant="success">✓ VERIFIED</Badge>
+                    <h3 className="font-bold text-lg text-slate-900">{b.name}</h3>
+                    <Badge variant="success" className="text-[10px] font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> VERIFIED
+                    </Badge>
                   </div>
-                  <p className="text-sm text-slate-600 mb-4 leading-relaxed">
+                  <p className="text-xs text-slate-600 mb-4 leading-relaxed font-normal">
                     {b.description || 'Verified campus partner providing student meals, beverages, and supplies.'}
                   </p>
 
                   {b.products && b.products.length > 0 && (
                     <div className="space-y-1 mb-4 pt-3 border-t border-slate-100">
-                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                        Popular Menu Items
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                        Popular Items
                       </span>
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        {b.products.map((p) => (
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {b.products.slice(0, 4).map((p) => (
                           <span
                             key={p.id}
-                            className="inline-block text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md font-medium"
+                            className="inline-block text-[11px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium"
                           >
                             {p.name}
                           </span>
@@ -299,20 +326,20 @@ export default function DirectoryPage() {
 
                 <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
                   <span className="inline-flex items-center gap-1 text-xs text-slate-500 font-medium">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400" /> Main Campus · Student Lounge
+                    <MapPin className="w-3.5 h-3.5 text-slate-400" /> Main Campus &bull; Bate
                   </span>
-                  <Link
-                    href={`/shop/${b.id}`}
-                    className="text-xs font-bold px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-sm"
-                  >
-                    View Menu & Order →
-                  </Link>
+                  <Button size="sm" asChild className="h-8 text-xs font-bold">
+                    <Link href={`/shop/${b.id}`} className="flex items-center gap-1">
+                      View Menu & Order <ChevronRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </Button>
                 </div>
               </Card>
             ))}
           </div>
         )}
       </main>
+
       <Footer />
     </div>
   );

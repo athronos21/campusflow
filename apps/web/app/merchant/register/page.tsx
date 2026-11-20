@@ -1,10 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { apiClient } from '@/lib/api-client';
 import Link from 'next/link';
+import { CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 
 export default function MerchantRegisterPage() {
   const [name, setName] = useState('');
@@ -50,26 +53,24 @@ export default function MerchantRegisterPage() {
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-        <Card className="w-full max-w-md p-8 text-center shadow-sm">
-          <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl mx-auto mb-4">
-            ✓
+        <Card className="w-full max-w-md p-8 text-center shadow-lg border-slate-200">
+          <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">Registration Submitted!</h2>
-          <p className="text-sm text-slate-600 mb-6">
-            Your business <strong>{name}</strong> is now in the verification queue. Once approved by campus administration, it will be visible in the student directory.
+          <h2 className="text-2xl font-black text-slate-900 mb-2">Registration Submitted!</h2>
+          <p className="text-sm text-slate-600 mb-6 leading-relaxed">
+            Your business <strong className="text-slate-900">{name}</strong> is in the verification queue. Once approved by campus administration, it will be visible to all students in the campus directory.
           </p>
           <div className="space-y-3">
-            <Link
-              href="/admin/verifications"
-              className="block w-full py-2.5 rounded-lg bg-rose-600 text-white font-medium text-sm hover:bg-rose-700 transition"
-            >
-              Go to Admin Verification Queue →
+            <Link href="/admin/verifications">
+              <Button className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold">
+                Go to Admin Verification Queue <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
             </Link>
-            <Link
-              href="/directory"
-              className="block w-full py-2.5 rounded-lg border border-slate-300 text-slate-700 font-medium text-sm hover:bg-slate-50 transition"
-            >
-              Back to Campus Directory
+            <Link href="/directory">
+              <Button variant="outline" className="w-full font-semibold">
+                Back to Campus Directory
+              </Button>
             </Link>
           </div>
         </Card>
@@ -79,77 +80,79 @@ export default function MerchantRegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12">
-      <Card className="w-full max-w-md p-8 shadow-sm">
-        <div className="text-center mb-6">
-          <Link href="/" className="font-extrabold text-2xl tracking-tight text-slate-900">
+      <Card className="w-full max-w-md shadow-lg border-slate-200">
+        <CardHeader className="text-center pb-2">
+          <Link href="/" className="font-black text-2xl tracking-tight text-slate-900 inline-block">
             Campus<span className="text-indigo-600">Flow</span>
           </Link>
-          <h2 className="text-xl font-bold text-slate-900 mt-3">Register Campus Business</h2>
-          <p className="text-sm text-slate-500">Partner with CampusFlow at Haramaya University</p>
-        </div>
+          <CardTitle className="text-xl font-black text-slate-900 mt-2">
+            Register Campus Merchant
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Open a digital storefront for your shop or service at Haramaya University
+          </CardDescription>
+        </CardHeader>
 
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-xs">
+          <div className="mx-6 p-3 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-xs font-semibold">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-              Select Campus
-            </label>
-            <select
-              value={campusId}
-              onChange={(e) => setCampusId(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-4 pt-4">
+            <div>
+              <Label className="text-xs">Campus Location</Label>
+              <select
+                value={campusId}
+                onChange={(e) => setCampusId(e.target.value)}
+                className="w-full mt-1 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-medium"
+              >
+                {campuses.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <Label className="text-xs">Business Name</Label>
+              <Input
+                type="text"
+                required
+                placeholder="e.g. Eagle Fast Print & Stationery"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs">Description & Campus Building</Label>
+              <textarea
+                rows={3}
+                required
+                placeholder="e.g. Printing, photocopying, binding, and stationery near Gate 2 Commercial block."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full mt-1 px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900"
+              />
+            </div>
+          </CardContent>
+
+          <CardFooter className="flex flex-col gap-3 pt-2">
+            <Button type="submit" disabled={loading} className="w-full font-bold">
+              {loading ? 'Submitting Registration...' : 'Submit for Verification'}
+            </Button>
+            <Link
+              href="/directory"
+              className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition flex items-center justify-center gap-1"
             >
-              {campuses.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-              Business Name
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. Eagle Fast Print & Stationery"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-              Description & Campus Location
-            </label>
-            <textarea
-              rows={3}
-              required
-              placeholder="e.g. Printing, photocopying, binding, and stationery near Gate 2 Commercial block."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          <Button type="submit" disabled={loading} className="w-full mt-2">
-            {loading ? 'Submitting Registration...' : 'Submit for Verification'}
-          </Button>
+              <ArrowLeft className="w-3.5 h-3.5" /> Back to Directory
+            </Link>
+          </CardFooter>
         </form>
-
-        <p className="text-center text-xs text-slate-500 mt-6">
-          <Link href="/directory" className="hover:underline">
-            ← Cancel and return to Directory
-          </Link>
-        </p>
       </Card>
     </div>
   );

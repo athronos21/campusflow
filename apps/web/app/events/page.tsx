@@ -3,11 +3,13 @@
 import React, { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
+import { Navbar } from '@/components/layout/navbar';
+import { Footer } from '@/components/layout/footer';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { formatETB } from '@/lib/utils';
-import Link from 'next/link';
-import { Calendar, MapPin, Users, Ticket, Sparkles } from 'lucide-react';
+import { Calendar, MapPin, Users, Ticket, CheckCircle2, X } from 'lucide-react';
 
 interface Organizer {
   displayName: string;
@@ -51,11 +53,14 @@ export default function EventsPage() {
   const [myRsvps, setMyRsvps] = useState<EventRsvp[]>([]);
   const [activeTab, setActiveTab] = useState<'events' | 'my-tickets'>('events');
   const [loading, setLoading] = useState(true);
-  const [categoryFilter, setCategoryFilter] = useState<string>('All');
-
-  // Active Ticket Modal
-  const [activeTicket, setActiveTicket] = useState<{ ticketCode: string; eventTitle: string; venue: string; date: string } | null>(null);
-  const [rsvpLoadingId, setRsvpLoadingId] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState('All');
+  const [rsvpingEventId, setRsvpingEventId] = useState<string | null>(null);
+  const [activeTicket, setActiveTicket] = useState<{
+    ticketCode: string;
+    eventTitle: string;
+    venue: string;
+    date: string;
+  } | null>(null);
 
   useEffect(() => {
     fetchEvents();
@@ -70,7 +75,7 @@ export default function EventsPage() {
       const data = await apiClient.get<CampusEvent[]>('/events');
       setEvents(data);
     } catch (err) {
-      console.error('Failed to load events', err);
+      console.error('Failed to load events:', err);
     } finally {
       setLoading(false);
     }
@@ -81,297 +86,296 @@ export default function EventsPage() {
       const data = await apiClient.get<EventRsvp[]>('/events/rsvps/my');
       setMyRsvps(data);
     } catch (err) {
-      console.error('Failed to load tickets', err);
+      console.error('Failed to load user passes:', err);
     }
   }
 
-  const isRsvpd = (eventId: string) => {
-    return myRsvps.some(r => r.eventId === eventId);
-  };
-
-  const getRsvpTicketCode = (eventId: string) => {
-    const r = myRsvps.find(r => r.eventId === eventId);
-    return r ? r.ticketCode : null;
-  };
-
   async function handleRsvp(event: CampusEvent) {
     if (!user) {
-      alert('Please sign in to register for campus events');
+      alert('Please sign in or create an account to RSVP for campus events.');
       return;
     }
 
     try {
-      setRsvpLoadingId(event.id);
-      const res = await apiClient.post<EventRsvp>(`/events/${event.id}/rsvp`);
-      
+      setRsvpingEventId(event.id);
+      const rsvp = await apiClient.post<EventRsvp>(`/events/${event.id}/rsvp`);
+      await fetchMyRsvps();
       setActiveTicket({
-        ticketCode: res.ticketCode,
+        ticketCode: rsvp.ticketCode,
         eventTitle: event.title,
         venue: event.venue,
         date: new Date(event.startsAt).toLocaleString(),
       });
-
-      fetchMyRsvps();
-      fetchEvents();
-    } catch (err: any) {
-      alert(err.message || 'Failed to RSVP for event');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to register for event';
+      alert(msg);
     } finally {
-      setRsvpLoadingId(null);
+      setRsvpingEventId(null);
     }
   }
 
   const categories = ['All', 'Technology & Hackathons', 'Campus Life', 'Academic', 'Career & Networking'];
 
-  const filteredEvents = categoryFilter === 'All'
-    ? events
-    : events.filter(e => e.category === categoryFilter);
+  const filteredEvents =
+    categoryFilter === 'All'
+      ? events
+      : events.filter((e) => e.category === categoryFilter);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-violet-900 via-indigo-900 to-slate-900 text-white rounded-2xl p-8 shadow-lg">
-        <div className="max-w-2xl">
-          <Badge className="bg-indigo-500/20 text-indigo-200 border-indigo-400/30 mb-3">
-            Service 06 • Campus Events & Hackathons
-          </Badge>
-          <h1 className="text-3xl font-extrabold tracking-tight">Haramaya Campus Events & Passes</h1>
-          <p className="mt-2 text-indigo-100/90 text-sm leading-relaxed">
-            Discover hackathons, academic workshops, guest lectures, and cultural fests. Instant RSVP passes with QR validation.
+    <div className="min-h-screen flex flex-col justify-between bg-slate-50 text-slate-900 font-sans">
+      <Navbar />
+
+      <main className="max-w-6xl mx-auto px-4 py-8 flex-1 w-full space-y-8">
+        {/* Header */}
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
+            <span className="text-xs font-bold text-slate-500 tracking-wide uppercase">
+              Haramaya Campus Happenings
+            </span>
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
+            Campus Events & Hackathons
+          </h1>
+          <p className="text-sm text-slate-600 max-w-2xl leading-relaxed">
+            Discover student competitions, academic symposiums, guest lectures, and festivals.
+            One-click RSVP with instant verified digital QR entrance passes.
           </p>
         </div>
-      </div>
 
-      {/* Tabs & Category Filter */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-200 pb-4">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setActiveTab('events')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
-              activeTab === 'events'
-                ? 'bg-slate-900 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            All Events ({events.length})
-          </button>
-          {user && (
-            <button
-              onClick={() => setActiveTab('my-tickets')}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
-                activeTab === 'my-tickets'
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
+        {/* Tabs & Category Filter */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-200 pb-4">
+          <div className="flex items-center gap-2">
+            <Button
+              variant={activeTab === 'events' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveTab('events')}
+              className="h-9 font-bold text-xs"
             >
-              My Passes ({myRsvps.length})
-            </button>
-          )}
-        </div>
-
-        {activeTab === 'events' && (
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full text-xs font-medium">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setCategoryFilter(cat)}
-                className={`px-3 py-1 rounded-md whitespace-nowrap transition ${
-                  categoryFilter === cat
-                    ? 'bg-indigo-600 text-white font-bold'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
+              All Events ({events.length})
+            </Button>
+            {user && (
+              <Button
+                variant={activeTab === 'my-tickets' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveTab('my-tickets')}
+                className="h-9 font-bold text-xs"
               >
-                {cat}
-              </button>
-            ))}
+                My Passes ({myRsvps.length})
+              </Button>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Content */}
-      {activeTab === 'events' ? (
-        loading ? (
-          <div className="py-20 text-center text-slate-500">Loading campus events...</div>
-        ) : filteredEvents.length === 0 ? (
-          <div className="py-20 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-            <p className="text-slate-600 font-medium">No upcoming events scheduled in this category.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredEvents.map((evt) => {
-              const booked = isRsvpd(evt.id);
-              const ticketCode = getRsvpTicketCode(evt.id);
-              const rsvpCount = evt._count?.rsvps || 0;
-
-              return (
-                <Card key={evt.id} className="overflow-hidden flex flex-col justify-between hover:shadow-md transition">
-                  <div>
-                    <div className="relative h-44 bg-slate-100 w-full overflow-hidden rounded-lg mb-4">
-                      {evt.bannerUrl ? (
-                        <img
-                          src={evt.bannerUrl}
-                          alt={evt.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-tr from-indigo-100 to-violet-200">
-                          <Sparkles className="w-10 h-10 text-indigo-500" />
-                        </div>
-                      )}
-                      <div className="absolute top-2 left-2">
-                        <Badge className="bg-slate-900/80 text-white text-[10px] font-semibold backdrop-blur-sm border-none">
-                          {evt.category}
-                        </Badge>
-                      </div>
-                      <div className="absolute top-2 right-2">
-                        <Badge
-                          variant={Number(evt.entryFeeMinor) === 0 ? 'success' : 'warning'}
-                          className="font-bold shadow-sm"
-                        >
-                          {Number(evt.entryFeeMinor) === 0 ? 'FREE ENTRY' : formatETB(evt.entryFeeMinor)}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <h3 className="font-bold text-slate-900 text-lg leading-tight">{evt.title}</h3>
-                      <p className="text-xs text-indigo-700 font-semibold flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5 text-indigo-600" /> {new Date(evt.startsAt).toLocaleDateString('en-US', {
-                          weekday: 'short',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </p>
-                      <p className="text-xs text-slate-500 flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400" /> {evt.venue}
-                      </p>
-                      <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed mt-2">
-                        {evt.description}
-                      </p>
-                    </div>
-
-                    <div className="mt-4 flex items-center justify-between text-xs text-slate-500 bg-slate-50 p-2.5 rounded-lg">
-                      <span className="flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5 text-slate-400" /> Attendees: <strong>{rsvpCount}</strong> {evt.maxAttendees ? `/ ${evt.maxAttendees}` : ''}
-                      </span>
-                      <span>By: {evt.organizer?.displayName || 'Campus Council'}</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                    {booked ? (
-                      <button
-                        onClick={() => setActiveTicket({
-                          ticketCode: ticketCode!,
-                          eventTitle: evt.title,
-                          venue: evt.venue,
-                          date: new Date(evt.startsAt).toLocaleString(),
-                        })}
-                        className="w-full py-2 bg-emerald-50 text-emerald-700 border border-emerald-300 rounded-lg text-xs font-bold hover:bg-emerald-100 transition flex items-center justify-center gap-1.5"
-                      >
-                        <Ticket className="w-3.5 h-3.5 text-emerald-600" /> View Boarding Pass ({ticketCode})
-                      </button>
-                    ) : user ? (
-                      <button
-                        disabled={rsvpLoadingId === evt.id}
-                        onClick={() => handleRsvp(evt)}
-                        className="w-full py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition disabled:opacity-50"
-                      >
-                        {rsvpLoadingId === evt.id ? 'Registering...' : 'Get Instant RSVP Pass'}
-                      </button>
-                    ) : (
-                      <Link
-                        href="/login"
-                        className="w-full text-center py-2 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-200 transition"
-                      >
-                        Sign In to RSVP
-                      </Link>
-                    )}
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        )
-      ) : (
-        /* My Tickets Tab */
-        <div className="space-y-4">
-          {myRsvps.length === 0 ? (
-            <div className="py-20 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-              <p className="text-slate-600 font-medium">You haven&apos;t registered for any campus events yet.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {myRsvps.map((rsvp) => (
-                <Card key={rsvp.id} className="p-6 border-l-4 border-l-indigo-600 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs font-mono bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold">
-                        {rsvp.ticketCode}
-                      </span>
-                      <Badge variant="success">CONFIRMED PASS</Badge>
-                    </div>
-                    <h4 className="font-bold text-slate-900 text-lg leading-tight">{rsvp.event?.title}</h4>
-                    <p className="text-xs text-indigo-700 font-semibold mt-1 flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-indigo-600" /> {new Date(rsvp.event?.startsAt).toLocaleString()}
-                    </p>
-                    <p className="text-xs text-slate-600 mt-1 flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-slate-400" /> {rsvp.event?.venue}
-                    </p>
-                  </div>
-
-                  <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-xs text-slate-500">
-                      Show code at entrance gate
-                    </span>
-                    <button
-                      onClick={() => setActiveTicket({
-                        ticketCode: rsvp.ticketCode,
-                        eventTitle: rsvp.event.title,
-                        venue: rsvp.event.venue,
-                        date: new Date(rsvp.event.startsAt).toLocaleString(),
-                      })}
-                      className="text-xs font-bold text-indigo-600 hover:text-indigo-800 underline"
-                    >
-                      Show Full Digital Pass
-                    </button>
-                  </div>
-                </Card>
+          {activeTab === 'events' && (
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full text-xs font-medium">
+              {categories.map((cat) => (
+                <Button
+                  key={cat}
+                  variant={categoryFilter === cat ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCategoryFilter(cat)}
+                  className="h-7 px-3 whitespace-nowrap text-xs font-medium"
+                >
+                  {cat}
+                </Button>
               ))}
             </div>
           )}
         </div>
-      )}
+
+        {/* Events Content */}
+        {activeTab === 'events' ? (
+          loading ? (
+            <div className="py-20 text-center text-slate-500 text-sm font-medium">
+              Loading scheduled campus events...
+            </div>
+          ) : filteredEvents.length === 0 ? (
+            <Card className="py-16 text-center border-slate-200">
+              <Calendar className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+              <p className="text-slate-600 font-semibold text-sm">No events found in this category.</p>
+              <p className="text-slate-400 text-xs mt-1">Check other categories or check back soon.</p>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredEvents.map((event) => {
+                const isRsvpd = myRsvps.some((r) => r.eventId === event.id);
+                return (
+                  <Card
+                    key={event.id}
+                    className="overflow-hidden flex flex-col justify-between border-slate-200 hover:border-purple-400/60 hover:shadow-xs transition"
+                  >
+                    <div>
+                      {event.bannerUrl ? (
+                        <div className="h-44 bg-slate-100 overflow-hidden">
+                          <img
+                            src={event.bannerUrl}
+                            alt={event.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="h-28 bg-slate-100 flex items-center justify-center text-slate-400">
+                          <Calendar className="w-8 h-8 text-slate-300" />
+                        </div>
+                      )}
+
+                      <div className="p-5 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Badge variant="secondary" className="text-[10px] font-bold">
+                            {event.category}
+                          </Badge>
+                          <span className="text-xs font-mono font-bold text-slate-700">
+                            {Number(event.entryFeeMinor) > 0
+                              ? formatETB(event.entryFeeMinor)
+                              : 'FREE ENTRY'}
+                          </span>
+                        </div>
+
+                        <div>
+                          <h3 className="font-bold text-base text-slate-900 leading-snug">{event.title}</h3>
+                          <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" /> {event.venue}
+                          </p>
+                        </div>
+
+                        <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed font-normal">
+                          {event.description}
+                        </p>
+
+                        <div className="pt-2 text-xs text-slate-500 flex items-center justify-between border-t border-slate-100">
+                          <span className="font-mono text-[11px]">
+                            {new Date(event.startsAt).toLocaleDateString(undefined, {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                          <span className="flex items-center gap-1 text-[11px]">
+                            <Users className="w-3 h-3 text-slate-400" />
+                            {event._count?.rsvps || 0} registered
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-5 pt-0">
+                      {isRsvpd ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const rsvp = myRsvps.find((r) => r.eventId === event.id);
+                            if (rsvp) {
+                              setActiveTicket({
+                                ticketCode: rsvp.ticketCode,
+                                eventTitle: event.title,
+                                venue: event.venue,
+                                date: new Date(event.startsAt).toLocaleString(),
+                              });
+                            }
+                          }}
+                          className="w-full h-9 font-bold text-xs border-emerald-300 text-emerald-800 bg-emerald-50/50"
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-1 text-emerald-600" /> View Digital Pass
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          disabled={rsvpingEventId === event.id}
+                          onClick={() => handleRsvp(event)}
+                          className="w-full h-9 font-bold text-xs"
+                        >
+                          {rsvpingEventId === event.id ? 'Securing Pass...' : 'RSVP & Get Pass'}
+                        </Button>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )
+        ) : (
+          /* My Passes Tab */
+          myRsvps.length === 0 ? (
+            <Card className="py-16 text-center border-slate-200">
+              <Ticket className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+              <p className="text-slate-600 font-semibold text-sm">No registered event passes yet.</p>
+              <p className="text-slate-400 text-xs mt-1">Browse scheduled events above to register for campus fests and hackathons.</p>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {myRsvps.map((rsvp) => (
+                <Card
+                  key={rsvp.id}
+                  className="p-5 border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-base text-slate-900">{rsvp.event.title}</h4>
+                      <Badge variant="success" className="text-[10px] font-bold">
+                        CONFIRMED PASS
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-slate-500 flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5 text-slate-400" /> {rsvp.event.venue} &bull;{' '}
+                      <span className="font-mono">{new Date(rsvp.event.startsAt).toLocaleString()}</span>
+                    </p>
+                    <p className="text-xs text-slate-600 font-mono">
+                      Pass Code: <strong className="text-slate-900 tracking-wider">{rsvp.ticketCode}</strong>
+                    </p>
+                  </div>
+                  <div>
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        setActiveTicket({
+                          ticketCode: rsvp.ticketCode,
+                          eventTitle: rsvp.event.title,
+                          venue: rsvp.event.venue,
+                          date: new Date(rsvp.event.startsAt).toLocaleString(),
+                        })
+                      }
+                      className="h-8 font-bold text-xs"
+                    >
+                      Show QR Pass
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )
+        )}
+      </main>
+
+      <Footer />
 
       {/* Ticket Pass Modal */}
       {activeTicket && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl relative text-center space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <Card className="max-w-sm w-full p-6 bg-white border-slate-200 shadow-2xl relative text-center space-y-4">
             <button
               onClick={() => setActiveTicket(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 font-bold text-lg"
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 font-bold"
             >
-              ✕
+              <X className="w-4 h-4" />
             </button>
 
-            <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto">
-              <Ticket className="w-6 h-6 text-indigo-600" />
+            <div className="w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto">
+              <Ticket className="w-6 h-6" />
             </div>
 
             <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
                 Official Campus Event Pass
               </span>
-              <h3 className="font-extrabold text-slate-900 text-lg leading-tight mt-1">
+              <h3 className="font-extrabold text-slate-900 text-base leading-tight mt-1">
                 {activeTicket.eventTitle}
               </h3>
             </div>
 
-            {/* QR Simulation Card */}
-            <div className="bg-slate-50 border-2 border-dashed border-slate-300 p-5 rounded-xl space-y-3">
-              <div className="w-36 h-36 mx-auto bg-white border border-slate-200 rounded-lg p-2 flex items-center justify-center shadow-inner">
-                {/* SVG QR Code Simulation */}
+            <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
+              <div className="w-32 h-32 mx-auto bg-white border border-slate-200 rounded-lg p-2 flex items-center justify-center shadow-xs">
                 <svg viewBox="0 0 100 100" className="w-full h-full text-slate-900 fill-current">
                   <path d="M0,0 h30 v30 h-30 z M10,10 h10 v10 h-10 z" />
                   <path d="M70,0 h30 v30 h-30 z M80,10 h10 v10 h-10 z" />
@@ -386,11 +390,11 @@ export default function EventsPage() {
                 </svg>
               </div>
 
-              <div className="font-mono text-base font-extrabold tracking-widest text-slate-900 bg-white py-1.5 rounded border border-slate-200">
+              <div className="font-mono text-sm font-extrabold tracking-widest text-slate-900 bg-white py-1.5 rounded border border-slate-200">
                 {activeTicket.ticketCode}
               </div>
 
-              <div className="text-[11px] text-slate-500 space-y-1">
+              <div className="text-[11px] text-slate-500 space-y-0.5">
                 <p className="flex items-center justify-center gap-1">
                   <MapPin className="w-3 h-3 text-slate-400" /> {activeTicket.venue}
                 </p>
@@ -401,16 +405,16 @@ export default function EventsPage() {
             </div>
 
             <p className="text-[11px] text-slate-400">
-              Valid for single attendee entry. Present to gate marshal upon arrival.
+              Valid for single entry. Present QR code at the hall entrance.
             </p>
 
-            <button
+            <Button
               onClick={() => setActiveTicket(null)}
-              className="w-full py-2.5 bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition"
+              className="w-full h-9 font-bold text-xs"
             >
               Done
-            </button>
-          </div>
+            </Button>
+          </Card>
         </div>
       )}
     </div>

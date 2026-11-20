@@ -1,13 +1,17 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Card } from '@/components/ui/card';
+import { Navbar } from '@/components/layout/navbar';
+import { Footer } from '@/components/layout/footer';
+import { Card, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { OrderStatusBadge } from '@/components/commerce/order-status-badge';
 import { formatETB } from '@/lib/utils';
 import { apiClient, API_BASE_URL } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
-import { Smartphone, Bell, Check } from 'lucide-react';
+import { Smartphone, RotateCw, ShoppingBag, X } from 'lucide-react';
 
 interface OrderItem {
   id: string;
@@ -26,6 +30,12 @@ interface Order {
   items: OrderItem[];
 }
 
+interface PaymentData {
+  providerReference: string;
+  ussdDial: string;
+  instructions: string;
+}
+
 export default function StudentOrdersPage() {
   const { user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -33,7 +43,7 @@ export default function StudentOrdersPage() {
 
   // Telebirr Pay Modal State
   const [payModalOrder, setPayModalOrder] = useState<Order | null>(null);
-  const [payData, setPayData] = useState<any | null>(null);
+  const [payData, setPayData] = useState<PaymentData | null>(null);
   const [payLoading, setPayLoading] = useState(false);
 
   const fetchOrders = async () => {
@@ -65,11 +75,10 @@ export default function StudentOrdersPage() {
           console.error('Error parsing SSE event:', e);
         }
       };
-    } catch (e) {
-      console.warn('SSE not supported or connection error, falling back to polling');
+    } catch {
+      // Fallback polling
     }
 
-    // Secondary fallback poll every 8 seconds
     const interval = setInterval(fetchOrders, 8000);
 
     return () => {
@@ -82,7 +91,7 @@ export default function StudentOrdersPage() {
     setPayModalOrder(order);
     setPayLoading(true);
     try {
-      const res = await apiClient<any>('/payments/initialize', {
+      const res = await apiClient<PaymentData>('/payments/initialize', {
         method: 'POST',
         body: JSON.stringify({
           orderId: order.id,
@@ -90,189 +99,207 @@ export default function StudentOrdersPage() {
         }),
       });
       setPayData(res);
-    } catch (err: any) {
-      alert(err.message || 'Payment initialization failed');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Payment initialization failed';
+      alert(msg);
     } finally {
       setPayLoading(false);
     }
   }
 
   async function handleConfirmMockPayment(ref: string) {
-    setPayLoading(true);
     try {
-      await apiClient<any>(`/payments/verify/${ref}`, { method: 'POST' });
-      alert('Payment verified successfully! Order marked as PAID.');
+      setPayLoading(true);
+      await apiClient('/payments/webhook/mock', {
+        method: 'POST',
+        body: JSON.stringify({
+          providerReference: ref,
+          status: 'success',
+        }),
+      });
+
       setPayModalOrder(null);
       setPayData(null);
-      fetchOrders();
-    } catch (err: any) {
-      alert(err.message || 'Verification failed');
+      await fetchOrders();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to confirm payment';
+      alert(msg);
     } finally {
       setPayLoading(false);
     }
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-extrabold text-slate-900">My Orders</h1>
-          <p className="text-slate-600 mt-1">
-            {user ? `Logged in as ${user.displayName} • ` : ''}Live status of your campus orders, Telebirr payment, and pickup notifications.
-          </p>
-        </div>
-        <button
-          onClick={fetchOrders}
-          className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition"
-        >
-          ↻ Refresh
-        </button>
-      </div>
+    <div className="min-h-screen flex flex-col justify-between bg-slate-50 text-slate-900 font-sans">
+      <Navbar />
 
-      {isLoading && orders.length === 0 ? (
-        <div className="text-center py-12 text-slate-500 font-medium">Loading your orders...</div>
-      ) : orders.length === 0 ? (
-        <Card className="text-center py-12">
-          <p className="text-slate-600 font-medium">You haven't placed any orders yet.</p>
-          <Link
-            href="/directory"
-            className="mt-3 inline-block text-sm font-semibold text-indigo-600 hover:text-indigo-700"
+      <main className="max-w-4xl mx-auto px-4 py-8 flex-1 w-full space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200 pb-4">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-black tracking-tight text-slate-900">Live Campus Orders</h1>
+            <p className="text-sm text-slate-600">
+              {user ? `Logged in as ${user.displayName} &bull; ` : ''}Real-time kitchen order queue and Telebirr settlement.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchOrders}
+            className="h-9 font-semibold text-xs border-slate-300 flex items-center gap-1.5 self-start sm:self-center"
           >
-            Explore campus shops & order food →
-          </Link>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {orders.map((order) => {
-            const isPaid = order.paymentStatus === 'paid';
-            return (
-              <Card key={order.id} className="flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
-                <div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-bold text-slate-900 text-lg">
-                      {order.business?.name || 'Campus Cafe'}
-                    </span>
-                    <OrderStatusBadge status={order.status} />
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                      isPaid ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                    }`}>
-                      {isPaid ? '✓ PAID' : 'UNPAID'}
-                    </span>
-                  </div>
-
-                  <div className="text-sm text-slate-700 mt-2 space-y-0.5">
-                    {order.items.map((i) => (
-                      <div key={i.id} className="text-slate-600">
-                        <span className="font-semibold text-slate-800">{i.quantity}x</span> {i.productName} (
-                        {formatETB(i.unitPriceMinor)} each)
-                      </div>
-                    ))}
-                  </div>
-
-                  <span className="text-xs text-slate-400 mt-2 block">
-                    Ordered at {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
-
-                <div className="text-right md:border-l md:pl-6 border-slate-100 flex flex-col justify-center items-end">
-                  <span className="text-xl font-black text-slate-900 block">{formatETB(order.totalMinor)}</span>
-                  
-                  {isPaid ? (
-                    <span className="text-xs text-emerald-600 font-bold mt-1 flex items-center gap-1">
-                      <Check className="w-3.5 h-3.5" /> Paid via Digital Payment
-                    </span>
-                  ) : (
-                    <div className="mt-2 flex gap-1.5">
-                      <button
-                        onClick={() => handleInitiatePayment(order, 'telebirr')}
-                        className="px-2.5 py-1 bg-emerald-600 text-white text-xs font-bold rounded hover:bg-emerald-700 transition flex items-center gap-1"
-                      >
-                        <Smartphone className="w-3.5 h-3.5" /> Pay Telebirr
-                      </button>
-                      <button
-                        onClick={() => handleInitiatePayment(order, 'cbe_birr')}
-                        className="px-2.5 py-1 bg-purple-600 text-white text-xs font-bold rounded hover:bg-purple-700 transition"
-                      >
-                        CBE Birr
-                      </button>
-                    </div>
-                  )}
-
-                  {order.status === 'ready' && (
-                    <span className="inline-flex items-center gap-1.5 mt-2 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md animate-bounce">
-                      Ready for Pickup! <Bell className="w-3.5 h-3.5 text-emerald-600" />
-                    </span>
-                  )}
-                </div>
-              </Card>
-            );
-          })}
+            <RotateCw className="w-3.5 h-3.5 text-slate-500" /> Refresh Queue
+          </Button>
         </div>
-      )}
 
-      {/* Payment Dialog */}
+        {isLoading && orders.length === 0 ? (
+          <div className="text-center py-20 text-slate-500 text-sm font-medium">
+            Loading your campus orders...
+          </div>
+        ) : orders.length === 0 ? (
+          <Card className="text-center py-16 p-6 border-slate-200">
+            <ShoppingBag className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+            <p className="text-slate-600 font-semibold text-sm">You haven&apos;t placed any orders yet.</p>
+            <Link
+              href="/directory"
+              className="mt-3 inline-block text-xs font-bold text-primary hover:underline"
+            >
+              Explore campus cafeterias & order food &rarr;
+            </Link>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {orders.map((order) => {
+              const isPaid = order.paymentStatus === 'paid';
+              return (
+                <Card
+                  key={order.id}
+                  className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 border-slate-200 hover:border-slate-300 transition"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <span className="font-bold text-slate-900 text-base">
+                        {order.business?.name || 'Campus Cafe'}
+                      </span>
+                      <OrderStatusBadge status={order.status} />
+                      <Badge
+                        variant={isPaid ? 'success' : 'warning'}
+                        className="text-[10px] font-bold uppercase tracking-wider"
+                      >
+                        {isPaid ? '✓ PAID' : 'UNPAID'}
+                      </Badge>
+                    </div>
+
+                    <div className="text-xs text-slate-600 space-y-0.5">
+                      {order.items.map((i) => (
+                        <div key={i.id}>
+                          <span className="font-bold text-slate-800">{i.quantity}x</span> {i.productName} (
+                          {formatETB(i.unitPriceMinor)} each)
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="text-[11px] text-slate-400">
+                      Placed at: {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} &bull;{' '}
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row md:flex-col items-start sm:items-center md:items-end justify-between gap-3 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100">
+                    <div className="text-left md:text-right">
+                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total</div>
+                      <div className="text-lg font-black text-slate-900 font-mono">
+                        {formatETB(order.totalMinor)}
+                      </div>
+                    </div>
+
+                    {!isPaid && order.status !== 'cancelled' && order.status !== 'rejected' && (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleInitiatePayment(order, 'telebirr')}
+                          className="h-8 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-1"
+                        >
+                          <Smartphone className="w-3.5 h-3.5" /> Pay Telebirr
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleInitiatePayment(order, 'cbe_birr')}
+                          className="h-8 text-xs font-bold border-purple-300 text-purple-900 bg-purple-50 hover:bg-purple-100"
+                        >
+                          CBE Birr
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </main>
+
+      <Footer />
+
+      {/* Telebirr / CBE Payment Modal */}
       {payModalOrder && payData && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
-              <div className="flex items-center gap-2">
-                <span className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">
-                  {payData.provider === 'telebirr' ? 'TB' : 'CBE'}
-                </span>
-                <h3 className="font-bold text-slate-900 text-base">
-                  Pay {payData.provider === 'telebirr' ? 'Telebirr' : 'CBE Birr'}
-                </h3>
-              </div>
-              <button
-                onClick={() => {
-                  setPayModalOrder(null);
-                  setPayData(null);
-                }}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                ✕
-              </button>
-            </div>
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <Card className="w-full max-w-sm p-6 bg-white border-slate-200 shadow-2xl relative space-y-4">
+            <button
+              onClick={() => {
+                setPayModalOrder(null);
+                setPayData(null);
+              }}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 font-bold"
+            >
+              <X className="w-4 h-4" />
+            </button>
 
-            <div className="text-center py-2 mb-4">
-              <div className="text-xs text-slate-400 uppercase font-semibold">Total Amount</div>
-              <div className="text-3xl font-black text-slate-900">{formatETB(payData.amountMinor)}</div>
-              <div className="text-xs text-slate-500 mt-1">
-                Ref: <code className="font-mono font-bold text-indigo-600">{payData.providerReference}</code>
+            <div className="text-center space-y-1">
+              <Badge variant="warning" className="text-[10px] uppercase font-bold">
+                Instant USSD Settlement
+              </Badge>
+              <CardTitle className="text-lg font-black text-slate-900">
+                {formatETB(payModalOrder.totalMinor)}
+              </CardTitle>
+              <div className="text-xs text-slate-500">
+                Ref: <code className="font-mono font-bold text-primary">{payData.providerReference}</code>
               </div>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-800 mb-6 space-y-2">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-800 space-y-2">
               <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                <Smartphone className="w-4 h-4 text-indigo-600" /> Payment Instruction:
+                <Smartphone className="w-4 h-4 text-primary" /> Payment Instruction:
               </div>
-              <div className="bg-white p-2.5 rounded-lg border border-slate-200 font-mono text-center font-bold text-indigo-700 text-sm">
+              <div className="bg-white p-2.5 rounded-lg border border-slate-200 font-mono text-center font-black text-primary text-sm select-all">
                 {payData.ussdDial}
               </div>
-              <p className="text-[11px] text-slate-600 leading-relaxed">
+              <p className="text-[11px] text-slate-600 leading-relaxed font-normal">
                 {payData.instructions}
               </p>
             </div>
 
-            <div className="flex gap-3">
-              <button
+            <div className="flex gap-2">
+              <Button
                 disabled={payLoading}
                 onClick={() => handleConfirmMockPayment(payData.providerReference)}
-                className="flex-1 py-2.5 bg-emerald-600 text-white font-bold rounded-xl text-sm hover:bg-emerald-700 transition disabled:opacity-50 shadow-sm"
+                className="flex-1 h-9 font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
               >
                 {payLoading ? 'Verifying...' : 'Simulate Verified Payment'}
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => {
                   setPayModalOrder(null);
                   setPayData(null);
                 }}
-                className="px-4 py-2.5 border border-slate-300 text-slate-700 font-semibold rounded-xl text-sm hover:bg-slate-50 transition"
+                className="h-9 text-xs font-semibold"
               >
                 Close
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
         </div>
       )}
     </div>
