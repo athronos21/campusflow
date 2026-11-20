@@ -45,10 +45,18 @@ async function bootstrap() {
     res.send(document);
   });
 
+  // Root redirect to Swagger docs and silent favicon handler
+  app.getHttpAdapter().get('/', (req: any, res: any) => {
+    res.redirect('/api/docs');
+  });
+  app.getHttpAdapter().get('/favicon.ico', (req: any, res: any) => {
+    res.status(204).end();
+  });
+
   const port = process.env.PORT || 4000;
   await app.listen(port);
-  console.log(`🚀 CampusFlow API is running on: http://localhost:${port}/api/v1`);
-  console.log(`📑 Swagger Documentation available at: http://localhost:${port}/api/docs`);
+  console.log(`[API] CampusFlow API is running on: http://localhost:${port}/api/v1`);
+  console.log(`[DOCS] Swagger Documentation available at: http://localhost:${port}/api/docs`);
 }
 
 bootstrap();
