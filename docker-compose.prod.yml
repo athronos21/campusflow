@@ -28,8 +28,15 @@ services:
         condition: service_healthy
     environment:
       PORT: 4000
+      NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-campusflow}:${POSTGRES_PASSWORD:-campusflow_secure_prod_pwd}@postgres:5432/${POSTGRES_DB:-campusflow_db}?schema=public
       JWT_SECRET: ${JWT_SECRET:-campusflow_prod_super_secret_min32chars}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-campusflow_betterauth_secret_min32chars}
+      TELEBIRR_APP_KEY: ${TELEBIRR_APP_KEY:-mock_telebirr_app_key_haramaya_prod}
+      TELEBIRR_PUBLIC_KEY: ${TELEBIRR_PUBLIC_KEY:-mock_telebirr_public_key_haramaya_prod}
+      TELEBIRR_SHORT_CODE: ${TELEBIRR_SHORT_CODE:-100200}
+      CBE_BIRR_MERCHANT_CODE: ${CBE_BIRR_MERCHANT_CODE:-CBE-HU-001}
+      CBE_BIRR_API_KEY: ${CBE_BIRR_API_KEY:-mock_cbe_api_key_haramaya_prod}
     ports:
       - '4000:4000'
 
@@ -40,10 +47,17 @@ services:
     container_name: campusflow-web-prod
     restart: always
     depends_on:
-      - api
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_started
     environment:
       PORT: 3000
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-campusflow}:${POSTGRES_PASSWORD:-campusflow_secure_prod_pwd}@postgres:5432/${POSTGRES_DB:-campusflow_db}?schema=public
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api/v1}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-campusflow_betterauth_secret_min32chars}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
     ports:
       - '3000:3000'
 

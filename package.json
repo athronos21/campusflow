@@ -22,6 +22,7 @@
     "test:e2e": "ts-node scripts/test-e2e-flow.ts",
     "test:mobile": "node -e \"const { execSync } = require('child_process'); execSync('flutter test', { cwd: 'apps/mobile', stdio: 'inherit' });\"",
     "analyze:mobile": "node -e \"const { execSync } = require('child_process'); execSync('flutter analyze', { cwd: 'apps/mobile', stdio: 'inherit' });\"",
+    "deploy:staging": "powershell -ExecutionPolicy Bypass -File scripts/deploy-staging.ps1",
     "db:studio": "prisma studio",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\""
   },
