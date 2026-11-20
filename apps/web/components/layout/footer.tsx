@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { ShieldCheck, Bus, Utensils, Home, Calendar, BookOpen, Wrench, Store, ShieldAlert } from 'lucide-react';
+import { ShieldCheck, Bus, Utensils, Home, Calendar, BookOpen, Wrench, Store, ShieldAlert, Tag } from 'lucide-react';
 
 export function Footer() {
   return (
@@ -64,6 +64,18 @@ export function Footer() {
                 <Link href="/bookings" className="hover:text-indigo-600 transition flex items-center gap-1.5">
                   <Wrench className="w-3.5 h-3.5 text-slate-400" />
                   <span>Print & Repair Appointments</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/marketplace" className="hover:text-indigo-600 transition flex items-center gap-1.5">
+                  <Tag className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Student Marketplace</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/maintenance" className="hover:text-indigo-600 transition flex items-center gap-1.5">
+                  <Wrench className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Dorm Maintenance Orders</span>
                 </Link>
               </li>
             </ul>

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/business.dart';
 import '../../services/business_service.dart';
+import '../../widgets/ai_assistant_sheet.dart';
 import 'shop_detail_screen.dart';
 import '../transport/transport_screen.dart';
 import '../housing/housing_screen.dart';
@@ -26,6 +27,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   List<Business> _businesses = [];
   bool _isLoading = true;
   String _searchQuery = '';
+  bool _isAmharic = false;
 
   @override
   void initState() {
@@ -42,6 +44,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
     });
   }
 
+  void _openAiAssistant() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const AiAssistantSheet(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final filteredMerchants = _businesses
@@ -50,6 +61,16 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openAiAssistant,
+        backgroundColor: AppColors.primary,
+        elevation: 6,
+        icon: const Icon(Icons.smart_toy_rounded, color: Colors.amber),
+        label: Text(
+          _isAmharic ? 'የካምፓስ AI ረዳት' : 'Campus AI Guide',
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+        ),
+      ),
       body: SafeArea(
         child: _isLoading
             ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
@@ -86,27 +107,37 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                     const SizedBox(width: 12),
                                     Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: const [
-                                        Text('Selam, Tigist 👋', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17)),
-                                        Text('Haramaya University · Main Campus', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500)),
+                                      children: [
+                                        Text(_isAmharic ? 'ሰላም፣ ትዕግሥት 👋' : 'Selam, Tigist 👋', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17)),
+                                        Text(_isAmharic ? 'ሐረማያ ዩኒቨርሲቲ · ዋና ግቢ' : 'Haramaya University · Main Campus', style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500)),
                                       ],
                                     ),
                                   ],
                                 ),
                                 Row(
                                   children: [
+                                    // Amharic 🇪🇹 / English 🇬🇧 Toggle Chip
+                                    InkWell(
+                                      onTap: () => setState(() => _isAmharic = !_isAmharic),
+                                      borderRadius: BorderRadius.circular(16),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white24,
+                                          borderRadius: BorderRadius.circular(16),
+                                        ),
+                                        child: Text(
+                                          _isAmharic ? '🇪🇹 አማርኛ' : '🇬🇧 EN',
+                                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
                                     IconButton(
                                       style: IconButton.styleFrom(backgroundColor: Colors.white12),
                                       icon: const Icon(Icons.badge_outlined, color: Colors.white),
                                       onPressed: () {
                                         Navigator.push(context, MaterialPageRoute(builder: (context) => const DigitalIdScreen()));
-                                      },
-                                    ),
-                                    IconButton(
-                                      style: IconButton.styleFrom(backgroundColor: Colors.white12),
-                                      icon: const Icon(Icons.notifications_none_rounded, color: Colors.white),
-                                      onPressed: () {
-                                        Navigator.push(context, MaterialPageRoute(builder: (context) => const AnnouncementsScreen()));
                                       },
                                     ),
                                   ],
@@ -131,10 +162,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               ),
                               child: TextField(
                                 onChanged: (val) => setState(() => _searchQuery = val.toLowerCase().trim()),
-                                decoration: const InputDecoration(
-                                  icon: Icon(Icons.search_rounded, color: AppColors.primary, size: 22),
-                                  hintText: 'Search cafeterias, print shops, study notes...',
-                                  hintStyle: TextStyle(fontSize: 13, color: AppColors.textMuted),
+                                decoration: InputDecoration(
+                                  icon: const Icon(Icons.search_rounded, color: AppColors.primary, size: 22),
+                                  hintText: _isAmharic ? 'ካፌዎችን፣ የህትመት ሱቆችን፣ ማስታወሻዎችን ይፈልጉ...' : 'Search cafeterias, print shops, study notes...',
+                                  hintStyle: const TextStyle(fontSize: 13, color: AppColors.textMuted),
                                   border: InputBorder.none,
                                 ),
                               ),
@@ -151,33 +182,36 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Campus Super Services', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                            Text(
+                              _isAmharic ? 'የካምፓስ አገልግሎቶች' : 'Campus Super Services',
+                              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                            ),
                             const SizedBox(height: 14),
                             SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
                               child: Row(
                                 children: [
-                                  _buildModernServiceCard(context, icon: Icons.campaign_rounded, color: const Color(0xFF2563EB), bg: const Color(0xFFEFF6FF), label: 'Notices', screen: const AnnouncementsScreen()),
+                                  _buildModernServiceCard(context, icon: Icons.campaign_rounded, color: const Color(0xFF2563EB), bg: const Color(0xFFEFF6FF), label: _isAmharic ? 'ማስታወቂያዎች' : 'Notices', screen: const AnnouncementsScreen()),
                                   const SizedBox(width: 12),
-                                  _buildModernServiceCard(context, icon: Icons.storefront_rounded, color: const Color(0xFF7C3AED), bg: const Color(0xFFF5F3FF), label: 'Marketplace', screen: const MarketplaceScreen()),
+                                  _buildModernServiceCard(context, icon: Icons.storefront_rounded, color: const Color(0xFF7C3AED), bg: const Color(0xFFF5F3FF), label: _isAmharic ? 'ገበያ' : 'Marketplace', screen: const MarketplaceScreen()),
                                   const SizedBox(width: 12),
-                                  _buildModernServiceCard(context, icon: Icons.account_balance_wallet_rounded, color: const Color(0xFF059669), bg: const Color(0xFFECFDF5), label: 'Campus Pay', screen: const WalletScreen()),
+                                  _buildModernServiceCard(context, icon: Icons.account_balance_wallet_rounded, color: const Color(0xFF059669), bg: const Color(0xFFECFDF5), label: _isAmharic ? 'ካምፓስ ፔይ' : 'Campus Pay', screen: const WalletScreen()),
                                   const SizedBox(width: 12),
-                                  _buildModernServiceCard(context, icon: Icons.badge_rounded, color: const Color(0xFFD97706), bg: const Color(0xFFFFFBEB), label: 'Digital ID', screen: const DigitalIdScreen()),
+                                  _buildModernServiceCard(context, icon: Icons.badge_rounded, color: const Color(0xFFD97706), bg: const Color(0xFFFFFBEB), label: _isAmharic ? 'መታወቂያ' : 'Digital ID', screen: const DigitalIdScreen()),
                                   const SizedBox(width: 12),
-                                  _buildModernServiceCard(context, icon: Icons.map_rounded, color: const Color(0xFF0D9488), bg: const Color(0xFFF0FDFA), label: 'Campus Map', screen: const CampusMapScreen()),
+                                  _buildModernServiceCard(context, icon: Icons.map_rounded, color: const Color(0xFF0D9488), bg: const Color(0xFFF0FDFA), label: _isAmharic ? 'የግቢው ካርታ' : 'Campus Map', screen: const CampusMapScreen()),
                                   const SizedBox(width: 12),
-                                  _buildModernServiceCard(context, icon: Icons.calculate_rounded, color: const Color(0xFF4F46E5), bg: const Color(0xFFEEF2FF), label: 'GPA & Timetable', screen: const AcademicScreen()),
+                                  _buildModernServiceCard(context, icon: Icons.calculate_rounded, color: const Color(0xFF4F46E5), bg: const Color(0xFFEEF2FF), label: _isAmharic ? 'GPA እና ክፍለ-ጊዜ' : 'GPA & Timetable', screen: const AcademicScreen()),
                                   const SizedBox(width: 12),
-                                  _buildModernServiceCard(context, icon: Icons.build_circle_rounded, color: const Color(0xFFEA580C), bg: const Color(0xFFFFF7ED), label: 'Dorm Repairs', screen: const MaintenanceScreen()),
+                                  _buildModernServiceCard(context, icon: Icons.build_circle_rounded, color: const Color(0xFFEA580C), bg: const Color(0xFFFFF7ED), label: _isAmharic ? 'የዶርም ጥገና' : 'Dorm Repairs', screen: const MaintenanceScreen()),
                                   const SizedBox(width: 12),
-                                  _buildModernServiceCard(context, icon: Icons.emergency_rounded, color: const Color(0xFFDC2626), bg: const Color(0xFFFEF2F2), label: '24/7 SOS', screen: const EmergencyScreen()),
+                                  _buildModernServiceCard(context, icon: Icons.emergency_rounded, color: const Color(0xFFDC2626), bg: const Color(0xFFFEF2F2), label: _isAmharic ? '24/7 አደጋ' : '24/7 SOS', screen: const EmergencyScreen()),
                                   const SizedBox(width: 12),
-                                  _buildModernServiceCard(context, icon: Icons.directions_bus_rounded, color: const Color(0xFFB45309), bg: const Color(0xFFFEF3C7), label: 'Transport', screen: const TransportScreen()),
+                                  _buildModernServiceCard(context, icon: Icons.directions_bus_rounded, color: const Color(0xFFB45309), bg: const Color(0xFFFEF3C7), label: _isAmharic ? 'ትራንስፖርት' : 'Transport', screen: const TransportScreen()),
                                   const SizedBox(width: 12),
-                                  _buildModernServiceCard(context, icon: Icons.home_work_rounded, color: const Color(0xFF0F766E), bg: const Color(0xFFCCFBF1), label: 'Housing', screen: const HousingScreen()),
+                                  _buildModernServiceCard(context, icon: Icons.home_work_rounded, color: const Color(0xFF0F766E), bg: const Color(0xFFCCFBF1), label: _isAmharic ? 'መኖሪያ' : 'Housing', screen: const HousingScreen()),
                                   const SizedBox(width: 12),
-                                  _buildModernServiceCard(context, icon: Icons.event_rounded, color: const Color(0xFF4338CA), bg: const Color(0xFFE0E7FF), label: 'Events', screen: const EventsScreen()),
+                                  _buildModernServiceCard(context, icon: Icons.event_rounded, color: const Color(0xFF4338CA), bg: const Color(0xFFE0E7FF), label: _isAmharic ? 'ኩነቶች' : 'Events', screen: const EventsScreen()),
                                 ],
                               ),
                             ),
@@ -193,10 +227,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Verified Campus Merchants', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                            Text(
+                              _isAmharic ? 'የተረጋገጡ የግቢው ነጋዴዎች' : 'Verified Campus Merchants',
+                              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                            ),
                             TextButton(
                               onPressed: _loadBusinesses,
-                              child: const Text('Refresh', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                              child: Text(_isAmharic ? 'አድስ' : 'Refresh', style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
                             ),
                           ],
                         ),
@@ -217,7 +254,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               ),
                             ),
                     ),
-                    const SliverToBoxAdapter(child: SizedBox(height: 30)),
+                    const SliverToBoxAdapter(child: SizedBox(height: 80)),
                   ],
                 ),
               ),
@@ -283,18 +320,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       children: [
                         Text(business.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textPrimary)),
                         const SizedBox(height: 2),
-                        const Text('Main Campus Lounge · Open', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                        Text(_isAmharic ? 'ዋና ግቢ · ክፍት' : 'Main Campus Lounge · Open', style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
                       ],
                     ),
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(color: AppColors.successBg, borderRadius: BorderRadius.circular(8)),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(Icons.verified, color: AppColors.success, size: 12),
-                        SizedBox(width: 4),
-                        Text('VERIFIED', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.success)),
+                        const Icon(Icons.verified, color: AppColors.success, size: 12),
+                        const SizedBox(width: 4),
+                        Text(_isAmharic ? 'የተረጋገጠ' : 'VERIFIED', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.success)),
                       ],
                     ),
                   ),
@@ -302,7 +339,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                business.description ?? 'Fresh food, coffee, and campus essentials available for instant pickup.',
+                business.description ?? (_isAmharic ? 'ትኩስ ምግብ፣ ቡና እና የካምፓስ ፍላጎቶች።' : 'Fresh food, coffee, and campus essentials available for instant pickup.'),
                 style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -312,12 +349,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 children: [
                   const Icon(Icons.star_rounded, size: 16, color: Colors.amber),
                   const SizedBox(width: 4),
-                  const Text('4.8 (120+ reviews)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                  Text(_isAmharic ? '4.8 (120+ አስተያየቶች)' : '4.8 (120+ reviews)', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
                   const Spacer(),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(10)),
-                    child: const Text('Explore Menu →', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+                    child: Text(_isAmharic ? 'ሜኑ ይመልከቱ →' : 'Explore Menu →', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
                   ),
                 ],
               ),
@@ -353,42 +390,42 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text('Haramaya Campus Cafe & Snack', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textPrimary)),
-                      SizedBox(height: 2),
-                      Text('Near Student Lounge · Open', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                    children: [
+                      Text(_isAmharic ? 'ሐረማያ ግቢ ካፌ እና ምግቦች' : 'Haramaya Campus Cafe & Snack', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textPrimary)),
+                      const SizedBox(height: 2),
+                      Text(_isAmharic ? 'ተማሪዎች ላውንጅ አጠገብ · ክፍት' : 'Near Student Lounge · Open', style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
                     ],
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(color: AppColors.successBg, borderRadius: BorderRadius.circular(8)),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.verified, color: AppColors.success, size: 12),
-                      SizedBox(width: 4),
-                      Text('VERIFIED', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.success)),
+                      const Icon(Icons.verified, color: AppColors.success, size: 12),
+                      const SizedBox(width: 4),
+                      Text(_isAmharic ? 'የተረጋገጠ' : 'VERIFIED', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.success)),
                     ],
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Fresh traditional Ethiopian coffee, snacks, breakfast, and fast food near Student Lounge.',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
+            Text(
+              _isAmharic ? 'ትኩስ የኢትዮጵያ ባህላዊ ቡና፣ ቁርስ እና ፈጣን ምግቦች ከተማሪዎች ላውንጅ አጠገብ።' : 'Fresh traditional Ethiopian coffee, snacks, breakfast, and fast food near Student Lounge.',
+              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
             ),
             const SizedBox(height: 14),
             Row(
               children: [
                 const Icon(Icons.star_rounded, size: 16, color: Colors.amber),
                 const SizedBox(width: 4),
-                const Text('4.9 (240+ reviews)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                Text(_isAmharic ? '4.9 (240+ አስተያየቶች)' : '4.9 (240+ reviews)', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
                 const Spacer(),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(10)),
-                  child: const Text('Explore Menu →', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+                  child: Text(_isAmharic ? 'ሜኑ ይመልከቱ →' : 'Explore Menu →', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
               ],
             ),
