@@ -10,6 +10,7 @@ COPY packages/contracts/package.json ./packages/contracts/
 COPY packages/design-system/package.json ./packages/design-system/
 COPY packages/config/package.json ./packages/config/
 COPY apps/web/package.json ./apps/web/
+COPY prisma ./prisma/
 
 RUN pnpm install
 
@@ -18,6 +19,7 @@ COPY packages/design-system ./packages/design-system
 COPY packages/config ./packages/config
 COPY apps/web ./apps/web
 
+RUN pnpm db:generate
 RUN pnpm --filter @campusflow/contracts build
 RUN pnpm --filter @campusflow/web build
 
@@ -31,6 +33,7 @@ RUN npm install -g pnpm@9.1.0
 
 COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml ./
 COPY apps/web/package.json ./apps/web/
+COPY prisma ./prisma/
 
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages/contracts/dist ./packages/contracts/dist

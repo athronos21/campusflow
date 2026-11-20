@@ -1,0 +1,135 @@
+name: CampusFlow CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  monorepo-ci:
+    name: Monorepo Typecheck, Tests & Build
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: campusflow
+          POSTGRES_PASSWORD: campusflow_dev_password
+          POSTGRES_DB: campusflow_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm 9.x
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9.1.0
+          run_install: false
+
+      - name: Get pnpm Store Directory
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm Cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install Monorepo Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client & Push Database Schema
+        env:
+          DATABASE_URL: postgresql://campusflow:campusflow_dev_password@localhost:5432/campusflow_db?schema=public
+        run: |
+          pnpm db:generate
+          pnpm db:push
+          pnpm db:seed
+
+      - name: Run Turborepo Typecheck
+        run: pnpm typecheck
+
+      - name: Run Payment Gateway Cryptography Tests
+        run: pnpm test:payments
+
+      - name: Run End-to-End Integration Suite
+        env:
+          DATABASE_URL: postgresql://campusflow:campusflow_dev_password@localhost:5432/campusflow_db?schema=public
+          JWT_SECRET: test_jwt_secret_32_characters_long_min
+        run: pnpm test:e2e
+
+      - name: Build Web & API Packages
+        env:
+          DATABASE_URL: postgresql://campusflow:campusflow_dev_password@localhost:5432/campusflow_db?schema=public
+          NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
+          BETTER_AUTH_SECRET: test_better_auth_secret_32_chars_min
+          BETTER_AUTH_URL: http://localhost:3000
+        run: |
+          pnpm --filter @campusflow/contracts build
+          pnpm --filter @campusflow/api build
+          pnpm --filter @campusflow/web build
+
+  mobile-ci:
+    name: Flutter Mobile Analyze & Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java for Android Toolchain
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Mobile Dependencies
+        working-directory: apps/mobile
+        run: flutter pub get
+
+      - name: Analyze Flutter Mobile Code
+        working-directory: apps/mobile
+        run: flutter analyze
+
+      - name: Run Flutter Unit Tests
+        working-directory: apps/mobile
+        run: flutter test
+
+  docker-validation:
+    name: Docker Production Config Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Validate Production Docker Compose
+        run: docker compose -f docker-compose.prod.yml config

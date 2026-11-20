@@ -1,0 +1,16 @@
+{
+  "name": "CampusFlow — Haramaya University",
+  "short_name": "CampusFlow",
+  "description": "Unified campus marketplace, bus ticketing, and student services platform for Ethiopian higher education.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

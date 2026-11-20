@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { InitializePaymentDto, PaymentWebhookDto } from './dto/payments.dto';
 import { randomBytes } from 'crypto';
+import { generateTelebirrSignature, verifyTelebirrSignature, verifyCbeBirrSignature } from './gateway-crypto';
 
 @Injectable()
 export class PaymentsService {
@@ -55,18 +56,39 @@ export class PaymentsService {
 
     const amountInBirr = (Number(amountMinor) / 100).toFixed(2);
 
+    const gatewayMode = process.env.PAYMENT_GATEWAY_MODE || 'simulation';
+    const telebirrAppId = process.env.TELEBIRR_APP_ID || 'CAMPUSFLOW_HU_SANDBOX';
+    const telebirrAppKey = process.env.TELEBIRR_APP_KEY || 'hu_telebirr_dev_secret_key_2026';
+    const telebirrShortCode = process.env.TELEBIRR_SHORT_CODE || '251911223344';
+
     let instructions = '';
     let ussdDial = '';
     let qrData = '';
+    let checkoutUrl = '';
+    let signature = '';
 
     if (dto.provider === 'telebirr') {
-      ussdDial = `*127*1*251911223344*${amountInBirr}#`;
-      qrData = `telebirr://pay?to=CAMPUSFLOW_HU&amount=${amountInBirr}&ref=${providerRef}`;
-      instructions = `Dial ${ussdDial} on your Ethio Telecom phone or scan with Telebirr App. Use Reference: ${providerRef}`;
+      const payloadToSign = {
+        appId: telebirrAppId,
+        shortCode: telebirrShortCode,
+        outTradeNo: providerRef,
+        totalAmount: amountInBirr,
+        nonce: randomBytes(8).toString('hex'),
+        timestamp: Date.now().toString(),
+      };
+      signature = generateTelebirrSignature(payloadToSign, telebirrAppKey);
+
+      ussdDial = `*127*1*${telebirrShortCode}*${amountInBirr}#`;
+      qrData = `telebirr://pay?to=${telebirrShortCode}&amount=${amountInBirr}&ref=${providerRef}&sign=${signature}`;
+      checkoutUrl = gatewayMode === 'live'
+        ? `https://telebirr.ethiotelecom.et/h5/pay?outTradeNo=${providerRef}&sign=${signature}`
+        : `https://sandbox.telebirr.et/pay?outTradeNo=${providerRef}&sign=${signature}`;
+      instructions = `Dial ${ussdDial} on your Ethio Telecom phone, scan QR with Telebirr App, or pay directly via link. Ref: ${providerRef}`;
     } else if (dto.provider === 'cbe_birr') {
+      const cbeShortCode = process.env.CBE_BIRR_SHORT_CODE || '882194';
       ussdDial = `*847#`;
-      qrData = `cbebirr://pay?shortcode=882194&amount=${amountInBirr}&ref=${providerRef}`;
-      instructions = `Dial *847# or open CBE Birr App. Choose Pay Merchant / Bill (Short code: 882194) and enter Ref: ${providerRef}`;
+      qrData = `cbebirr://pay?shortcode=${cbeShortCode}&amount=${amountInBirr}&ref=${providerRef}`;
+      instructions = `Dial *847# or open CBE Birr App. Choose Pay Merchant / Bill (Short code: ${cbeShortCode}) and enter Ref: ${providerRef}`;
     } else {
       instructions = 'Pay in cash directly at pickup counter or campus departure terminal upon ticket verification.';
     }
@@ -81,6 +103,9 @@ export class PaymentsService {
       status: payment.status,
       ussdDial,
       qrData,
+      checkoutUrl,
+      signature,
+      gatewayMode,
       instructions,
     };
   }
@@ -167,6 +192,35 @@ export class PaymentsService {
   }
 
   async handleWebhook(dto: PaymentWebhookDto) {
+    const gatewayMode = process.env.PAYMENT_GATEWAY_MODE || 'simulation';
+    const telebirrAppKey = process.env.TELEBIRR_APP_KEY || 'hu_telebirr_dev_secret_key_2026';
+    const cbeSecret = process.env.CBE_BIRR_API_KEY || 'hu_cbe_dev_secret_key_2026';
+
+    if (dto.signature) {
+      if (dto.provider === 'telebirr') {
+        const isValid = verifyTelebirrSignature(
+          {
+            provider: dto.provider,
+            providerReference: dto.providerReference,
+            status: dto.status,
+            orderId: dto.orderId,
+            reservationId: dto.reservationId,
+          },
+          dto.signature,
+          telebirrAppKey,
+        );
+        if (!isValid && gatewayMode !== 'simulation') {
+          throw new UnauthorizedException('Invalid Telebirr webhook signature');
+        }
+      } else if (dto.provider === 'cbe_birr') {
+        const payloadString = `${dto.provider}:${dto.providerReference}:${dto.status}`;
+        const isValid = verifyCbeBirrSignature(payloadString, dto.signature, cbeSecret);
+        if (!isValid && gatewayMode !== 'simulation') {
+          throw new UnauthorizedException('Invalid CBE Birr webhook signature');
+        }
+      }
+    }
+
     const payment = await this.prisma.payment.findFirst({
       where: {
         provider: dto.provider,
