@@ -39,20 +39,28 @@
 
 ```text
 campusflow/
+├── .agents/skills/              # 15 Superpowers engineering skills + Impeccable design system
+├── .github/workflows/ci.yml     # Automated CI pipeline (lint, typecheck, tests, Docker build)
 ├── apps/
 │   ├── api/                     # NestJS 10 REST API with OpenAPI Swagger docs
-│   ├── web/                     # Next.js 14 App Router (React, Tailwind CSS, Lucide)
-│   └── mobile/                  # Flutter 3.x Mobile App (Android & iOS with Dio HTTP client)
+│   ├── web/                     # Next.js 14 App Router (React, Tailwind CSS, Better Auth, shadcn/ui)
+│   └── mobile/                  # Flutter 3.47+ Mobile App (Amharic/English, AI guide, Dio client)
 ├── packages/
 │   ├── contracts/               # Shared Zod schemas, DTOs & TypeScript types
 │   ├── config/                  # Shared TypeScript, ESLint, Prettier configs
 │   └── design-system/           # Brand tokens and Ethiopian theme palettes
 ├── prisma/
-│   ├── schema.prisma            # Multi-tenant PostgreSQL schema
-│   └── seed.ts                  # Seed script (campuses, merchants, buses, housing, events, notes)
+│   ├── schema.prisma            # Multi-tenant PostgreSQL schema (Prisma 5 & Better Auth adapter)
+│   └── seed.ts                  # Fully idempotent seed script (merchants, buses, housing, events)
 ├── scripts/
-│   └── test-e2e-flow.ts         # 13-point automated End-to-End integration test suite
-├── docker-compose.yml           # Local PostgreSQL 16 container definition
+│   ├── dev-all.ts               # Background multi-process runner (Web + API + DB + Mobile)
+│   ├── doctor.ts                # System toolchain & environment diagnostic suite
+│   ├── test-e2e-flow.ts         # 13-point automated End-to-End integration test suite
+│   ├── test-payment-crypto.ts   # Telebirr & CBE Birr HMAC-SHA256 signature test suite
+│   ├── deploy-staging.ps1       # Automated staging deployment script (PowerShell)
+│   └── deploy-staging.sh        # Automated staging deployment script (POSIX Bash)
+├── docker-compose.yml           # Local development PostgreSQL 16 container definition
+├── docker-compose.prod.yml      # Multi-stage production container stack (API, Web, DB)
 ├── package.json                 # Monorepo workspace configuration
 ├── pnpm-workspace.yaml          # pnpm workspace mapping
 └── turbo.json                   # Turborepo pipeline orchestration
@@ -93,10 +101,17 @@ pnpm db:seed
 ```
 
 ### 5. Run Automated Test Suites
-Verify all 10 services, database operations, and mobile unit tests:
+Verify all 10 services, database operations, payment cryptography, and mobile unit tests:
 ```bash
-# End-to-End integration test suite (Database & Services)
+# End-to-End integration test suite (Database, Commerce & Services)
 pnpm test:e2e
+
+# Payment Gateway Cryptography (Telebirr & CBE Birr HMAC-SHA256 signatures)
+pnpm test:payments
+
+# Monorepo typecheck & lint
+pnpm typecheck
+pnpm lint
 
 # Flutter mobile unit tests (Currency formatters & precision)
 pnpm test:mobile
@@ -104,9 +119,22 @@ pnpm test:mobile
 # Flutter mobile static analyzer check
 pnpm analyze:mobile
 ```
-*Expected Output:* `ALL END-TO-END VERIFICATION CHECKS PASSED (13/13)` and `All tests passed! (2/2)`
+*Expected Output:* `ALL END-TO-END VERIFICATION CHECKS PASSED (13/13)`, `All 3 Payment Gateway Crypto checks passed cleanly!`, and `All tests passed! (2/2)`
 
-### 6. Launch Development Servers
+### 6. Automated Staging Deployment
+Deploy the full multi-stage production container stack with schema synchronization, idempotent database seeding, and health verification:
+```bash
+# Automated staging deploy via PowerShell (Windows)
+pnpm deploy:staging
+
+# Automated staging deploy via Bash (Linux/macOS/CI)
+bash scripts/deploy-staging.sh
+
+# Or start directly with Docker Compose
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+### 7. Launch Development Servers
 ```bash
 pnpm dev
 ```
@@ -114,7 +142,7 @@ pnpm dev
 * **API Documentation (Swagger):** [http://localhost:4000/api/docs](http://localhost:4000/api/docs)
 * **Prisma Studio:** `pnpm db:studio` (available at [http://localhost:5555](http://localhost:5555))
 
-### 7. Run Flutter Mobile App (Android)
+### 8. Run Flutter Mobile App (Android)
 ```bash
 cd apps/mobile
 flutter pub get
