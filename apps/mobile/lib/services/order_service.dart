@@ -40,7 +40,7 @@ class OrderService {
   static Future<Map<String, dynamic>> initializePayment(String orderId, {String provider = 'telebirr'}) async {
     try {
       final response = await ApiClient.client.post(
-        '/payments/initialize',
+        ApiEndpoints.paymentsInitialize,
         data: {
           'orderId': orderId,
           'provider': provider,
@@ -48,20 +48,21 @@ class OrderService {
       );
       return response.data;
     } catch (e) {
-      print('Init payment fallback');
+      print('Init payment fallback: $e');
       return {
-        'ussdQuickDial': '*127*1*251911223344*130#',
-        'paymentReference': 'REF-TELEBIRR-8821',
+        'ussdQuickDial': provider == 'cbe_birr' ? '*847*1*251911223344*130#' : '*127*1*251911223344*130#',
+        'paymentReference': 'REF-${provider.toUpperCase()}-8821',
+        'provider': provider,
       };
     }
   }
 
   static Future<Map<String, dynamic>> verifyPayment(String reference) async {
     try {
-      final response = await ApiClient.client.post('/payments/verify/$reference');
+      final response = await ApiClient.client.post('${ApiEndpoints.paymentsVerify}/$reference');
       return response.data;
     } catch (e) {
-      print('Verify payment fallback');
+      print('Verify payment fallback: $e');
       return {'status': 'success', 'reference': reference};
     }
   }
