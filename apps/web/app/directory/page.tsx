@@ -170,17 +170,17 @@ export default function DirectoryPage() {
 
         {/* Header */}
         <div className="space-y-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-bold text-slate-500 tracking-wide uppercase">
-              Haramaya University Pilot
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
+              Campus Directory & Shops
+            </h1>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Haramaya Pilot
             </span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
-            Campus Directory & Shops
-          </h1>
           <p className="text-sm text-slate-600 max-w-2xl leading-relaxed">
-            Verified campus cafeterias, printing centers, and stationery stores serving students and faculty.
+            Verified campus cafeterias, printing centers, and stationery stores serving students and faculty across Haramaya University.
           </p>
         </div>
 
