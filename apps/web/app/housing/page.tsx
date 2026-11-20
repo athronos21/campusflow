@@ -223,6 +223,7 @@ export default function HousingPage() {
                   <div>
                     <div className="relative h-44 bg-slate-100 w-full overflow-hidden">
                       {listing.imageUrl ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
                         <img
                           src={listing.imageUrl}
                           alt={listing.title}

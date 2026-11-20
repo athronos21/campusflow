@@ -195,7 +195,7 @@ export default function MerchantDashboardPage() {
                 <Badge variant="secondary">Manual Verification</Badge>
               </div>
               <p className="text-slate-500 text-[11px]">
-                Collect physical cash from the student before tapping "Mark as Completed" on the queue screen.
+                Collect physical cash from the student before tapping &quot;Mark as Completed&quot; on the queue screen.
               </p>
             </div>
           </CardContent>

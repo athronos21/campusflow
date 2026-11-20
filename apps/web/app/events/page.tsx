@@ -207,6 +207,7 @@ export default function EventsPage() {
                     <div>
                       {event.bannerUrl ? (
                         <div className="h-44 bg-slate-100 overflow-hidden">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={event.bannerUrl}
                             alt={event.title}

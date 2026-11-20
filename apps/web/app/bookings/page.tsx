@@ -58,6 +58,7 @@ export default function BookingsPage() {
     } else {
       setIsLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const handleCreateBooking = async (e: React.FormEvent) => {

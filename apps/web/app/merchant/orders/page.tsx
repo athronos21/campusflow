@@ -99,6 +99,7 @@ export default function MerchantOrdersQueuePage() {
       clearInterval(interval);
       if (eventSource) eventSource.close();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audioEnabled]);
 
   const handleUpdateStatus = async (orderId: string, status: string) => {

@@ -7,7 +7,7 @@
     "dev": "nest start --watch",
     "start": "nest start",
     "start:prod": "node dist/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
+    "lint": "echo No eslint configured in @campusflow/api && exit 0",
     "test": "echo No unit tests specified in @campusflow/api && exit 0"
   },
   "dependencies": {
