@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'core/constants/app_colors.dart';
+import 'core/theme/app_theme.dart';
 import 'screens/home_navigation_screen.dart';
 
 void main() {
@@ -22,18 +23,7 @@ class CampusFlowApp extends StatelessWidget {
     return MaterialApp(
       title: 'CampusFlow',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        primaryColor: AppColors.primary,
-        scaffoldBackgroundColor: AppColors.background,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.primary,
-          primary: AppColors.primary,
-          secondary: AppColors.warning,
-          surface: AppColors.surface,
-        ),
-        fontFamily: 'Roboto',
-      ),
+      theme: AppTheme.lightTheme,
       home: const HomeNavigationScreen(),
     );
   }
