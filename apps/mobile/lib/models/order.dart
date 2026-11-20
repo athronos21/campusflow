@@ -33,7 +33,7 @@ class Order {
   final String businessId;
   final String? businessName;
   final String status;
-  final String paymentStatus;
+  String paymentStatus;
   final int totalMinor;
   final String currency;
   final DateTime createdAt;
