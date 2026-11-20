@@ -53,6 +53,31 @@ async function bootstrap() {
     res.status(204).end();
   });
 
+  // Base /api/v1 service health and discovery response
+  app.getHttpAdapter().get('/api/v1', (req: any, res: any) => {
+    res.json({
+      name: 'CampusFlow REST API',
+      version: '1.0.0',
+      status: 'healthy',
+      institution: 'Haramaya University (Main Campus, Bate)',
+      timestamp: new Date().toISOString(),
+      docs: '/api/docs',
+      endpoints: {
+        campuses: '/api/v1/campuses',
+        businesses: '/api/v1/businesses',
+        products: '/api/v1/products',
+        orders: '/api/v1/orders',
+        transport: '/api/v1/transport',
+        housing: '/api/v1/housing',
+        events: '/api/v1/events',
+        learning: '/api/v1/learning',
+        bookings: '/api/v1/bookings',
+        announcements: '/api/v1/announcements',
+        notifications: '/api/v1/notifications',
+      },
+    });
+  });
+
   const port = process.env.PORT || 4000;
   await app.listen(port);
   console.log(`[API] CampusFlow API is running on: http://localhost:${port}/api/v1`);
