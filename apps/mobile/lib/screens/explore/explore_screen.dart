@@ -15,6 +15,10 @@ import '../academic/academic_screen.dart';
 import '../maintenance/maintenance_screen.dart';
 import '../digital_id/digital_id_screen.dart';
 import '../campus_map/campus_map_screen.dart';
+import '../cafeteria/cafeteria_pass_screen.dart';
+import '../laundry/laundry_screen.dart';
+import '../lost_found/lost_found_screen.dart';
+import '../study_groups/study_groups_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -191,6 +195,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               scrollDirection: Axis.horizontal,
                               child: Row(
                                 children: [
+                                  _buildModernServiceCard(context, icon: Icons.flatware_rounded, color: const Color(0xFF059669), bg: const Color(0xFFECFDF5), label: _isAmharic ? 'የምግብ ቲኬት' : 'Meal Pass', screen: const CafeteriaPassScreen()),
+                                  const SizedBox(width: 12),
+                                  _buildModernServiceCard(context, icon: Icons.local_laundry_service_rounded, color: const Color(0xFF2563EB), bg: const Color(0xFFEFF6FF), label: _isAmharic ? 'ልብስ ማጠቢያ' : 'Laundry', screen: const LaundryScreen()),
+                                  const SizedBox(width: 12),
+                                  _buildModernServiceCard(context, icon: Icons.find_in_page_rounded, color: const Color(0xFFD97706), bg: const Color(0xFFFFFBEB), label: _isAmharic ? 'የጠፉ ዕቃዎች' : 'Lost & Found', screen: const LostFoundScreen()),
+                                  const SizedBox(width: 12),
+                                  _buildModernServiceCard(context, icon: Icons.groups_rounded, color: const Color(0xFF7C3AED), bg: const Color(0xFFF5F3FF), label: _isAmharic ? 'የጥናት ቡድን' : 'Study Groups', screen: const StudyGroupsScreen()),
+                                  const SizedBox(width: 12),
                                   _buildModernServiceCard(context, icon: Icons.campaign_rounded, color: const Color(0xFF2563EB), bg: const Color(0xFFEFF6FF), label: _isAmharic ? 'ማስታወቂያዎች' : 'Notices', screen: const AnnouncementsScreen()),
                                   const SizedBox(width: 12),
                                   _buildModernServiceCard(context, icon: Icons.storefront_rounded, color: const Color(0xFF7C3AED), bg: const Color(0xFFF5F3FF), label: _isAmharic ? 'ገበያ' : 'Marketplace', screen: const MarketplaceScreen()),
