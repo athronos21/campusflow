@@ -11,7 +11,7 @@ import { formatETB } from '@/lib/utils';
 import { apiClient, API_BASE_URL } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
-import { Smartphone, RotateCw, ShoppingBag, X } from 'lucide-react';
+import { Smartphone, RotateCw, ShoppingBag, X, ExternalLink } from 'lucide-react';
 
 interface OrderItem {
   id: string;
@@ -34,6 +34,8 @@ interface PaymentData {
   providerReference: string;
   ussdDial: string;
   instructions: string;
+  checkoutUrl?: string;
+  signature?: string;
 }
 
 export default function StudentOrdersPage() {
@@ -277,6 +279,18 @@ export default function StudentOrdersPage() {
               <p className="text-[11px] text-slate-600 leading-relaxed font-normal">
                 {payData.instructions}
               </p>
+              {payData.checkoutUrl && (
+                <div className="pt-1">
+                  <a
+                    href={payData.checkoutUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition font-bold text-xs"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" /> Open Telebirr App / Web Pay
+                  </a>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2">

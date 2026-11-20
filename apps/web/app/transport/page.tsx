@@ -12,7 +12,7 @@ import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import { formatETB } from '@/lib/utils';
 import { TripDto, TicketReservationDto } from '@campusflow/contracts';
-import { Bus, Ticket, MapPin, Navigation, Clock, Smartphone, CheckCircle, X, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Bus, Ticket, MapPin, Navigation, Clock, Smartphone, CheckCircle, X, ArrowRight, ShieldCheck, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 
 export default function TransportPage() {
@@ -688,6 +688,18 @@ export default function TransportPage() {
               <p className="text-[11px] text-emerald-800 leading-relaxed">
                 Dial the code on your phone to complete payment directly. In this pilot sandbox, click below to simulate instant payment verification.
               </p>
+              {payData.checkoutUrl && (
+                <div className="pt-1">
+                  <a
+                    href={payData.checkoutUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-emerald-100/70 border border-emerald-300 text-emerald-900 hover:bg-emerald-200/70 transition font-bold text-xs"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" /> Open Telebirr App / Web Pay
+                  </a>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-3">
