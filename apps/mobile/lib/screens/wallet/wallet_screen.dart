@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/formatters.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -9,7 +10,7 @@ class WalletScreen extends StatefulWidget {
 }
 
 class _WalletScreenState extends State<WalletScreen> {
-  double _balance = 1250.00;
+  int _balanceMinor = 125000; // 1,250.00 ETB in integer cents (no float rounding)
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +60,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 const Text('Available Balance', style: TextStyle(color: Colors.white70, fontSize: 12)),
                 const SizedBox(height: 4),
                 Text(
-                  'ETB ${_balance.toStringAsFixed(2)}',
+                  Formatters.formatETB(_balanceMinor),
                   style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 20),
@@ -198,10 +199,11 @@ class _WalletScreenState extends State<WalletScreen> {
             onPressed: () {
               final val = double.tryParse(controller.text) ?? 0;
               if (val > 0) {
-                setState(() => _balance += val);
+                final addedMinor = (val * 100).round();
+                setState(() => _balanceMinor += addedMinor);
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Successfully added ETB ${val.toStringAsFixed(2)} via Telebirr!')),
+                  SnackBar(content: Text('Successfully added ${Formatters.formatETB(addedMinor)} via Telebirr!')),
                 );
               }
             },

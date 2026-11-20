@@ -109,20 +109,23 @@ class _CafeteriaPassScreenState extends State<CafeteriaPassScreen> {
                 children: [
                   const Text('Dietary Preference', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textPrimary)),
                   const SizedBox(height: 10),
-                  Row(
-                    children: ['Non-Fasting', 'Fasting (Tsom)', 'Vegetarian'].map((pref) {
-                      final isSelected = _dietaryPreference == pref;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ChoiceChip(
-                          label: Text(pref),
-                          selected: isSelected,
-                          selectedColor: const Color(0xFF059669),
-                          labelStyle: TextStyle(color: isSelected ? Colors.white : AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 12),
-                          onSelected: (_) => setState(() => _dietaryPreference = pref),
-                        ),
-                      );
-                    }).toList(),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: ['Non-Fasting', 'Fasting (Tsom)', 'Vegetarian'].map((pref) {
+                        final isSelected = _dietaryPreference == pref;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Text(pref),
+                            selected: isSelected,
+                            selectedColor: const Color(0xFF059669),
+                            labelStyle: TextStyle(color: isSelected ? Colors.white : AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 12),
+                            onSelected: (_) => setState(() => _dietaryPreference = pref),
+                          ),
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ],
               ),
