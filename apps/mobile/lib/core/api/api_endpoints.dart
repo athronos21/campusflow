@@ -40,4 +40,8 @@ class ApiEndpoints {
 
   // Learning Resources
   static const String learningResources = '/learning/resources';
+
+  // Payments (Telebirr & CBE Birr)
+  static const String paymentsInitialize = '/payments/initialize';
+  static const String paymentsVerify = '/payments/verify';
 }
