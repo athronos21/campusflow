@@ -11,8 +11,8 @@ interface CheckResult {
 
 async function runDoctor() {
   console.log('====================================================');
-  console.log('🩺 CampusFlow Environment & Health Doctor');
-  console.log('Haramaya University Pilot MVP · Ethiopian Higher Ed');
+  console.log('[DOCTOR] CampusFlow Environment & Health Diagnostics');
+  console.log('Haramaya University Pilot MVP - Ethiopian Higher Ed');
   console.log('====================================================\n');
 
   const results: CheckResult[] = [];
@@ -114,16 +114,16 @@ async function runDoctor() {
   // Print Results Summary
   console.log('Results:');
   for (const r of results) {
-    const icon = r.status === 'PASS' ? '✅' : r.status === 'WARN' ? '⚠️ ' : '❌';
-    console.log(`${icon} [${r.status.padEnd(4)}] ${r.name.padEnd(32)} : ${r.detail}`);
+    const symbol = r.status === 'PASS' ? '[PASS]' : r.status === 'WARN' ? '[WARN]' : '[FAIL]';
+    console.log(`${symbol.padEnd(7)} ${r.name.padEnd(34)} : ${r.detail}`);
   }
 
   console.log('\n====================================================');
   const failures = results.filter((r) => r.status === 'FAIL');
   if (failures.length === 0) {
-    console.log('🎉 System diagnostics healthy! Ready for local development & staging.');
+    console.log('[OK] System diagnostics healthy. Ready for local development & staging.');
   } else {
-    console.log(`⚠️  ${failures.length} diagnostic failure(s) found. Check details above.`);
+    console.log(`[WARN] ${failures.length} diagnostic failure(s) found. Check details above.`);
   }
   console.log('====================================================\n');
 }

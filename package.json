@@ -5,6 +5,9 @@
   "description": "CampusFlow — Unified Campus Services Platform for Ethiopian Universities",
   "packageManager": "pnpm@9.1.0",
   "scripts": {
+    "start": "ts-node scripts/dev-all.ts",
+    "dev:all": "ts-node scripts/dev-all.ts",
+    "dev:full": "ts-node scripts/dev-all.ts --mobile",
     "build": "pnpm --filter @campusflow/contracts build && pnpm --filter @campusflow/api build && pnpm --filter @campusflow/web build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
