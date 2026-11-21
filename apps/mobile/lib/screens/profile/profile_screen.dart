@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
 import '../wallet/wallet_screen.dart';
@@ -113,11 +114,11 @@ class ProfileScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: const [
-                          Text('Tigist Haile', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                          Text('Sample Student', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
                           SizedBox(height: 2),
-                          Text('Software Engineering · Year 3', style: TextStyle(fontSize: 12, color: Colors.white70)),
+                          Text('Software Engineering · Year 3 (Example)', style: TextStyle(fontSize: 12, color: Colors.white70)),
                           SizedBox(height: 2),
-                          Text('ID: RAMA/8921/14', style: TextStyle(fontSize: 11, color: Colors.amber, fontWeight: FontWeight.bold)),
+                          Text('ID: HU/0000/00 (Example)', style: TextStyle(fontSize: 11, color: Colors.amber, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
@@ -187,6 +188,26 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 20),
 
           const Text('Settings & Privacy', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textPrimary)),
+          const SizedBox(height: 10),
+
+          ValueListenableBuilder<ThemeMode>(
+            valueListenable: themeNotifier,
+            builder: (context, mode, _) {
+              final isDark = mode == ThemeMode.dark;
+              return ListTile(
+                tileColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: AppColors.border)),
+                leading: Icon(isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded, color: isDark ? Colors.amber : AppColors.primary),
+                title: Text(isDark ? 'Dark Mode Active' : 'Light Mode Active', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                subtitle: Text(isDark ? 'Comfortable viewing in low light' : 'Bright high contrast theme', style: const TextStyle(fontSize: 11)),
+                trailing: Switch(
+                  value: isDark,
+                  activeColor: AppColors.primary,
+                  onChanged: (_) => AppTheme.toggleTheme(),
+                ),
+              );
+            },
+          ),
           const SizedBox(height: 10),
 
           ListTile(

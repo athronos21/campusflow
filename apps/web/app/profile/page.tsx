@@ -235,10 +235,10 @@ export default function ProfilePage() {
 
                   <div className="space-y-1 text-xs">
                     <div className="text-base font-black text-white">{displayName}</div>
-                    <div className="text-indigo-200 font-mono text-xs font-bold">ID: UGR/24910/16</div>
+                    <div className="text-indigo-200 font-mono text-xs font-bold">ID: HU/00000/00 (Example)</div>
                     <div className="text-slate-300 text-[11px]">Software Engineering &bull; Year 3</div>
                     <div className="text-slate-400 text-[10px]">Campus: Main Campus (Bate)</div>
-                    <div className="text-indigo-300 text-[10px] font-mono pt-1">Issued: 15 Oct 2024 &bull; Expires: 30 Jul 2027</div>
+                    <div className="text-indigo-300 text-[10px] font-mono pt-1">Sample Card Preview</div>
                   </div>
                 </div>
 

@@ -180,7 +180,7 @@ export default function RegisterPage() {
                 required
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Abebe Kebede"
+                placeholder="Enter your full name"
                 className="h-10 text-sm"
               />
             </div>

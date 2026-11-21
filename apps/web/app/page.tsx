@@ -402,9 +402,9 @@ export default function HomePage() {
                   <GraduationCap className="w-8 h-8" />
                 </div>
                 <div className="space-y-0.5 text-xs">
-                  <div className="font-bold text-white text-sm">Abebe Bekele</div>
-                  <div className="font-mono text-indigo-300 text-[11px]">UGR/24910/16</div>
-                  <div className="text-slate-400 text-[11px]">Software Engineering &bull; Yr 3</div>
+                  <div className="font-bold text-white text-sm">Sample Student</div>
+                  <div className="font-mono text-indigo-300 text-[11px]">ID: HU/00000/00 (Example)</div>
+                  <div className="text-slate-400 text-[11px]">Faculty &bull; Year (Example)</div>
                 </div>
               </div>
 

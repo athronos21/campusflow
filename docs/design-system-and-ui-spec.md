@@ -281,8 +281,8 @@ Every card is wrapped with a 1px border (`#E2E8F0`) over a `#FFFFFF` or `#FCFCFD
 ### 4.6 Service 6: Digital Student ID & Gate Access (`digital_id_screen.dart`)
 - **Physical Card Metaphor:** Sleek 20px rounded card with official Haramaya University crest watermark, hologram foil shine animation, and photo portrait.
 - **Student Data Attributes:**
-  - Full Name (English & Amharic: `Abebe Bekele / አበበ በቀለ`).
-  - Student ID Number (`UGR/24910/16`).
+  - Full Name (Template placeholder: Student Name / የተማሪ ስም).
+  - Student ID Number (Template placeholder: `HU/00000/00`).
   - Faculty & Department (`Software Engineering, Year 3`).
   - Validity Period (`Expires: 30 July 2027`).
 - **Dynamic Security QR Code:**

@@ -79,12 +79,12 @@ class DigitalIdScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Tigist Haile', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                          Text('Sample Student', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                           SizedBox(height: 4),
-                          Text('ID: RAMA/8921/14', style: TextStyle(color: Colors.amber, fontSize: 13, fontWeight: FontWeight.bold)),
+                          Text('ID: HU/0000/00 (Example)', style: TextStyle(color: Colors.amber, fontSize: 13, fontWeight: FontWeight.bold)),
                           SizedBox(height: 4),
-                          Text('Dept: Software Engineering', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                          Text('College: HiT (Technology)', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                          Text('Dept: Software Engineering (Example)', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                          Text('Campus: Main Campus (Example)', style: TextStyle(color: Colors.white70, fontSize: 11)),
                         ],
                       ),
                     ),

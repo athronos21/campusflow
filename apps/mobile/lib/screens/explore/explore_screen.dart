@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../models/business.dart';
 import '../../services/business_service.dart';
 import '../../widgets/ai_assistant_sheet.dart';
@@ -97,49 +98,73 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(2),
-                                      decoration: const BoxDecoration(color: Colors.amber, shape: BoxShape.circle),
-                                      child: const CircleAvatar(
-                                        radius: 20,
-                                        backgroundColor: Colors.white,
-                                        child: Icon(Icons.person_rounded, color: AppColors.primary),
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(2),
+                                        decoration: const BoxDecoration(color: Colors.amber, shape: BoxShape.circle),
+                                        child: const CircleAvatar(
+                                          radius: 18,
+                                          backgroundColor: Colors.white,
+                                          child: Icon(Icons.person_rounded, color: AppColors.primary, size: 20),
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(_isAmharic ? 'ሰላም፣ ትዕግሥት 👋' : 'Selam, Tigist 👋', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17)),
-                                        Text(_isAmharic ? 'ሐረማያ ዩኒቨርሲቲ · ዋና ግቢ' : 'Haramaya University · Main Campus', style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500)),
-                                      ],
-                                    ),
-                                  ],
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(_isAmharic ? 'ሰላም፣ ትዕግሥት 👋' : 'Selam, Tigist 👋', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15), overflow: TextOverflow.ellipsis),
+                                            Text(_isAmharic ? 'ሐረማያ · ዋና ግቢ' : 'Haramaya · Main Campus', style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                                 Row(
                                   children: [
-                                    // Amharic 🇪🇹 / English 🇬🇧 Toggle Chip
                                     InkWell(
                                       onTap: () => setState(() => _isAmharic = !_isAmharic),
-                                      borderRadius: BorderRadius.circular(16),
+                                      borderRadius: BorderRadius.circular(14),
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                                         decoration: BoxDecoration(
                                           color: Colors.white24,
-                                          borderRadius: BorderRadius.circular(16),
+                                          borderRadius: BorderRadius.circular(14),
                                         ),
                                         child: Text(
                                           _isAmharic ? '🇪🇹 አማርኛ' : '🇬🇧 EN',
-                                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 6),
+                                    const SizedBox(width: 4),
                                     IconButton(
+                                      constraints: const BoxConstraints(maxWidth: 36, maxHeight: 36),
+                                      padding: EdgeInsets.zero,
                                       style: IconButton.styleFrom(backgroundColor: Colors.white12),
-                                      icon: const Icon(Icons.badge_outlined, color: Colors.white),
+                                      icon: ValueListenableBuilder<ThemeMode>(
+                                        valueListenable: themeNotifier,
+                                        builder: (context, mode, _) {
+                                          return Icon(
+                                            mode == ThemeMode.dark ? Icons.wb_sunny_rounded : Icons.nightlight_round,
+                                            color: mode == ThemeMode.dark ? Colors.amber : Colors.white,
+                                            size: 18,
+                                          );
+                                        },
+                                      ),
+                                      onPressed: () {
+                                        AppTheme.toggleTheme();
+                                      },
+                                    ),
+                                    const SizedBox(width: 4),
+                                    IconButton(
+                                      constraints: const BoxConstraints(maxWidth: 36, maxHeight: 36),
+                                      padding: EdgeInsets.zero,
+                                      style: IconButton.styleFrom(backgroundColor: Colors.white12),
+                                      icon: const Icon(Icons.badge_outlined, color: Colors.white, size: 18),
                                       onPressed: () {
                                         Navigator.push(context, MaterialPageRoute(builder: (context) => const DigitalIdScreen()));
                                       },
