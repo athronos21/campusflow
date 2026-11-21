@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/formatters.dart';
 
@@ -80,7 +81,7 @@ class _WalletScreenState extends State<WalletScreen> {
                         label: const Text('Top Up', style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
@@ -94,6 +95,19 @@ class _WalletScreenState extends State<WalletScreen> {
                         icon: const Icon(Icons.qr_code_scanner, size: 18),
                         label: const Text('Scan & Pay', style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white24,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      onPressed: () {
+                        _showReceiveQrModal(context);
+                      },
+                      icon: const Icon(Icons.qr_code_2_rounded, size: 22),
+                      tooltip: 'My Receiving QR',
                     ),
                   ],
                 ),
@@ -214,16 +228,86 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
+  void _showReceiveQrModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('My Receiving QR Pass', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: QrImageView(
+                data: 'CAMPUSFLOW:WALLET:HU-00000-00:RECEIVE',
+                version: QrVersions.auto,
+                size: 140.0,
+                backgroundColor: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text('Sample Student · Telebirr & CBE Birr', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            const SizedBox(height: 4),
+            const Text('ID: HU/00000/00 (Example)', style: TextStyle(fontFamily: 'monospace', fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 6),
+            const Text('Ask another student or merchant to scan this QR code to transfer funds with zero fees.', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Colors.black54)),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showScanQRDialog(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.qr_code_2, size: 100, color: AppColors.primary),
-            const SizedBox(height: 12),
+            Container(
+              width: 140,
+              height: 140,
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.primary, width: 2),
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  const Icon(Icons.qr_code_scanner, size: 64, color: AppColors.primary),
+                  Positioned(
+                    bottom: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(4)),
+                      child: const Text('CAMERA VIEWFINDER', style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
             const Text('Scan Campus Merchant QR Code', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 6),
             const Text('Point your camera at cafeteria, bookstore, or print shop QR code to pay instantly.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
@@ -232,8 +316,13 @@ class _WalletScreenState extends State<WalletScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Simulate Merchant Payment', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                onPressed: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Simulated merchant payment of 85.00 ETB verified via Telebirr!')),
+                  );
+                },
+                child: const Text('Simulate Merchant QR Scan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ),
           ],

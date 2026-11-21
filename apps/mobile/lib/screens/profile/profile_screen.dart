@@ -143,7 +143,7 @@ class ProfileScreen extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildStatColumn('ETB 1,250', 'Wallet'),
+                      _buildStatColumn('Zero Fee', 'Wallet'),
                       Container(height: 24, width: 1, color: Colors.white24),
                       _buildStatColumn('4 Orders', 'History'),
                       Container(height: 24, width: 1, color: Colors.white24),
@@ -162,7 +162,7 @@ class ProfileScreen extends StatelessWidget {
             icon: Icons.account_balance_wallet_rounded,
             color: Colors.green,
             title: 'Campus Pay & Digital Wallet',
-            subtitle: 'Balance: ETB 1,250.00 · Telebirr / CBE Birr',
+            subtitle: 'Integrated Telebirr & CBE Birr · 0% Student Fee',
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const WalletScreen())),
           ),
           const SizedBox(height: 10),
@@ -172,7 +172,7 @@ class ProfileScreen extends StatelessWidget {
             icon: Icons.badge_rounded,
             color: Colors.amber.shade800,
             title: 'Digital Student ID Pass',
-            subtitle: 'Official University ID & Barcode Pass',
+            subtitle: 'Official Gate Pass & Real Dynamic QR Pass',
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const DigitalIdScreen())),
           ),
           const SizedBox(height: 10),

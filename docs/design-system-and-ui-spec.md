@@ -210,6 +210,24 @@ Every card is wrapped with a 1px border (`#E2E8F0`) over a `#FFFFFF` or `#FCFCFD
 
 ## 4. Screen-by-Screen UI/UX Blueprints (All Key Services)
 
+### 4.0 Verifiable Real QR Pass Architecture (Zero-Mock Security Standard)
+
+Every QR code rendered in CampusFlow across Web (`qrcode.react` / `QRCodeSVG`) and Mobile (`qr_flutter` / `QrImageView`) is a genuine, camera-scannable ISO/IEC 18004 2D matrix configured with **Error Correction Level M (15% recovery)**. Placeholder vector icons or static SVG rectangles are strictly prohibited.
+
+#### Standardized Payload Schemas
+
+| Pass Category | Target Engine | Payload Pattern | Offline Validation Rule |
+|---|---|---|---|
+| **Gate Student ID Pass** | Web `/profile`, Mobile `DigitalIdScreen` | `https://campusflow.haramaya.edu.et/verify/id/{studentId}` | 30s rotating TOTP nonce cacheable on offline gate scanners |
+| **Dining Table & Meal Pass** | Mobile `CafeteriaPassScreen` | `HU-DINING-PASS-{dietaryPreference}-{year}` | Matched against daily board meal allowance |
+| **Event Entry Pass** | Web `/events`, Mobile `EventsScreen` | `CAMPUSFLOW:EVENT:{ticketCode}:{eventTitle}` | Valid for single entry scan at auditorium turnstiles |
+| **Bus Boarding Pass** | Web `/transport`, Mobile `TransportScreen` | `CAMPUSFLOW:BUS:{qrCode}:SEAT{seatNumber}` | Verified by driver/conductor handheld terminal before departure |
+| **Order Counter Pickup Pass** | Web `/orders`, Mobile `OrdersScreen` | `CAMPUSFLOW:PICKUP:{orderId}:{businessId}` | Kitchen queue completion trigger upon cashier counter scan |
+| **Service Appointment Pass** | Web `/bookings`, Mobile `BookingsScreen` | `CAMPUSFLOW:APPT:{bookingId}:{serviceName}` | Shop counter intake token for stationery, tech repair, or laundry |
+| **P2P Wallet Receiving QR** | Mobile `WalletScreen` | `CAMPUSFLOW:WALLET:{studentId}:RECEIVE` | Instant student-to-student transfer with zero transaction fee |
+
+---
+
 ### 4.1 Service 1: Campus Dining & Merchant Commerce (`/shop`, `/cart`, `/orders`)
 - **Header:** Merchant identity banner showing operating status (Open / Busy / Closed), dietary certifications, opening hours (`07:00 - 21:30 EAT`), and preparation lead-time (`15-20 min`).
 - **Category Filter Tabs:** Horizontally scrollable chips: `All Items`, `Hot Meals`, `Bakery & Pastries`, `Beverages & Coffee`, `Stationery`.
