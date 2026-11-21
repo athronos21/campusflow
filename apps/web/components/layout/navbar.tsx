@@ -153,21 +153,25 @@ export function Navbar() {
           {/* User Account / Auth Actions */}
           {user ? (
             <div className="flex items-center gap-3 pl-3 border-l border-slate-200">
-              <div className="flex items-center gap-2">
-                <Avatar className="h-8 w-8 border border-slate-200 bg-indigo-50">
-                  <AvatarFallback className="text-xs font-bold bg-indigo-100 text-indigo-700">
+              <Link
+                href="/profile"
+                className="flex items-center gap-2 p-1 rounded-lg hover:bg-slate-100 transition group"
+                title="View Profile & Digital ID"
+              >
+                <Avatar className="h-8 w-8 border border-slate-200 bg-indigo-50 group-hover:border-indigo-400 transition">
+                  <AvatarFallback className="text-xs font-bold bg-indigo-100 text-indigo-700 group-hover:bg-indigo-600 group-hover:text-white transition">
                     {getInitials(user.displayName)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="hidden lg:flex flex-col text-left">
-                  <span className="text-xs font-bold leading-tight text-slate-900 truncate max-w-[130px]">
+                  <span className="text-xs font-bold leading-tight text-slate-900 group-hover:text-indigo-600 transition truncate max-w-[130px]">
                     {user.displayName}
                   </span>
                   <span className="text-[10px] font-semibold text-indigo-700">
                     {primaryRole}
                   </span>
                 </div>
-              </div>
+              </Link>
               <Button
                 variant="ghost"
                 size="sm"
