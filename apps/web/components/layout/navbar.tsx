@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useCart } from '@/lib/cart-context';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -23,6 +24,12 @@ import {
 export function Navbar() {
   const { user, logout } = useAuth();
   const { itemCount } = useCart();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  };
 
   const getInitials = (name?: string) => {
     if (!name) return 'U';
@@ -175,7 +182,7 @@ export function Navbar() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={logout}
+                onClick={handleLogout}
                 className="h-8 px-2 text-rose-600 hover:bg-rose-50 text-xs font-semibold"
                 title="Sign Out"
               >

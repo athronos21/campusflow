@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import { useAuth } from '@/lib/auth-context';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   GraduationCap,
@@ -16,15 +17,72 @@ import {
   LogOut,
   ArrowRight,
   CheckCircle2,
+  LogIn,
+  User,
 } from 'lucide-react';
 
 export default function ProfilePage() {
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'id' | 'wallet' | 'security'>('id');
 
-  const displayName = user?.displayName || 'Tigist Haile';
-  const email = user?.email || 'student@haramaya.edu.et';
-  const role = user?.roles?.[0]
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.replace('/login');
+    }
+  }, [user, isLoading, router]);
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col justify-between bg-slate-100 font-sans">
+        <Navbar />
+        <main className="max-w-5xl mx-auto px-4 py-16 text-center space-y-4">
+          <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-xs text-slate-500 font-medium">Verifying student session...</p>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Unauthenticated fallback state (while router redirect happens or if JS is disabled)
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col justify-between bg-slate-100 font-sans">
+        <Navbar />
+        <main className="max-w-md mx-auto px-4 py-20 text-center space-y-5">
+          <div className="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center mx-auto shadow-xs">
+            <User className="w-7 h-7" />
+          </div>
+          <div className="space-y-1.5">
+            <h1 className="text-xl font-bold text-slate-900">Sign in to view your profile</h1>
+            <p className="text-xs text-slate-500 max-w-xs mx-auto">
+              Please sign in with your student or campus account to access your digital ID, campus wallet, and orders.
+            </p>
+          </div>
+          <div>
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-xs"
+            >
+              <LogIn className="w-4 h-4" /> Sign In Now
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  const displayName = user.displayName;
+  const email = user.email || 'student@haramaya.edu.et';
+  const role = user.roles?.[0]
     ? user.roles[0].charAt(0).toUpperCase() + user.roles[0].slice(1)
     : 'Student';
 
@@ -77,7 +135,7 @@ export default function ProfilePage() {
 
             <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2 border-t sm:border-t-0 border-slate-800 pt-3 sm:pt-0">
               <button
-                onClick={logout}
+                onClick={handleLogout}
                 className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-rose-950/40 text-slate-300 hover:text-rose-400 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition"
               >
                 <LogOut className="w-3.5 h-3.5" /> Sign Out
@@ -196,7 +254,9 @@ export default function ProfilePage() {
                     </div>
                     <div className="text-[10px] text-slate-500">Auto-regenerates every 30 seconds</div>
                     <div className="text-[11px] font-mono font-bold text-indigo-700">CODE: HU-8921-2026</div>
-                    <div className="text-[10px] text-emerald-700 font-semibold">&check; Offline Validated via Gate Scanners</div>
+                    <div className="text-[10px] text-emerald-700 font-semibold flex items-center justify-end gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Offline Validated via Gate Scanners
+                    </div>
                   </div>
                 </div>
               </div>
@@ -263,7 +323,9 @@ export default function ProfilePage() {
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                 <span className="text-xs text-slate-500">Available Balance</span>
                 <div className="text-2xl font-black text-slate-900 font-mono">1,420.50 ETB</div>
-                <span className="text-[11px] text-emerald-700 font-semibold block">&check; Ready for cafeteria & bus checkout</span>
+                <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Ready for cafeteria & bus checkout
+                </span>
               </div>
 
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
