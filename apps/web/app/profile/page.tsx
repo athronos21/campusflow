@@ -5,6 +5,7 @@ import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
+import { QRCodeSVG } from 'qrcode.react';
 import Link from 'next/link';
 import {
   GraduationCap,
@@ -242,12 +243,17 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                {/* Rotating QR & Barcode Section */}
-                <div className="bg-white p-3 rounded-xl flex items-center justify-between text-slate-900">
-                  <div className="w-16 h-16 bg-slate-50 p-1 border border-slate-200 rounded-lg flex items-center justify-center">
-                    <QrCode className="w-full h-full text-slate-900" />
+                {/* Rotating Real Dynamic QR Section */}
+                <div className="bg-white p-3 rounded-xl flex items-center justify-between gap-4 text-slate-900 shadow-xs">
+                  <div className="w-20 h-20 bg-white p-1.5 border border-slate-200 rounded-lg flex items-center justify-center shrink-0">
+                    <QRCodeSVG
+                      value={`https://campusflow.haramaya.edu.et/verify/id/HU-8921-2026`}
+                      size={68}
+                      level="M"
+                      includeMargin={false}
+                    />
                   </div>
-                  <div className="text-right text-xs space-y-0.5">
+                  <div className="text-right text-xs space-y-0.5 flex-1">
                     <div className="font-bold text-slate-900 flex items-center justify-end gap-1">
                       <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                       Dynamic Security QR

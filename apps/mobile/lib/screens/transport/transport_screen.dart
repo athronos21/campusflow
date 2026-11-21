@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/transport.dart';
@@ -476,18 +477,41 @@ class _TransportScreenState extends State<TransportScreen> with SingleTickerProv
                 const SizedBox(height: 8),
 
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
+                    color: Colors.grey.shade50,
                     borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade200),
                   ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Digital Token:', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                      Text(
-                        ticket.qrCode,
-                        style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, fontSize: 12),
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: QrImageView(
+                          data: 'CAMPUSFLOW:BUS:${ticket.qrCode}',
+                          version: QrVersions.auto,
+                          size: 54.0,
+                          backgroundColor: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Boarding Token', style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
+                            Text(
+                              ticket.qrCode,
+                              style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary),
+                            ),
+                            const Text('Valid for gate boarding scan', style: TextStyle(fontSize: 10, color: Colors.green, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
                       ),
                     ],
                   ),

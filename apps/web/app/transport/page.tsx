@@ -12,6 +12,7 @@ import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import { formatETB } from '@/lib/utils';
 import { TripDto, TicketReservationDto } from '@campusflow/contracts';
+import { QRCodeSVG } from 'qrcode.react';
 import { Bus, Ticket, MapPin, Navigation, Clock, Smartphone, CheckCircle, X, ArrowRight, ShieldCheck, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 
@@ -508,12 +509,26 @@ export default function TransportPage() {
                   <div className="text-xs text-slate-600 mt-1 mb-3">
                     Terminal: <span className="font-semibold text-slate-800">{selectedTrip.route.departureStation}</span>
                   </div>
-                  <div className="bg-white p-3 rounded-lg border border-indigo-100 flex items-center justify-between">
-                    <div>
-                      <div className="text-[10px] text-slate-400 uppercase font-bold">Verifiable Token</div>
-                      <div className="font-mono text-sm font-bold text-indigo-700">{confirmedReservation.qrCode}</div>
+                  <div className="bg-white p-3 rounded-lg border border-indigo-100 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-16 h-16 bg-white p-1 rounded border border-slate-200 flex items-center justify-center shrink-0">
+                        <QRCodeSVG
+                          value={`CAMPUSFLOW:BUS:${confirmedReservation.qrCode}:SEAT${confirmedReservation.seatNumber}`}
+                          size={56}
+                          level="M"
+                          includeMargin={false}
+                        />
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-slate-400 uppercase font-bold">Boarding Pass QR</div>
+                        <div className="font-mono text-xs font-bold text-indigo-700">{confirmedReservation.qrCode}</div>
+                        <div className="text-[10px] text-emerald-600 font-semibold">Ready for terminal scan</div>
+                      </div>
                     </div>
-                    <div className="text-sm font-black text-slate-900">{formatETB(confirmedReservation.amountMinor)}</div>
+                    <div className="text-right">
+                      <div className="text-[10px] text-slate-400 uppercase font-bold">Total Fare</div>
+                      <div className="text-sm font-black text-slate-900">{formatETB(confirmedReservation.amountMinor)}</div>
+                    </div>
                   </div>
                 </div>
 

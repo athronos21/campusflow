@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/event.dart';
@@ -80,21 +81,26 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
             ),
             const SizedBox(height: 16),
 
-            // Simulated QR box
+            // Real Verifiable Event QR Pass
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.grey.shade300),
               ),
               child: Column(
                 children: [
-                  const Icon(Icons.qr_code_2, size: 90, color: AppColors.textPrimary),
-                  const SizedBox(height: 8),
+                  QrImageView(
+                    data: 'CAMPUSFLOW:EVENT:$ticketCode',
+                    version: QrVersions.auto,
+                    size: 140.0,
+                    backgroundColor: Colors.white,
+                  ),
+                  const SizedBox(height: 10),
                   Text(
                     ticketCode,
-                    style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.5, fontSize: 14),
+                    style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.5, fontSize: 14, color: AppColors.textPrimary),
                   ),
                 ],
               ),

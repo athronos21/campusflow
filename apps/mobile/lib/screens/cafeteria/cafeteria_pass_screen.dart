@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/constants/app_colors.dart';
 
 class CafeteriaPassScreen extends StatefulWidget {
@@ -80,16 +81,21 @@ class _CafeteriaPassScreenState extends State<CafeteriaPassScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // QR Code
+                // Real Dining Pass QR Code
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
                   child: Column(
                     children: [
-                      const Icon(Icons.qr_code_2_rounded, size: 90, color: Colors.black87),
-                      const SizedBox(height: 4),
-                      Text('*HU-DINING-PASS-$_dietaryPreference*', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black54)),
+                      QrImageView(
+                        data: 'HU-DINING-PASS-$_dietaryPreference-${DateTime.now().year}',
+                        version: QrVersions.auto,
+                        size: 110.0,
+                        backgroundColor: Colors.white,
+                      ),
+                      const SizedBox(height: 6),
+                      Text('HU-DINING-PASS-$_dietaryPreference', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black87, letterSpacing: 1.2)),
                     ],
                   ),
                 ),

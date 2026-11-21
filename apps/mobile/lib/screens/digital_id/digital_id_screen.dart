@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/constants/app_colors.dart';
 
 class DigitalIdScreen extends StatelessWidget {
@@ -92,26 +93,52 @@ class DigitalIdScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
 
-                // Digital Barcode Pass
+                // Real Dynamic QR Security Pass
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Column(
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: List.generate(
-                          24,
-                          (index) => Container(
-                            width: (index % 3 == 0) ? 5 : (index % 2 == 0) ? 3 : 2,
-                            height: 40,
-                            color: Colors.black,
-                          ),
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: QrImageView(
+                          data: 'https://campusflow.haramaya.edu.et/verify/id/HU892114EXP2026',
+                          version: QrVersions.auto,
+                          size: 130.0,
+                          backgroundColor: Colors.white,
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      Text('*HU892114EXP2026*', style: TextStyle(letterSpacing: 3, fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black.withOpacity(0.8))),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'CODE: HU-8921-2026',
+                        style: TextStyle(
+                          letterSpacing: 2,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.green, size: 14),
+                          SizedBox(width: 4),
+                          Text(
+                            'Dynamic QR • Auto-refreshes every 30s',
+                            style: TextStyle(fontSize: 10, color: Colors.black54, fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),

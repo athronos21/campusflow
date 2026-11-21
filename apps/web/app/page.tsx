@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
+import { QRCodeSVG } from 'qrcode.react';
 import Link from 'next/link';
 import {
   Bus,
@@ -14,7 +15,6 @@ import {
   ShieldCheck,
   Search,
   PhoneCall,
-  QrCode,
   CreditCard,
   Download,
   Check,
@@ -382,13 +382,18 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="bg-white p-3 rounded-lg flex items-center justify-between">
-                <div className="w-12 h-12 flex items-center justify-center">
-                  <QrCode className="w-full h-full text-slate-900" />
+              <div className="bg-white p-3 rounded-lg flex items-center justify-between gap-3 text-slate-900">
+                <div className="w-14 h-14 bg-white p-1 rounded border border-slate-200 flex items-center justify-center shrink-0">
+                  <QRCodeSVG
+                    value="https://campusflow.haramaya.edu.et/verify/id/HU-SAMPLE-PASS"
+                    size={48}
+                    level="M"
+                    includeMargin={false}
+                  />
                 </div>
                 <div className="text-right text-[11px] text-slate-600">
                   <div className="font-bold text-slate-900">Dynamic Gate QR</div>
-                  <div className="text-[10px] text-slate-500">Refreshes every 30s</div>
+                  <div className="text-[10px] text-slate-500 font-mono">Refreshes every 30s</div>
                   <div className="text-[10px] text-emerald-700 font-semibold">Offline Validated</div>
                 </div>
               </div>

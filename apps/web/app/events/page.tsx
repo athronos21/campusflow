@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatETB } from '@/lib/utils';
+import { QRCodeSVG } from 'qrcode.react';
 import { Calendar, MapPin, Users, Ticket, CheckCircle2, X } from 'lucide-react';
 
 interface Organizer {
@@ -376,19 +377,13 @@ export default function EventsPage() {
             </div>
 
             <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
-              <div className="w-32 h-32 mx-auto bg-white border border-slate-200 rounded-lg p-2 flex items-center justify-center shadow-xs">
-                <svg viewBox="0 0 100 100" className="w-full h-full text-slate-900 fill-current">
-                  <path d="M0,0 h30 v30 h-30 z M10,10 h10 v10 h-10 z" />
-                  <path d="M70,0 h30 v30 h-30 z M80,10 h10 v10 h-10 z" />
-                  <path d="M0,70 h30 v30 h-30 z M10,80 h10 v10 h-10 z" />
-                  <rect x="40" y="10" width="10" height="20" />
-                  <rect x="55" y="10" width="10" height="10" />
-                  <rect x="40" y="40" width="20" height="20" />
-                  <rect x="70" y="45" width="20" height="10" />
-                  <rect x="10" y="45" width="15" height="10" />
-                  <rect x="70" y="70" width="15" height="20" />
-                  <rect x="45" y="75" width="15" height="15" />
-                </svg>
+              <div className="w-36 h-36 mx-auto bg-white border border-slate-200 rounded-lg p-2 flex items-center justify-center shadow-xs">
+                <QRCodeSVG
+                  value={`CAMPUSFLOW:EVENT:${activeTicket.ticketCode}:${activeTicket.eventTitle}`}
+                  size={120}
+                  level="M"
+                  includeMargin={false}
+                />
               </div>
 
               <div className="font-mono text-sm font-extrabold tracking-widest text-slate-900 bg-white py-1.5 rounded border border-slate-200">
