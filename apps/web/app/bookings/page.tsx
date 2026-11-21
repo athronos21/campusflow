@@ -10,8 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
+import { QRCodeSVG } from 'qrcode.react';
 import Link from 'next/link';
-import { MapPin, Calendar, Clock, Plus, ShieldCheck, Wrench, X } from 'lucide-react';
+import { MapPin, Calendar, Clock, Plus, ShieldCheck, Wrench, X, QrCode } from 'lucide-react';
 
 interface Booking {
   id: string;
@@ -30,6 +31,7 @@ export default function BookingsPage() {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [serviceName, setServiceName] = useState('Thesis Printing & Hardcover Binding');
   const [bookingDate, setBookingDate] = useState('2026-11-20T14:00:00.000Z');
+  const [activePassBooking, setActivePassBooking] = useState<Booking | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -295,15 +297,74 @@ export default function BookingsPage() {
                       </div>
                     </div>
 
-                    <div className="flex sm:flex-col items-center sm:items-end justify-between border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100">
+                    <div className="flex sm:flex-col items-center sm:items-end justify-between gap-3 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100">
                       <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
                         Guaranteed Slot
                       </span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setActivePassBooking(b)}
+                        className="h-8 text-xs font-bold border-indigo-200 text-indigo-700 hover:bg-indigo-50 flex items-center gap-1.5"
+                      >
+                        <QrCode className="w-3.5 h-3.5" /> Counter QR Pass
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             ))}
+          </div>
+        )}
+
+        {/* Counter Pass QR Modal */}
+        {activePassBooking && (
+          <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+            <Card className="w-full max-w-sm p-6 bg-white border-slate-200 shadow-2xl relative text-center space-y-4">
+              <button
+                onClick={() => setActivePassBooking(null)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 font-bold"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              <div>
+                <Badge variant="success" className="text-[10px] uppercase font-bold">
+                  Verified Appointment
+                </Badge>
+                <h3 className="text-base font-bold text-slate-900 mt-2">
+                  {activePassBooking.serviceName}
+                </h3>
+                <p className="text-xs text-slate-500">
+                  {activePassBooking.business?.name || 'Haramaya Campus Partner'}
+                </p>
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
+                <div className="w-36 h-36 mx-auto bg-white border border-slate-200 rounded-lg p-2.5 flex items-center justify-center shadow-xs">
+                  <QRCodeSVG
+                    value={`CAMPUSFLOW:APPT:${activePassBooking.id}:${activePassBooking.serviceName}`}
+                    size={120}
+                    level="M"
+                    includeMargin={false}
+                  />
+                </div>
+                <div className="font-mono text-xs font-bold text-indigo-700 bg-white py-1 rounded border border-slate-200">
+                  REF: #{activePassBooking.id.slice(0, 8).toUpperCase()}
+                </div>
+              </div>
+
+              <p className="text-[11px] text-slate-500">
+                Present this dynamic QR code at the counter for instant booking validation.
+              </p>
+
+              <Button
+                onClick={() => setActivePassBooking(null)}
+                className="w-full h-9 font-bold text-xs"
+              >
+                Done
+              </Button>
+            </Card>
           </div>
         )}
       </main>

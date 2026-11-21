@@ -10,8 +10,9 @@ import { OrderStatusBadge } from '@/components/commerce/order-status-badge';
 import { formatETB } from '@/lib/utils';
 import { apiClient, API_BASE_URL } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
+import { QRCodeSVG } from 'qrcode.react';
 import Link from 'next/link';
-import { Smartphone, RotateCw, ShoppingBag, X, ExternalLink } from 'lucide-react';
+import { Smartphone, RotateCw, ShoppingBag, X, ExternalLink, QrCode } from 'lucide-react';
 
 interface OrderItem {
   id: string;
@@ -47,6 +48,7 @@ export default function StudentOrdersPage() {
   const [payModalOrder, setPayModalOrder] = useState<Order | null>(null);
   const [payData, setPayData] = useState<PaymentData | null>(null);
   const [payLoading, setPayLoading] = useState(false);
+  const [pickupModalOrder, setPickupModalOrder] = useState<Order | null>(null);
 
   const fetchOrders = async () => {
     try {
@@ -214,6 +216,17 @@ export default function StudentOrdersPage() {
                       </div>
                     </div>
 
+                    {isPaid && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setPickupModalOrder(order)}
+                        className="h-8 text-xs font-bold border-emerald-300 text-emerald-800 bg-emerald-50 hover:bg-emerald-100 flex items-center gap-1.5"
+                      >
+                        <QrCode className="w-3.5 h-3.5 text-emerald-700" /> Counter Pickup QR
+                      </Button>
+                    )}
+
                     {!isPaid && order.status !== 'cancelled' && order.status !== 'rejected' && (
                       <div className="flex items-center gap-2">
                         <Button
@@ -313,6 +326,56 @@ export default function StudentOrdersPage() {
                 Close
               </Button>
             </div>
+          </Card>
+        </div>
+      )}
+      {/* Counter Pickup QR Modal */}
+      {pickupModalOrder && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <Card className="w-full max-w-sm p-6 bg-white border-slate-200 shadow-2xl relative text-center space-y-4">
+            <button
+              onClick={() => setPickupModalOrder(null)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 font-bold"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div>
+              <Badge variant="success" className="text-[10px] uppercase font-bold">
+                ✓ Order Paid &bull; Ready for Counter Pickup
+              </Badge>
+              <h3 className="text-base font-bold text-slate-900 mt-2">
+                {pickupModalOrder.business?.name || 'Campus Cafeteria'}
+              </h3>
+              <p className="text-xs text-slate-500 font-mono">
+                Order #{pickupModalOrder.id.slice(0, 8).toUpperCase()}
+              </p>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
+              <div className="w-36 h-36 mx-auto bg-white border border-slate-200 rounded-lg p-2.5 flex items-center justify-center shadow-xs">
+                <QRCodeSVG
+                  value={`CAMPUSFLOW:PICKUP:${pickupModalOrder.id}:${pickupModalOrder.business?.id}`}
+                  size={120}
+                  level="M"
+                  includeMargin={false}
+                />
+              </div>
+              <div className="text-xs font-bold text-slate-700">
+                {pickupModalOrder.items.map((i) => `${i.quantity}x ${i.productName}`).join(', ')}
+              </div>
+            </div>
+
+            <p className="text-[11px] text-slate-500">
+              Present this pass at the cafeteria counter to collect your order.
+            </p>
+
+            <Button
+              onClick={() => setPickupModalOrder(null)}
+              className="w-full h-9 font-bold text-xs"
+            >
+              Done
+            </Button>
           </Card>
         </div>
       )}

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/booking.dart';
 import '../../models/business.dart';
@@ -218,6 +219,55 @@ class _BookingsScreenState extends State<BookingsScreen> {
     );
   }
 
+  void _showAppointmentQrPass(Booking b) {
+    final refCode = b.id.length > 8 ? b.id.substring(0, 8).toUpperCase() : b.id.toUpperCase();
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Appointment Check-in Pass', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: QrImageView(
+                  data: 'CAMPUSFLOW:APPT:${b.id}:${b.serviceName}',
+                  version: QrVersions.auto,
+                  size: 140.0,
+                  backgroundColor: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(b.serviceName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              Text(b.businessName ?? 'Campus Partner Shop', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              const SizedBox(height: 8),
+              Text('REF: #$refCode', style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, color: Colors.purple)),
+              const SizedBox(height: 4),
+              const Text('Present this QR code at the counter for fast check-in', style: TextStyle(fontSize: 11, color: Colors.black54)),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -319,6 +369,17 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                       style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                                     ),
                                   ],
+                                ),
+                                const SizedBox(height: 10),
+                                OutlinedButton.icon(
+                                  onPressed: () => _showAppointmentQrPass(b),
+                                  icon: const Icon(Icons.qr_code_2, size: 16),
+                                  label: const Text('Show Counter Pass QR', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.purple.shade700,
+                                    side: BorderSide(color: Colors.purple.shade200),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
                                 ),
                               ],
                             ),

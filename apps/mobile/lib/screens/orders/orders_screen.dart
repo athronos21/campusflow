@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/order.dart';
@@ -246,6 +247,51 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 
+  void _showPickupQrModal(Order order) {
+    final orderRef = order.id.length > 8 ? order.id.substring(0, 8).toUpperCase() : order.id.toUpperCase();
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Cafeteria Pickup Pass', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: QrImageView(
+                data: 'CAMPUSFLOW:PICKUP:${order.id}:${order.businessId}',
+                version: QrVersions.auto,
+                size: 140.0,
+                backgroundColor: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(order.businessName ?? 'Campus Cafe', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+            Text('ORDER #$orderRef', style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, color: AppColors.primary)),
+            const SizedBox(height: 4),
+            const Text('Scan at pickup counter to collect your fresh meal', style: TextStyle(fontSize: 11, color: Colors.black54)),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -343,41 +389,50 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                   ),
                                 )
                               else if (isReady)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.success,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        'Ready for Pickup!',
-                                        style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                                      ),
-                                      SizedBox(width: 4),
-                                      Icon(Icons.notifications_active, color: Colors.white, size: 14),
-                                    ],
+                                InkWell(
+                                  onTap: () => _showPickupQrModal(order),
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.success,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'Ready · Tap for QR',
+                                          style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                        ),
+                                        SizedBox(width: 4),
+                                        Icon(Icons.qr_code, color: Colors.white, size: 14),
+                                      ],
+                                    ),
                                   ),
                                 )
                               else
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.shade50,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.check_circle, color: Colors.green.shade800, size: 13),
-                                      const SizedBox(width: 3),
-                                      Text(
-                                        'PAID',
-                                        style: TextStyle(color: Colors.green.shade800, fontSize: 11, fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
+                                InkWell(
+                                  onTap: () => _showPickupQrModal(order),
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.green.shade50,
+                                      border: Border.all(color: Colors.green.shade200),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.qr_code, color: Colors.green.shade800, size: 13),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Pickup QR',
+                                          style: TextStyle(color: Colors.green.shade800, fontSize: 11, fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                             ],
