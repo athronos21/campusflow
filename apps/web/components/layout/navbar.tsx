@@ -17,7 +17,7 @@ import {
   Store,
   Shield,
   LogOut,
-  Sparkles,
+  Package,
 } from 'lucide-react';
 
 export function Navbar() {
@@ -34,106 +34,137 @@ export function Navbar() {
       .toUpperCase();
   };
 
+  const isMerchant = user?.roles?.includes('merchant') || user?.roles?.includes('admin');
+  const isAdmin = user?.roles?.includes('admin');
+  const primaryRole = user?.roles?.[0]
+    ? user.roles[0].charAt(0).toUpperCase() + user.roles[0].slice(1)
+    : 'Student';
+
   return (
-    <nav className="border-b border-border/70 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 sticky top-0 z-50 transition-all">
-      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+    <nav className="border-b border-slate-200 bg-white/95 backdrop-blur sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        
+        {/* Brand Logo */}
         <Link
           href="/"
-          className="font-black text-xl tracking-tight text-foreground flex items-center gap-1.5 transition-transform hover:scale-[1.01]"
+          className="font-black text-xl tracking-tight text-slate-900 flex items-center gap-2 transition hover:opacity-90"
         >
-          <span className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center text-primary-foreground text-sm font-black shadow-sm">
+          <span className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white text-sm font-black shadow-xs">
             C
           </span>
           <span>
-            Campus<span className="text-primary">Flow</span>
+            Campus<span className="text-indigo-600">Flow</span>
           </span>
         </Link>
 
-        {/* Navigation Links */}
-        <div className="hidden md:flex items-center gap-5 text-sm font-medium text-muted-foreground">
+        {/* Primary Navigation Links (Student-Focused) */}
+        <div className="hidden md:flex items-center gap-6 text-xs font-semibold text-slate-600">
           <Link
             href="/directory"
-            className="hover:text-foreground transition flex items-center gap-1"
+            className="hover:text-indigo-600 transition flex items-center gap-1.5"
           >
             <Compass className="w-4 h-4 text-slate-400" />
             <span>Directory</span>
           </Link>
           <Link
             href="/transport"
-            className="hover:text-foreground transition flex items-center gap-1"
+            className="hover:text-indigo-600 transition flex items-center gap-1.5"
           >
             <Bus className="w-4 h-4 text-slate-400" />
             <span>Transport</span>
           </Link>
           <Link
             href="/housing"
-            className="hover:text-foreground transition flex items-center gap-1"
+            className="hover:text-indigo-600 transition flex items-center gap-1.5"
           >
             <Home className="w-4 h-4 text-slate-400" />
             <span>Housing</span>
           </Link>
           <Link
             href="/events"
-            className="hover:text-foreground transition flex items-center gap-1"
+            className="hover:text-indigo-600 transition flex items-center gap-1.5"
           >
             <Calendar className="w-4 h-4 text-slate-400" />
             <span>Events</span>
           </Link>
           <Link
             href="/learning"
-            className="hover:text-foreground transition flex items-center gap-1"
+            className="hover:text-indigo-600 transition flex items-center gap-1.5"
           >
             <BookOpen className="w-4 h-4 text-slate-400" />
             <span>Academic</span>
           </Link>
+
+          {/* Student Orders Link */}
+          {user && (
+            <Link
+              href="/orders"
+              className="hover:text-indigo-600 transition flex items-center gap-1.5"
+            >
+              <Package className="w-4 h-4 text-slate-400" />
+              <span>My Orders</span>
+            </Link>
+          )}
+
+          {/* Role-Gated: Merchant Portal (Only if merchant or admin) */}
+          {isMerchant && (
+            <Link
+              href="/merchant/dashboard"
+              className="text-amber-800 bg-amber-50 hover:bg-amber-100 px-2 py-1 rounded-md transition flex items-center gap-1.5 font-bold"
+            >
+              <Store className="w-3.5 h-3.5 text-amber-600" />
+              <span>Merchant</span>
+            </Link>
+          )}
+
+          {/* Role-Gated: Admin Portal (Only if admin) */}
+          {isAdmin && (
+            <Link
+              href="/admin/verifications"
+              className="text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-md transition flex items-center gap-1.5 font-bold"
+            >
+              <Shield className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Admin</span>
+            </Link>
+          )}
+        </div>
+
+        {/* Right Section: Cart + User Profile / Auth */}
+        <div className="flex items-center gap-3">
+          
+          {/* Shopping Cart Trigger */}
           <Link
             href="/cart"
-            className="hover:text-foreground transition flex items-center gap-1.5 font-semibold text-foreground relative"
+            className="relative p-2 rounded-lg text-slate-700 hover:text-indigo-600 hover:bg-slate-100 transition flex items-center gap-1.5 text-xs font-bold"
+            title="View Shopping Cart"
           >
-            <ShoppingCart className="w-4 h-4 text-primary" />
-            <span>Cart</span>
+            <ShoppingCart className="w-4 h-4 text-slate-600" />
+            <span className="hidden sm:inline">Cart</span>
             {itemCount > 0 && (
               <Badge
                 variant="default"
-                className="h-5 px-1.5 text-[10px] font-black rounded-full"
+                className="h-4 min-w-[16px] px-1 text-[10px] font-black rounded-full bg-indigo-600 text-white"
               >
                 {itemCount}
               </Badge>
             )}
           </Link>
-          <Link
-            href="/merchant/dashboard"
-            className="hover:text-foreground transition flex items-center gap-1"
-          >
-            <Store className="w-3.5 h-3.5 text-slate-400" />
-            <span>Merchant</span>
-          </Link>
-          <Link
-            href="/admin/verifications"
-            className="hover:text-foreground transition flex items-center gap-1"
-          >
-            <Shield className="w-3.5 h-3.5 text-slate-400" />
-            <span>Admin</span>
-          </Link>
-        </div>
 
-        {/* User Account / Auth Actions */}
-        <div className="flex items-center gap-3">
+          {/* User Account / Auth Actions */}
           {user ? (
-            <div className="flex items-center gap-3 pl-3 border-l border-border">
+            <div className="flex items-center gap-3 pl-3 border-l border-slate-200">
               <div className="flex items-center gap-2">
-                <Avatar className="h-8 w-8 border border-border">
-                  <AvatarFallback className="text-xs font-bold bg-primary/10 text-primary">
+                <Avatar className="h-8 w-8 border border-slate-200 bg-indigo-50">
+                  <AvatarFallback className="text-xs font-bold bg-indigo-100 text-indigo-700">
                     {getInitials(user.displayName)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="hidden lg:flex flex-col text-left">
-                  <span className="text-xs font-bold leading-tight text-foreground truncate max-w-[120px]">
+                  <span className="text-xs font-bold leading-tight text-slate-900 truncate max-w-[130px]">
                     {user.displayName}
                   </span>
-                  <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                    <Sparkles className="w-2.5 h-2.5 text-amber-500" />
-                    Student
+                  <span className="text-[10px] font-semibold text-indigo-700">
+                    {primaryRole}
                   </span>
                 </div>
               </div>
@@ -141,11 +172,11 @@ export function Navbar() {
                 variant="ghost"
                 size="sm"
                 onClick={logout}
-                className="h-8 px-2 text-destructive hover:bg-destructive/10 text-xs font-medium"
+                className="h-8 px-2 text-rose-600 hover:bg-rose-50 text-xs font-semibold"
                 title="Sign Out"
               >
-                <LogOut className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline ml-1">Sign Out</span>
+                <LogOut className="w-3.5 h-3.5 mr-1" />
+                <span className="hidden sm:inline">Sign Out</span>
               </Button>
             </div>
           ) : (
@@ -153,11 +184,12 @@ export function Navbar() {
               <Button variant="outline" size="sm" asChild className="h-8 text-xs font-semibold">
                 <Link href="/login">Sign In</Link>
               </Button>
-              <Button size="sm" asChild className="h-8 text-xs font-bold shadow-sm">
+              <Button size="sm" asChild className="h-8 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs">
                 <Link href="/register">Sign Up</Link>
               </Button>
             </div>
           )}
+
         </div>
       </div>
     </nav>
