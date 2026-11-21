@@ -429,30 +429,43 @@ export default function HomePage() {
             <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                  <CreditCard className="w-4 h-4 text-indigo-600" /> Campus Wallet Balance
+                  <CreditCard className="w-4 h-4 text-indigo-600" /> Campus Digital Wallet
                 </div>
-                <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-bold">
-                  Telebirr Synced
+                <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-bold border border-emerald-200">
+                  Zero Fee
                 </span>
               </div>
 
-              <div>
-                <div className="text-2xl font-black text-slate-900 font-mono">1,420.50 ETB</div>
-                <div className="text-xs text-slate-500 mt-0.5">Zero student transaction fee</div>
+              <div className="space-y-1.5">
+                <div className="text-xs font-bold text-slate-900">
+                  Integrated Telebirr &amp; CBE Birr
+                </div>
+                <p className="text-[11px] text-slate-600 leading-relaxed">
+                  Fast cashless checkout across campus cafeterias, bus shuttles, stationery printing, and dorm deposits with instant USSD or dynamic QR settlement.
+                </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-xs">
+              <div className="space-y-1 pt-2 border-t border-slate-100 text-[11px] text-slate-600 font-medium">
+                <div className="flex items-center justify-between">
+                  <span>Student Transfer Fee:</span>
+                  <span className="font-bold text-emerald-700">0.00 ETB (100% Free)</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Top-Up Methods:</span>
+                  <span className="font-semibold text-slate-800">Telebirr &bull; CBE Birr</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Accounting Standard:</span>
+                  <span className="font-mono text-slate-800">Integer Cents (Zero Loss)</span>
+                </div>
+              </div>
+
+              <div className="pt-1">
                 <Link
                   href="/orders"
-                  className="py-1.5 text-center font-bold bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
+                  className="block w-full py-2 text-center font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs transition shadow-xs"
                 >
-                  + Top Up
-                </Link>
-                <Link
-                  href="/orders"
-                  className="py-1.5 text-center font-semibold bg-slate-100 text-slate-800 rounded hover:bg-slate-200 transition"
-                >
-                  Statement
+                  Manage Wallet &amp; Top Up &rarr;
                 </Link>
               </div>
             </div>
