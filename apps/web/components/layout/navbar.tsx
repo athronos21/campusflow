@@ -19,6 +19,8 @@ import {
   Shield,
   LogOut,
   Package,
+  Clock,
+  PhoneCall,
 } from 'lucide-react';
 
 export function Navbar() {
@@ -48,8 +50,34 @@ export function Navbar() {
     : 'Student';
 
   return (
-    <nav className="border-b border-slate-200 bg-white/95 backdrop-blur sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+    <header className="border-b border-slate-200 bg-white">
+      {/* Top Institutional Status & Emergency Bar */}
+      <div className="bg-slate-900 text-white text-xs px-4 sm:px-6 py-2">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span className="font-bold text-slate-100">Haramaya University</span>
+            <span className="text-slate-500">&bull;</span>
+            <span className="text-slate-300">Main Campus (Bate) &bull; Academic Term 2026/27</span>
+          </div>
+
+          <div className="flex items-center gap-4 text-slate-300">
+            <span className="font-mono flex items-center gap-1.5 text-slate-400">
+              <Clock className="w-3.5 h-3.5" /> 14:45 EAT
+            </span>
+            <span className="text-slate-600">|</span>
+            <a
+              href="tel:0255530112"
+              className="text-rose-300 hover:text-white font-semibold flex items-center gap-1 transition"
+            >
+              <PhoneCall className="w-3.5 h-3.5" /> Clinic Hotline: 025-553-0112
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Navigation Bar */}
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         
         {/* Brand Logo */}
         <Link
@@ -202,7 +230,7 @@ export function Navbar() {
           )}
 
         </div>
-      </div>
-    </nav>
+      </nav>
+    </header>
   );
 }

@@ -14,7 +14,6 @@ import {
   ShieldCheck,
   Search,
   PhoneCall,
-  Clock,
   QrCode,
   CreditCard,
   Download,
@@ -39,31 +38,6 @@ export default function HomePage() {
 
       {/* Main Workspace Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full space-y-6">
-
-        {/* Top Operational Bar */}
-        <div className="bg-white border border-slate-200 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-              <span className="text-xs font-bold text-slate-800">Haramaya University</span>
-            </div>
-            <span className="text-slate-300">|</span>
-            <span className="text-xs text-slate-600">Main Campus (Bate) &bull; Academic Year 2026/27</span>
-          </div>
-
-          <div className="flex items-center gap-4 text-xs">
-            <span className="text-slate-500 font-mono flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-slate-400" /> 14:45 EAT
-            </span>
-            <span className="text-slate-300">|</span>
-            <a
-              href="tel:0255530112"
-              className="text-rose-700 font-semibold hover:text-rose-800 flex items-center gap-1"
-            >
-              <PhoneCall className="w-3.5 h-3.5" /> Clinic Emergency: 025-553-0112
-            </a>
-          </div>
-        </div>
 
         {/* Command & Quick Search Bar */}
         <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
