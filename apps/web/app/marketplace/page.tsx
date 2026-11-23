@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import { Card } from '@/components/ui/card';
@@ -17,6 +17,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { formatETB } from '@/lib/utils';
+import { apiClient } from '@/lib/api-client';
 import {
   Tag,
   Book,
@@ -26,6 +27,7 @@ import {
   Phone,
   Search,
   Plus,
+  Loader2,
 } from 'lucide-react';
 
 interface MarketplaceItem {
@@ -106,9 +108,49 @@ const INITIAL_ITEMS: MarketplaceItem[] = [
 
 export default function MarketplacePage() {
   const [items, setItems] = useState<MarketplaceItem[]>(INITIAL_ITEMS);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [search, setSearch] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    async function loadLiveProducts() {
+      try {
+        setIsLoading(true);
+        const data = await apiClient<any[]>('/products').catch(() => []);
+        if (data && data.length > 0) {
+          const mapped: MarketplaceItem[] = data.map((p) => {
+            let cat: 'textbooks' | 'electronics' | 'dorm' | 'stationery' = 'stationery';
+            const slug = (p.category?.slug || '').toLowerCase();
+            const nameLower = (p.name || '').toLowerCase();
+            if (slug.includes('textbook') || nameLower.includes('book') || nameLower.includes('calculus')) cat = 'textbooks';
+            else if (slug.includes('tech') || slug.includes('electronic') || nameLower.includes('calculator') || nameLower.includes('lamp')) cat = 'electronics';
+            else if (slug.includes('dorm') || nameLower.includes('bed') || nameLower.includes('mattress')) cat = 'dorm';
+
+            return {
+              id: p.id,
+              title: p.name,
+              category: cat,
+              priceMinor: p.priceMinor,
+              condition: 'Like New',
+              sellerName: p.business?.name || 'Haramaya Campus Merchant',
+              sellerDorm: 'Commercial & Student Center',
+              phone: '+251 91 122 3344',
+              description: p.description || 'Verified product listing on CampusFlow.',
+              createdAt: p.createdAt,
+            };
+          });
+          setItems(mapped);
+        }
+      } catch (err) {
+        console.error('Failed to load live marketplace items:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadLiveProducts();
+  }, []);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -256,11 +298,22 @@ export default function MarketplacePage() {
 
         {/* Marketplace Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredItems.map((item) => (
-            <Card
-              key={item.id}
-              className="flex flex-col justify-between border-slate-200 hover:border-slate-300 hover:shadow-xs transition p-5"
-            >
+          {isLoading ? (
+            <div className="col-span-full py-16 text-center text-slate-500">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-600 mb-2" />
+              <p className="text-xs font-medium">Loading live campus marketplace items...</p>
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="col-span-full py-16 text-center text-slate-500">
+              <p className="text-sm font-semibold">No marketplace items found</p>
+              <p className="text-xs mt-1">Be the first to list a textbook, electronics, or dorm supply!</p>
+            </div>
+          ) : (
+            filteredItems.map((item) => (
+              <Card
+                key={item.id}
+                className="flex flex-col justify-between border-slate-200 hover:border-slate-300 hover:shadow-xs transition p-5"
+              >
               <div>
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <span className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 shrink-0">
@@ -307,7 +360,7 @@ export default function MarketplacePage() {
                 </div>
               </div>
             </Card>
-          ))}
+          )))}
         </div>
       </main>
 

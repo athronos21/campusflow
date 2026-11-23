@@ -1,6 +1,26 @@
+import '../core/api/api_client.dart';
+import '../core/api/api_endpoints.dart';
+
 class AiAssistantService {
   static Future<String> getAnswer(String query) async {
-    await Future.delayed(const Duration(milliseconds: 400));
+    try {
+      final response = await ApiClient.client.post(
+        ApiEndpoints.assistantQuery,
+        data: {'query': query},
+      );
+
+      final data = response.data;
+      if (data is Map && data['answer'] != null) {
+        return data['answer'].toString();
+      }
+    } catch (e) {
+      print('AI Assistant API query error (using fallback): $e');
+    }
+
+    return _fallbackAnswer(query);
+  }
+
+  static String _fallbackAnswer(String query) {
     final q = query.toLowerCase();
 
     if (q.contains('library') || q.contains('book')) {

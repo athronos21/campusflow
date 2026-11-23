@@ -112,69 +112,141 @@ enum LearningResourceType {
   lab_manual
 }
 
-model Campus {
-  id          String              @id @default(uuid()) @db.Uuid
-  name        String
-  slug        String              @unique
-  city        String
-  isActive    Boolean             @default(true) @map("is_active")
-  createdAt   DateTime            @default(now()) @map("created_at")
+enum AcademicLevel {
+  undergraduate
+  postgraduate
+  doctoral
+  tvet
+}
 
-  memberships CampusMembership[]
-  businesses  Business[]
-  categories  Category[]
-  orders      Order[]
-  announcements Announcement[]
-  auditLogs   AuditLog[]
-  transportRoutes TransportRoute[]
-  housingListings HousingListing[]
-  events      CampusEvent[]
-  learningResources LearningResource[]
+enum StudentIdStatus {
+  active
+  suspended
+  graduated
+  lost
+}
+
+enum WalletStatus {
+  active
+  frozen
+  closed
+}
+
+enum WalletType {
+  student
+  merchant
+  campus_treasury
+  system_fee
+}
+
+enum LedgerEntryType {
+  credit
+  debit
+}
+
+enum TransactionCategory {
+  topup_telebirr
+  topup_cbe_birr
+  topup_chapa
+  p2p_transfer
+  merchant_payment
+  transport_payment
+  cafeteria_payment
+  housing_deposit
+  refund
+  system_fee
+}
+
+enum TransactionState {
+  pending
+  succeeded
+  failed
+  reversed
+}
+
+enum DietaryPreference {
+  non_fasting
+  fasting
+  vegetarian
+  halal
+}
+
+enum MealPeriod {
+  breakfast
+  lunch
+  dinner
+}
+
+model Campus {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String   @unique
+  city      String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  memberships        CampusMembership[]
+  businesses         Business[]
+  categories         Category[]
+  orders             Order[]
+  announcements      Announcement[]
+  auditLogs          AuditLog[]
+  transportRoutes    TransportRoute[]
+  housingListings    HousingListing[]
+  events             CampusEvent[]
+  learningResources  LearningResource[]
+  studentProfiles    StudentProfile[]
+  wallets            Wallet[]
+  walletTransactions WalletTransaction[]
+  mealPlans          MealPlan[]
 
   @@map("campuses")
 }
 
 model User {
-  id           String             @id @default(uuid()) @db.Uuid
-  email        String?            @unique
-  phone        String?            @unique
-  displayName  String             @map("display_name")
-  passwordHash String?            @map("password_hash")
-  emailVerified Boolean           @default(false) @map("email_verified")
-  image        String?
-  status       UserStatus         @default(active)
-  createdAt    DateTime           @default(now()) @map("created_at")
-  updatedAt    DateTime           @updatedAt @map("updated_at")
+  id            String     @id @default(uuid()) @db.Uuid
+  email         String?    @unique
+  phone         String?    @unique
+  displayName   String     @map("display_name")
+  passwordHash  String?    @map("password_hash")
+  emailVerified Boolean    @default(false) @map("email_verified")
+  image         String?
+  status        UserStatus @default(active)
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
 
-  sessions      Session[]
-  accounts      Account[]
-  memberships   CampusMembership[]
-  ownedBusinesses Business[]      @relation("BusinessOwner")
-  staffRoles    BusinessStaff[]
-  orders        Order[]           @relation("CustomerOrders")
-  bookings      Booking[]         @relation("CustomerBookings")
-  announcements Announcement[]    @relation("UserAnnouncements")
-  notifications Notification[]
-  auditLogs     AuditLog[]        @relation("ActorAuditLogs")
-  reportsFiled  Report[]          @relation("ReporterUser")
-  ticketReservations TicketReservation[] @relation("PassengerUser")
-  housingOwned  HousingListing[]  @relation("LandlordHousing")
-  viewingRequests HousingViewingRequest[] @relation("StudentViewingRequests")
-  eventsOrganized CampusEvent[]   @relation("EventOrganizer")
-  eventRsvps    EventRsvp[]       @relation("UserEventRsvps")
-  learningResources LearningResource[] @relation("UploaderLearningResources")
+  sessions           Session[]
+  accounts           Account[]
+  memberships        CampusMembership[]
+  ownedBusinesses    Business[]              @relation("BusinessOwner")
+  staffRoles         BusinessStaff[]
+  orders             Order[]                 @relation("CustomerOrders")
+  bookings           Booking[]               @relation("CustomerBookings")
+  announcements      Announcement[]          @relation("UserAnnouncements")
+  notifications      Notification[]
+  auditLogs          AuditLog[]              @relation("ActorAuditLogs")
+  reportsFiled       Report[]                @relation("ReporterUser")
+  ticketReservations TicketReservation[]     @relation("PassengerUser")
+  housingOwned       HousingListing[]        @relation("LandlordHousing")
+  viewingRequests    HousingViewingRequest[] @relation("StudentViewingRequests")
+  eventsOrganized    CampusEvent[]           @relation("EventOrganizer")
+  eventRsvps         EventRsvp[]             @relation("UserEventRsvps")
+  learningResources  LearningResource[]      @relation("UploaderLearningResources")
+  studentProfile     StudentProfile?
+  wallet             Wallet?
+  staffMealScans     MealScanLog[]           @relation("StaffMealScans")
 
   @@map("users")
 }
 
 model CampusMembership {
-  userId    String           @map("user_id") @db.Uuid
-  campusId  String           @map("campus_id") @db.Uuid
-  role      CampusRole
-  status    MembershipStatus @default(active)
+  userId   String           @map("user_id") @db.Uuid
+  campusId String           @map("campus_id") @db.Uuid
+  role     CampusRole
+  status   MembershipStatus @default(active)
 
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  campus    Campus           @relation(fields: [campusId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campus Campus @relation(fields: [campusId], references: [id], onDelete: Cascade)
 
   @@id([userId, campusId, role])
   @@map("campus_memberships")
@@ -189,12 +261,13 @@ model Business {
   status      BusinessStatus @default(pending)
   createdAt   DateTime       @default(now()) @map("created_at")
 
-  campus      Campus         @relation(fields: [campusId], references: [id], onDelete: Cascade)
-  owner       User           @relation("BusinessOwner", fields: [ownerId], references: [id], onDelete: Restrict)
-  staff       BusinessStaff[]
-  products    Product[]
-  orders      Order[]
-  bookings    Booking[]
+  campus   Campus          @relation(fields: [campusId], references: [id], onDelete: Cascade)
+  owner    User            @relation("BusinessOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  staff    BusinessStaff[]
+  products Product[]
+  orders   Order[]
+  bookings Booking[]
+  wallet   Wallet?
 
   @@index([campusId, status], name: "idx_businesses_campus_status")
   @@map("businesses")
@@ -205,16 +278,16 @@ model BusinessStaff {
   userId     String            @map("user_id") @db.Uuid
   role       BusinessStaffRole
 
-  business   Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([businessId, userId])
   @@map("business_staff")
 }
 
 model Category {
-  id       String    @id @default(uuid()) @db.Uuid
-  campusId String?   @map("campus_id") @db.Uuid
+  id       String  @id @default(uuid()) @db.Uuid
+  campusId String? @map("campus_id") @db.Uuid
   name     String
   slug     String
 
@@ -226,20 +299,21 @@ model Category {
 }
 
 model Product {
-  id            String      @id @default(uuid()) @db.Uuid
-  businessId    String      @map("business_id") @db.Uuid
-  categoryId    String?     @map("category_id") @db.Uuid
+  id            String   @id @default(uuid()) @db.Uuid
+  businessId    String   @map("business_id") @db.Uuid
+  categoryId    String?  @map("category_id") @db.Uuid
   name          String
   description   String?
-  priceMinor    BigInt      @map("price_minor")
-  currency      String      @default("ETB") @db.Char(3)
-  stockQuantity Int?        @map("stock_quantity")
-  isAvailable   Boolean     @default(true) @map("is_available")
-  createdAt     DateTime    @default(now()) @map("created_at")
+  priceMinor    BigInt   @map("price_minor")
+  currency      String   @default("ETB") @db.Char(3)
+  stockQuantity Int?     @map("stock_quantity")
+  isAvailable   Boolean  @default(true) @map("is_available")
+  version       Int      @default(1)
+  createdAt     DateTime @default(now()) @map("created_at")
 
-  business      Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  category      Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  orderItems    OrderItem[]
+  business   Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  category   Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  orderItems OrderItem[]
 
   @@index([businessId, isAvailable], name: "idx_products_business_available")
   @@map("products")
@@ -258,11 +332,11 @@ model Order {
   totalMinor    BigInt        @map("total_minor")
   createdAt     DateTime      @default(now()) @map("created_at")
 
-  campus        Campus        @relation(fields: [campusId], references: [id], onDelete: Cascade)
-  customer      User          @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Restrict)
-  business      Business      @relation(fields: [businessId], references: [id], onDelete: Restrict)
-  items         OrderItem[]
-  payments      Payment[]
+  campus   Campus      @relation(fields: [campusId], references: [id], onDelete: Cascade)
+  customer User        @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Restrict)
+  business Business    @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  items    OrderItem[]
+  payments Payment[]
 
   @@index([customerId, createdAt(sort: Desc)], name: "idx_orders_customer_created")
   @@index([businessId, status], name: "idx_orders_business_status")
@@ -270,15 +344,15 @@ model Order {
 }
 
 model OrderItem {
-  id              String   @id @default(uuid()) @db.Uuid
-  orderId         String   @map("order_id") @db.Uuid
-  productId       String?  @map("product_id") @db.Uuid
-  productName     String   @map("product_name")
-  unitPriceMinor  BigInt   @map("unit_price_minor")
-  quantity        Int
+  id             String  @id @default(uuid()) @db.Uuid
+  orderId        String  @map("order_id") @db.Uuid
+  productId      String? @map("product_id") @db.Uuid
+  productName    String  @map("product_name")
+  unitPriceMinor BigInt  @map("unit_price_minor")
+  quantity       Int
 
-  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product         Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
   @@map("order_items")
 }
@@ -292,26 +366,30 @@ model Booking {
   status      BookingStatus @default(requested)
   createdAt   DateTime      @default(now()) @map("created_at")
 
-  customer    User          @relation("CustomerBookings", fields: [customerId], references: [id], onDelete: Restrict)
-  business    Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer User     @relation("CustomerBookings", fields: [customerId], references: [id], onDelete: Restrict)
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId, startsAt], name: "idx_bookings_business_start")
   @@map("bookings")
 }
 
 model Payment {
-  id                String        @id @default(uuid()) @db.Uuid
-  orderId           String?       @map("order_id") @db.Uuid
-  reservationId     String?       @map("reservation_id") @db.Uuid
-  provider          String
-  providerReference String?       @map("provider_reference")
-  amountMinor       BigInt        @map("amount_minor")
-  currency          String        @default("ETB") @db.Char(3)
-  status            PaymentStatus @default(pending)
-  createdAt         DateTime      @default(now()) @map("created_at")
+  id                  String        @id @default(uuid()) @db.Uuid
+  orderId             String?       @map("order_id") @db.Uuid
+  reservationId       String?       @map("reservation_id") @db.Uuid
+  walletId            String?       @map("wallet_id") @db.Uuid
+  walletTransactionId String?       @map("wallet_transaction_id") @db.Uuid
+  provider            String
+  providerReference   String?       @map("provider_reference")
+  amountMinor         BigInt        @map("amount_minor")
+  currency            String        @default("ETB") @db.Char(3)
+  status              PaymentStatus @default(pending)
+  createdAt           DateTime      @default(now()) @map("created_at")
 
-  order             Order?              @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  reservation       TicketReservation?  @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  order             Order?             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  reservation       TicketReservation? @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  wallet            Wallet?            @relation("WalletPayments", fields: [walletId], references: [id], onDelete: SetNull)
+  walletTransaction WalletTransaction? @relation("TransactionPayments", fields: [walletTransactionId], references: [id], onDelete: SetNull)
 
   @@unique([provider, providerReference])
   @@map("payments")
@@ -327,8 +405,8 @@ model Announcement {
   expiresAt   DateTime? @map("expires_at")
   createdAt   DateTime  @default(now()) @map("created_at")
 
-  campus      Campus    @relation(fields: [campusId], references: [id], onDelete: Cascade)
-  author      User      @relation("UserAnnouncements", fields: [authorId], references: [id], onDelete: Restrict)
+  campus Campus @relation(fields: [campusId], references: [id], onDelete: Cascade)
+  author User   @relation("UserAnnouncements", fields: [authorId], references: [id], onDelete: Restrict)
 
   @@map("announcements")
 }
@@ -342,23 +420,23 @@ model Notification {
   readAt    DateTime? @map("read_at")
   createdAt DateTime  @default(now()) @map("created_at")
 
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt(sort: Desc)], name: "idx_notifications_user_created")
   @@map("notifications")
 }
 
 model Report {
-  id          String       @id @default(uuid()) @db.Uuid
-  reporterId  String       @map("reporter_id") @db.Uuid
-  entityType  String       @map("entity_type")
-  entityId    String       @map("entity_id") @db.Uuid
-  reason      String
-  details     String?
-  status      ReportStatus @default(pending)
-  createdAt   DateTime     @default(now()) @map("created_at")
+  id         String       @id @default(uuid()) @db.Uuid
+  reporterId String       @map("reporter_id") @db.Uuid
+  entityType String       @map("entity_type")
+  entityId   String       @map("entity_id") @db.Uuid
+  reason     String
+  details    String?
+  status     ReportStatus @default(pending)
+  createdAt  DateTime     @default(now()) @map("created_at")
 
-  reporter    User         @relation("ReporterUser", fields: [reporterId], references: [id], onDelete: Restrict)
+  reporter User @relation("ReporterUser", fields: [reporterId], references: [id], onDelete: Restrict)
 
   @@map("reports")
 }
@@ -372,22 +450,22 @@ model AuditLog {
   entityId   String?  @map("entity_id") @db.Uuid
   createdAt  DateTime @default(now()) @map("created_at")
 
-  actor      User?    @relation("ActorAuditLogs", fields: [actorId], references: [id], onDelete: SetNull)
-  campus     Campus?  @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  actor  User?   @relation("ActorAuditLogs", fields: [actorId], references: [id], onDelete: SetNull)
+  campus Campus? @relation(fields: [campusId], references: [id], onDelete: SetNull)
 
   @@map("audit_logs")
 }
 
 model TransportOperator {
-  id          String   @id @default(uuid()) @db.Uuid
-  name        String
-  logoUrl     String?  @map("logo_url")
-  phone       String?
-  email       String?
-  isActive    Boolean  @default(true) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  logoUrl   String?  @map("logo_url")
+  phone     String?
+  email     String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  trips       Trip[]
+  trips Trip[]
 
   @@map("transport_operators")
 }
@@ -404,8 +482,8 @@ model TransportRoute {
   isActive             Boolean  @default(true) @map("is_active")
   createdAt            DateTime @default(now()) @map("created_at")
 
-  campus               Campus?  @relation(fields: [campusId], references: [id], onDelete: SetNull)
-  trips                Trip[]
+  campus Campus? @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  trips  Trip[]
 
   @@map("transport_routes")
 }
@@ -423,11 +501,12 @@ model Trip {
   priceMinor     BigInt              @map("price_minor")
   currency       String              @default("ETB") @db.Char(3)
   status         TransportTripStatus @default(scheduled)
+  version        Int                 @default(1)
   createdAt      DateTime            @default(now()) @map("created_at")
 
-  operator       TransportOperator   @relation(fields: [operatorId], references: [id], onDelete: Restrict)
-  route          TransportRoute      @relation(fields: [routeId], references: [id], onDelete: Restrict)
-  reservations   TicketReservation[]
+  operator     TransportOperator   @relation(fields: [operatorId], references: [id], onDelete: Restrict)
+  route        TransportRoute      @relation(fields: [routeId], references: [id], onDelete: Restrict)
+  reservations TicketReservation[]
 
   @@index([routeId, departureTime], name: "idx_trips_route_departure")
   @@map("trips")
@@ -447,9 +526,9 @@ model TicketReservation {
   paymentStatus  PaymentStatus     @default(unpaid) @map("payment_status")
   createdAt      DateTime          @default(now()) @map("created_at")
 
-  trip           Trip              @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  passenger      User              @relation("PassengerUser", fields: [passengerId], references: [id], onDelete: Restrict)
-  payments       Payment[]
+  trip      Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  passenger User      @relation("PassengerUser", fields: [passengerId], references: [id], onDelete: Restrict)
+  payments  Payment[]
 
   @@unique([tripId, seatNumber])
   @@index([passengerId, createdAt(sort: Desc)], name: "idx_reservations_passenger")
@@ -474,8 +553,8 @@ model HousingListing {
   imageUrl       String?             @map("image_url")
   createdAt      DateTime            @default(now()) @map("created_at")
 
-  campus         Campus              @relation(fields: [campusId], references: [id], onDelete: Cascade)
-  landlord       User                @relation("LandlordHousing", fields: [landlordId], references: [id], onDelete: Restrict)
+  campus          Campus                  @relation(fields: [campusId], references: [id], onDelete: Cascade)
+  landlord        User                    @relation("LandlordHousing", fields: [landlordId], references: [id], onDelete: Restrict)
   viewingRequests HousingViewingRequest[]
 
   @@index([campusId, isAvailable], name: "idx_housing_campus_available")
@@ -492,32 +571,32 @@ model HousingViewingRequest {
   status        ViewingRequestStatus @default(pending)
   createdAt     DateTime             @default(now()) @map("created_at")
 
-  listing       HousingListing       @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  student       User                 @relation("StudentViewingRequests", fields: [studentId], references: [id], onDelete: Cascade)
+  listing HousingListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  student User           @relation("StudentViewingRequests", fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([studentId, createdAt(sort: Desc)], name: "idx_viewing_student")
   @@map("housing_viewing_requests")
 }
 
 model CampusEvent {
-  id            String          @id @default(uuid()) @db.Uuid
-  campusId      String          @map("campus_id") @db.Uuid
-  organizerId   String          @map("organizer_id") @db.Uuid
+  id            String    @id @default(uuid()) @db.Uuid
+  campusId      String    @map("campus_id") @db.Uuid
+  organizerId   String    @map("organizer_id") @db.Uuid
   title         String
   description   String
   venue         String
-  startsAt      DateTime        @map("starts_at")
-  endsAt        DateTime?       @map("ends_at")
-  category      String          @default("Campus Life")
-  entryFeeMinor BigInt          @default(0) @map("entry_fee_minor")
-  currency      String          @default("ETB") @db.Char(3)
-  maxAttendees  Int?            @map("max_attendees")
-  bannerUrl     String?         @map("banner_url")
-  createdAt     DateTime        @default(now()) @map("created_at")
+  startsAt      DateTime  @map("starts_at")
+  endsAt        DateTime? @map("ends_at")
+  category      String    @default("Campus Life")
+  entryFeeMinor BigInt    @default(0) @map("entry_fee_minor")
+  currency      String    @default("ETB") @db.Char(3)
+  maxAttendees  Int?      @map("max_attendees")
+  bannerUrl     String?   @map("banner_url")
+  createdAt     DateTime  @default(now()) @map("created_at")
 
-  campus        Campus          @relation(fields: [campusId], references: [id], onDelete: Cascade)
-  organizer     User            @relation("EventOrganizer", fields: [organizerId], references: [id], onDelete: Restrict)
-  rsvps         EventRsvp[]
+  campus    Campus      @relation(fields: [campusId], references: [id], onDelete: Cascade)
+  organizer User        @relation("EventOrganizer", fields: [organizerId], references: [id], onDelete: Restrict)
+  rsvps     EventRsvp[]
 
   @@index([campusId, startsAt], name: "idx_events_campus_starts")
   @@map("campus_events")
@@ -531,8 +610,8 @@ model EventRsvp {
   status     EventRsvpStatus @default(registered)
   createdAt  DateTime        @default(now()) @map("created_at")
 
-  event      CampusEvent     @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user       User            @relation("UserEventRsvps", fields: [userId], references: [id], onDelete: Cascade)
+  event CampusEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User        @relation("UserEventRsvps", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, userId])
   @@index([userId, createdAt(sort: Desc)], name: "idx_rsvp_user")
@@ -553,8 +632,8 @@ model LearningResource {
   isApproved    Boolean              @default(true) @map("is_approved")
   createdAt     DateTime             @default(now()) @map("created_at")
 
-  campus        Campus               @relation(fields: [campusId], references: [id], onDelete: Cascade)
-  uploader      User                 @relation("UploaderLearningResources", fields: [uploaderId], references: [id], onDelete: Restrict)
+  campus   Campus @relation(fields: [campusId], references: [id], onDelete: Cascade)
+  uploader User   @relation("UploaderLearningResources", fields: [uploaderId], references: [id], onDelete: Restrict)
 
   @@index([campusId, department], name: "idx_learning_campus_dept")
   @@index([courseCode], name: "idx_learning_course")
@@ -571,7 +650,7 @@ model Session {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId], name: "idx_session_user")
   @@map("sessions")
@@ -592,7 +671,7 @@ model Account {
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime  @updatedAt @map("updated_at")
 
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([providerId, accountId])
   @@index([userId], name: "idx_account_user")
@@ -609,4 +688,146 @@ model Verification {
 
   @@index([identifier], name: "idx_verification_identifier")
   @@map("verifications")
+}
+
+model StudentProfile {
+  id              String          @id @default(uuid()) @db.Uuid
+  userId          String          @unique @map("user_id") @db.Uuid
+  campusId        String          @map("campus_id") @db.Uuid
+  studentIdNumber String          @map("student_id_number")
+  college         String
+  department      String
+  academicLevel   AcademicLevel   @default(undergraduate) @map("academic_level")
+  batchYear       Int             @map("batch_year")
+  emergencyPhone  String?         @map("emergency_phone")
+  idCardStatus    StudentIdStatus @default(active) @map("id_card_status")
+  qrSecret        String          @default(uuid()) @map("qr_secret")
+  issuedAt        DateTime        @default(now()) @map("issued_at")
+  expiresAt       DateTime        @map("expires_at")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campus     Campus     @relation(fields: [campusId], references: [id], onDelete: Cascade)
+  mealPasses MealPass[]
+
+  @@unique([campusId, studentIdNumber])
+  @@index([campusId, department], name: "idx_student_campus_dept")
+  @@map("student_profiles")
+}
+
+model Wallet {
+  id           String       @id @default(uuid()) @db.Uuid
+  campusId     String       @map("campus_id") @db.Uuid
+  userId       String?      @unique @map("user_id") @db.Uuid
+  businessId   String?      @unique @map("business_id") @db.Uuid
+  walletType   WalletType   @default(student) @map("wallet_type")
+  currency     String       @default("ETB") @db.Char(3)
+  balanceMinor BigInt       @default(0) @map("balance_minor")
+  status       WalletStatus @default(active)
+  version      Int          @default(1)
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  user     User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business Business?     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  campus   Campus        @relation(fields: [campusId], references: [id], onDelete: Cascade)
+  entries  LedgerEntry[]
+  payments Payment[]     @relation("WalletPayments")
+
+  @@index([campusId, walletType], name: "idx_wallets_campus_type")
+  @@index([campusId, status], name: "idx_wallets_campus_status")
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id              String              @id @default(uuid()) @db.Uuid
+  referenceNumber String              @unique @map("reference_number")
+  idempotencyKey  String?             @unique @map("idempotency_key")
+  campusId        String              @map("campus_id") @db.Uuid
+  category        TransactionCategory
+  state           TransactionState    @default(pending)
+  amountMinor     BigInt              @map("amount_minor")
+  feeMinor        BigInt              @default(0) @map("fee_minor")
+  currency        String              @default("ETB") @db.Char(3)
+  description     String
+  metadata        Json?
+  createdAt       DateTime            @default(now()) @map("created_at")
+  completedAt     DateTime?           @map("completed_at")
+
+  campus   Campus        @relation(fields: [campusId], references: [id], onDelete: Cascade)
+  entries  LedgerEntry[]
+  payments Payment[]     @relation("TransactionPayments")
+
+  @@index([campusId, createdAt(sort: Desc)], name: "idx_tx_campus_created")
+  @@map("wallet_transactions")
+}
+
+model LedgerEntry {
+  id            String          @id @default(uuid()) @db.Uuid
+  transactionId String          @map("transaction_id") @db.Uuid
+  walletId      String          @map("wallet_id") @db.Uuid
+  entryType     LedgerEntryType @map("entry_type")
+  amountMinor   BigInt          @map("amount_minor")
+  currency      String          @default("ETB") @db.Char(3)
+  balanceAfter  BigInt          @map("balance_after")
+  createdAt     DateTime        @default(now()) @map("created_at")
+
+  transaction WalletTransaction @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+  wallet      Wallet            @relation(fields: [walletId], references: [id], onDelete: Restrict)
+
+  @@index([walletId, createdAt(sort: Desc)], name: "idx_ledger_wallet_created")
+  @@map("ledger_entries")
+}
+
+model MealPlan {
+  id                  String   @id @default(uuid()) @db.Uuid
+  campusId            String   @map("campus_id") @db.Uuid
+  name                String
+  description         String?
+  priceMinor          BigInt?  @map("price_minor")
+  billingDurationDays Int?     @map("billing_duration_days")
+  isActive            Boolean  @default(true) @map("is_active")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  campus Campus     @relation(fields: [campusId], references: [id], onDelete: Cascade)
+  passes MealPass[]
+
+  @@map("meal_plans")
+}
+
+model MealPass {
+  id                String            @id @default(uuid()) @db.Uuid
+  studentProfileId  String            @map("student_profile_id") @db.Uuid
+  mealPlanId        String            @map("meal_plan_id") @db.Uuid
+  dietaryPreference DietaryPreference @default(non_fasting) @map("dietary_preference")
+  passCode          String            @unique @map("pass_code")
+  validFrom         DateTime          @map("valid_from")
+  validUntil        DateTime          @map("valid_until")
+  isActive          Boolean           @default(true) @map("is_active")
+  createdAt         DateTime          @default(now()) @map("created_at")
+
+  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  mealPlan       MealPlan       @relation(fields: [mealPlanId], references: [id], onDelete: Restrict)
+  scans          MealScanLog[]
+
+  @@index([studentProfileId, isActive], name: "idx_meal_pass_student")
+  @@map("meal_passes")
+}
+
+model MealScanLog {
+  id          String     @id @default(uuid()) @db.Uuid
+  mealPassId  String     @map("meal_pass_id") @db.Uuid
+  scannedById String     @map("scanned_by_id") @db.Uuid
+  mealPeriod  MealPeriod @map("meal_period")
+  scannedDate DateTime   @map("scanned_date") @db.Date
+  scannedAt   DateTime   @default(now()) @map("scanned_at")
+  diningHall  String     @map("dining_hall")
+
+  mealPass  MealPass @relation(fields: [mealPassId], references: [id], onDelete: Cascade)
+  scannedBy User     @relation("StaffMealScans", fields: [scannedById], references: [id], onDelete: Restrict)
+
+  @@unique([mealPassId, scannedDate, mealPeriod], name: "uq_meal_pass_daily_period")
+  @@index([scannedDate, mealPeriod, diningHall], name: "idx_meal_scans_date_hall")
+  @@map("meal_scan_logs")
 }

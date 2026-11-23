@@ -9,5 +9,8 @@ export * from './payments';
 export * from './housing';
 export * from './events';
 export * from './learning';
+export * from './student';
+export * from './wallet';
+export * from './cafeteria';
 
 

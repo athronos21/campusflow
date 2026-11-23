@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import { Card } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { apiClient } from '@/lib/api-client';
 import {
   Dialog,
   DialogContent,
@@ -88,6 +89,33 @@ export default function MaintenancePage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  useEffect(() => {
+    async function loadReports() {
+      try {
+        const reports = await apiClient.get<any[]>('/moderation/reports').catch(() => []);
+        if (reports && reports.length > 0) {
+          const mapped: WorkOrder[] = reports.map((r) => {
+            const isResolved = r.status === 'resolved';
+            return {
+              id: r.id,
+              category: 'plumbing' as const,
+              title: r.reason,
+              dormBlock: r.entityId || 'Campus Residence',
+              roomNumber: 'Dorm Block',
+              description: r.details || 'Campus maintenance incident report.',
+              status: isResolved ? 'resolved' : 'in_progress',
+              createdAt: r.createdAt,
+            };
+          });
+          setOrders([...mapped, ...INITIAL_ORDERS]);
+        }
+      } catch (err) {
+        console.error('Failed to load maintenance reports:', err);
+      }
+    }
+    loadReports();
+  }, []);
+
   // Form state
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<'plumbing' | 'electrical' | 'carpentry' | 'network'>('plumbing');
@@ -100,7 +128,7 @@ export default function MaintenancePage() {
     return o.category === selectedCategory;
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !roomNumber || !description) return;
 
@@ -117,6 +145,18 @@ export default function MaintenancePage() {
 
     setOrders([newOrder, ...orders]);
     setIsModalOpen(false);
+
+    try {
+      await apiClient.post('/moderation/reports', {
+        entityType: 'maintenance_request',
+        entityId: `${dormBlock} - Room ${roomNumber}`,
+        reason: `[${category.toUpperCase()}] ${title}`,
+        details: description,
+      });
+    } catch (err) {
+      console.warn('Submitted offline/optimistically:', err);
+    }
+
     setTitle('');
     setRoomNumber('');
     setDescription('');

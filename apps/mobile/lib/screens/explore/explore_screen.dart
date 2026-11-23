@@ -17,6 +17,7 @@ import '../maintenance/maintenance_screen.dart';
 import '../digital_id/digital_id_screen.dart';
 import '../campus_map/campus_map_screen.dart';
 import '../cafeteria/cafeteria_pass_screen.dart';
+import '../bookings/bookings_screen.dart';
 import '../laundry/laundry_screen.dart';
 import '../lost_found/lost_found_screen.dart';
 import '../study_groups/study_groups_screen.dart';
@@ -65,7 +66,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         .toList();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBg(context),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openAiAssistant,
         backgroundColor: AppColors.primary,
@@ -179,7 +180,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 16),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white,
                                 borderRadius: BorderRadius.circular(16),
                                 boxShadow: [
                                   BoxShadow(
@@ -191,10 +192,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               ),
                               child: TextField(
                                 onChanged: (val) => setState(() => _searchQuery = val.toLowerCase().trim()),
+                                style: TextStyle(color: AppColors.getTextPrimary(context)),
                                 decoration: InputDecoration(
                                   icon: const Icon(Icons.search_rounded, color: AppColors.primary, size: 22),
                                   hintText: _isAmharic ? 'ካፌዎችን፣ የህትመት ሱቆችን፣ ማስታወሻዎችን ይፈልጉ...' : 'Search cafeterias, print shops, study notes...',
-                                  hintStyle: const TextStyle(fontSize: 13, color: AppColors.textMuted),
+                                  hintStyle: TextStyle(fontSize: 13, color: AppColors.getTextSecondary(context)),
                                   border: InputBorder.none,
                                 ),
                               ),
@@ -213,7 +215,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           children: [
                             Text(
                               _isAmharic ? 'የካምፓስ አገልግሎቶች' : 'Campus Super Services',
-                              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.getTextPrimary(context)),
                             ),
                             const SizedBox(height: 14),
                             SingleChildScrollView(
@@ -221,6 +223,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               child: Row(
                                 children: [
                                   _buildModernServiceCard(context, icon: Icons.flatware_rounded, color: const Color(0xFF059669), bg: const Color(0xFFECFDF5), label: _isAmharic ? 'የምግብ ቲኬት' : 'Meal Pass', screen: const CafeteriaPassScreen()),
+                                  const SizedBox(width: 12),
+                                  _buildModernServiceCard(context, icon: Icons.calendar_today_rounded, color: const Color(0xFF9333EA), bg: const Color(0xFFFAF5FF), label: _isAmharic ? 'ቀጠሮዎች' : 'Appointments', screen: const BookingsScreen()),
                                   const SizedBox(width: 12),
                                   _buildModernServiceCard(context, icon: Icons.local_laundry_service_rounded, color: const Color(0xFF2563EB), bg: const Color(0xFFEFF6FF), label: _isAmharic ? 'ልብስ ማጠቢያ' : 'Laundry', screen: const LaundryScreen()),
                                   const SizedBox(width: 12),
@@ -266,7 +270,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           children: [
                             Text(
                               _isAmharic ? 'የተረጋገጡ የግቢው ነጋዴዎች' : 'Verified Campus Merchants',
-                              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.getTextPrimary(context)),
                             ),
                             TextButton(
                               onPressed: _loadBusinesses,
@@ -300,6 +304,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Widget _buildModernServiceCard(BuildContext context, {required IconData icon, required Color color, required Color bg, required String label, required Widget screen}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       onTap: () {
         Navigator.push(context, MaterialPageRoute(builder: (context) => screen));
@@ -311,14 +316,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
             width: 62,
             height: 62,
             decoration: BoxDecoration(
-              color: bg,
+              color: isDark ? color.withValues(alpha: 0.15) : bg,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: color.withValues(alpha: 0.15)),
+              border: Border.all(color: color.withValues(alpha: isDark ? 0.3 : 0.15)),
             ),
-            child: Icon(icon, color: color, size: 28),
+            child: Icon(icon, color: isDark ? Colors.white : color, size: 28),
           ),
           const SizedBox(height: 8),
-          Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+          Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.getTextPrimary(context))),
         ],
       ),
     );
@@ -328,10 +333,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.getSurface(context),
         borderRadius: BorderRadius.circular(20),
         boxShadow: AppColors.softShadow,
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.getBorder(context)),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
@@ -347,7 +352,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(14)),
+                    decoration: BoxDecoration(color: AppColors.primaryLight.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(14)),
                     child: const Icon(Icons.storefront_rounded, color: AppColors.primary, size: 24),
                   ),
                   const SizedBox(width: 12),
@@ -355,9 +360,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(business.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textPrimary)),
+                        Text(business.name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.getTextPrimary(context))),
                         const SizedBox(height: 2),
-                        Text(_isAmharic ? 'ዋና ግቢ · ክፍት' : 'Main Campus Lounge · Open', style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                        Text(_isAmharic ? 'ዋና ግቢ · ክፍት' : 'Main Campus Lounge · Open', style: TextStyle(fontSize: 12, color: AppColors.getTextSecondary(context))),
                       ],
                     ),
                   ),
@@ -377,7 +382,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               const SizedBox(height: 12),
               Text(
                 business.description ?? (_isAmharic ? 'ትኩስ ምግብ፣ ቡና እና የካምፓስ ፍላጎቶች።' : 'Fresh food, coffee, and campus essentials available for instant pickup.'),
-                style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
+                style: TextStyle(fontSize: 13, color: AppColors.getTextSecondary(context), height: 1.4),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -386,7 +391,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 children: [
                   const Icon(Icons.star_rounded, size: 16, color: Colors.amber),
                   const SizedBox(width: 4),
-                  Text(_isAmharic ? '4.8 (120+ አስተያየቶች)' : '4.8 (120+ reviews)', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                  Text(_isAmharic ? '4.8 (120+ አስተያየቶች)' : '4.8 (120+ reviews)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.getTextPrimary(context))),
                   const Spacer(),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -406,10 +411,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.getSurface(context),
         borderRadius: BorderRadius.circular(20),
         boxShadow: AppColors.softShadow,
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.getBorder(context)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -420,7 +425,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(14)),
+                  decoration: BoxDecoration(color: AppColors.primaryLight.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(14)),
                   child: const Icon(Icons.local_cafe_rounded, color: AppColors.primary, size: 24),
                 ),
                 const SizedBox(width: 12),
@@ -428,9 +433,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(_isAmharic ? 'ሐረማያ ግቢ ካፌ እና ምግቦች' : 'Haramaya Campus Cafe & Snack', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textPrimary)),
+                      Text(_isAmharic ? 'ሐረማያ ግቢ ካፌ እና ምግቦች' : 'Haramaya Campus Cafe & Snack', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.getTextPrimary(context))),
                       const SizedBox(height: 2),
-                      Text(_isAmharic ? 'ተማሪዎች ላውንጅ አጠገብ · ክፍት' : 'Near Student Lounge · Open', style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                      Text(_isAmharic ? 'ተማሪዎች ላውንጅ አጠገብ · ክፍት' : 'Near Student Lounge · Open', style: TextStyle(fontSize: 12, color: AppColors.getTextSecondary(context))),
                     ],
                   ),
                 ),
@@ -450,14 +455,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
             const SizedBox(height: 12),
             Text(
               _isAmharic ? 'ትኩስ የኢትዮጵያ ባህላዊ ቡና፣ ቁርስ እና ፈጣን ምግቦች ከተማሪዎች ላውንጅ አጠገብ።' : 'Fresh traditional Ethiopian coffee, snacks, breakfast, and fast food near Student Lounge.',
-              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
+              style: TextStyle(fontSize: 13, color: AppColors.getTextSecondary(context), height: 1.4),
             ),
             const SizedBox(height: 14),
             Row(
               children: [
                 const Icon(Icons.star_rounded, size: 16, color: Colors.amber),
                 const SizedBox(width: 4),
-                Text(_isAmharic ? '4.9 (240+ አስተያየቶች)' : '4.9 (240+ reviews)', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                Text(_isAmharic ? '4.9 (240+ አስተያየቶች)' : '4.9 (240+ reviews)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.getTextPrimary(context))),
                 const Spacer(),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),

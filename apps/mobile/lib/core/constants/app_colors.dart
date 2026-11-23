@@ -25,6 +25,13 @@ class AppColors {
   static const Color textSecondary = Color(0xFF475569); // Slate 600
   static const Color textMuted = Color(0xFF94A3B8); // Slate 400
 
+  // Theme Helpers
+  static Color getBg(BuildContext context) => Theme.of(context).scaffoldBackgroundColor;
+  static Color getSurface(BuildContext context) => Theme.of(context).cardColor;
+  static Color getTextPrimary(BuildContext context) => Theme.of(context).brightness == Brightness.dark ? const Color(0xFFF8FAFC) : textPrimary;
+  static Color getTextSecondary(BuildContext context) => Theme.of(context).brightness == Brightness.dark ? const Color(0xFF94A3B8) : textSecondary;
+  static Color getBorder(BuildContext context) => Theme.of(context).brightness == Brightness.dark ? const Color(0xFF334155) : border;
+
   // Gradients
   static const LinearGradient heroGradient = LinearGradient(
     colors: [Color(0xFF1E1B4B), Color(0xFF4F46E5)],

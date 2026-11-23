@@ -53,6 +53,10 @@ class ApiClient {
     return client.put<T>(path, data: data, queryParameters: queryParameters, options: options);
   }
 
+  Future<Response<T>> patch<T>(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options}) {
+    return client.patch<T>(path, data: data, queryParameters: queryParameters, options: options);
+  }
+
   Future<Response<T>> delete<T>(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options}) {
     return client.delete<T>(path, data: data, queryParameters: queryParameters, options: options);
   }

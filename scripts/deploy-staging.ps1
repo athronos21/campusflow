@@ -1,4 +1,4 @@
-﻿# ==============================================================================
+# ==============================================================================
 # CampusFlow - Staging Deployment Automation Script (PowerShell)
 # Pilot MVP: Haramaya University Higher Ed Platform
 # ==============================================================================
@@ -25,7 +25,10 @@ if (-not (Test-Path ".env")) {
 
 # 2. Validate Docker Compose Configuration
 Write-Host "`n[2/5] Validating Production Docker Compose Config..." -ForegroundColor Yellow
-docker compose -f docker-compose.prod.yml config > $null
+$composeExe = if (Get-Command docker-compose -ErrorAction SilentlyContinue) { "docker-compose" } else { "docker" }
+$composeArgs = if ($composeExe -eq "docker-compose") { @("-f", "docker-compose.prod.yml") } else { @("compose", "-f", "docker-compose.prod.yml") }
+
+& $composeExe $composeArgs config > $null
 if ($LASTEXITCODE -ne 0) {
     Write-Error "docker-compose.prod.yml configuration validation failed."
     exit 1
@@ -50,8 +53,8 @@ if ($LASTEXITCODE -ne 0) {
 
 # 4. Build & Launch Staging Containers
 Write-Host "`n[4/5] Building & Launching Multi-Stage Docker Containers..." -ForegroundColor Yellow
-Write-Host "Running: docker compose -f docker-compose.prod.yml up -d --build" -ForegroundColor Gray
-docker compose -f docker-compose.prod.yml up -d --build
+Write-Host "Running: $composeExe $composeArgs up -d --build" -ForegroundColor Gray
+& $composeExe $composeArgs up -d --build
 
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Failed to start staging containers via docker-compose."

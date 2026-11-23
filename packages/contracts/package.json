@@ -7,7 +7,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node -e \"const { execSync } = require('child_process'); const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx'; execSync(`${npx} ts-node ../../scripts/test-contracts-validation.ts`, { stdio: 'inherit' });\""
   },
   "dependencies": {
     "zod": "^3.23.8"

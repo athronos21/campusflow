@@ -1,4 +1,4 @@
-import { PrismaClient, CampusRole, BusinessStatus, OrderStatus, PaymentStatus } from '@prisma/client';
+import { PrismaClient, CampusRole, BusinessStatus } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -505,6 +505,171 @@ async function main() {
         },
       ],
     });
+  }
+
+  // 10. Seed Digital Student ID, Campus Pay Wallets & Cafeteria Passes
+  console.log('Seeding Student Profile, Campus Pay Wallets, and Dining Passes...');
+
+  // Student Profile
+  const studentProfile = await prisma.studentProfile.upsert({
+    where: {
+      campusId_studentIdNumber: {
+        campusId: haramaya.id,
+        studentIdNumber: 'HU-8921',
+      },
+    },
+    update: {},
+    create: {
+      userId: studentUser.id,
+      campusId: haramaya.id,
+      studentIdNumber: 'HU-8921',
+      college: 'College of Computing and Informatics',
+      department: 'Software Engineering',
+      academicLevel: 'undergraduate',
+      batchYear: 2023,
+      emergencyPhone: '+251911223344',
+      idCardStatus: 'active',
+      expiresAt: new Date('2027-07-07T00:00:00Z'),
+    },
+  });
+  console.log(`Student profile seeded: HU-8921 for ${studentUser.displayName}`);
+
+  // Campus Treasury Wallet
+  let treasuryWallet = await prisma.wallet.findFirst({
+    where: { campusId: haramaya.id, walletType: 'campus_treasury' },
+  });
+  if (!treasuryWallet) {
+    treasuryWallet = await prisma.wallet.create({
+      data: {
+        campusId: haramaya.id,
+        walletType: 'campus_treasury',
+        currency: 'ETB',
+        balanceMinor: BigInt(499875000), // 4,998,750.00 ETB (after initial 1,250.00 ETB student allocation)
+        status: 'active',
+      },
+    });
+  }
+
+  // Student Wallet
+  let studentWallet = await prisma.wallet.findUnique({
+    where: { userId: studentUser.id },
+  });
+  if (!studentWallet) {
+    studentWallet = await prisma.wallet.create({
+      data: {
+        campusId: haramaya.id,
+        userId: studentUser.id,
+        walletType: 'student',
+        currency: 'ETB',
+        balanceMinor: BigInt(125000), // 1,250.00 ETB
+        status: 'active',
+      },
+    });
+
+    // Double-entry ledger transaction for initial student balance
+    const topupTx = await prisma.walletTransaction.create({
+      data: {
+        campusId: haramaya.id,
+        referenceNumber: 'TXN-202611-9482',
+        category: 'topup_telebirr',
+        state: 'succeeded',
+        amountMinor: BigInt(125000),
+        feeMinor: BigInt(0),
+        currency: 'ETB',
+        description: 'Telebirr Student Deposit',
+        completedAt: new Date(),
+        entries: {
+          create: [
+            {
+              walletId: studentWallet.id,
+              entryType: 'credit',
+              amountMinor: BigInt(125000),
+              currency: 'ETB',
+              balanceAfter: BigInt(125000),
+            },
+            {
+              walletId: treasuryWallet.id,
+              entryType: 'debit',
+              amountMinor: BigInt(125000),
+              currency: 'ETB',
+              balanceAfter: BigInt(499875000),
+            },
+          ],
+        },
+      },
+    });
+    console.log(`Student wallet seeded with double-entry tx: ${topupTx.referenceNumber}`);
+  }
+
+  // Merchant Wallet
+  if (business) {
+    let merchantWallet = await prisma.wallet.findUnique({
+      where: { businessId: business.id },
+    });
+    if (!merchantWallet) {
+      merchantWallet = await prisma.wallet.create({
+        data: {
+          campusId: haramaya.id,
+          businessId: business.id,
+          walletType: 'merchant',
+          currency: 'ETB',
+          balanceMinor: BigInt(785000), // 7,850.00 ETB
+          status: 'active',
+        },
+      });
+      console.log(`Merchant store wallet seeded for: ${business.name}`);
+    }
+  }
+
+  // Cafeteria Meal Plan & Pass
+  let mealPlan = await prisma.mealPlan.findFirst({
+    where: { campusId: haramaya.id, name: 'Haramaya University Boarding Meal Plan' },
+  });
+  if (!mealPlan) {
+    mealPlan = await prisma.mealPlan.create({
+      data: {
+        campusId: haramaya.id,
+        name: 'Haramaya University Boarding Meal Plan',
+        description: 'Official university-subsidized dining hall meal plan covering daily breakfast, lunch, and dinner.',
+        priceMinor: null,
+        billingDurationDays: 120,
+        isActive: true,
+      },
+    });
+  }
+
+  const mealPass = await prisma.mealPass.upsert({
+    where: { passCode: 'HU-DINING-PASS-NONFASTING-2026' },
+    update: {},
+    create: {
+      studentProfileId: studentProfile.id,
+      mealPlanId: mealPlan.id,
+      dietaryPreference: 'non_fasting',
+      passCode: 'HU-DINING-PASS-NONFASTING-2026',
+      validFrom: new Date(),
+      validUntil: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
+      isActive: true,
+    },
+  });
+  console.log(`Meal pass seeded: ${mealPass.passCode}`);
+
+  // Sample meal scan log for today
+  const existingScan = await prisma.mealScanLog.findFirst({
+    where: { mealPassId: mealPass.id, mealPeriod: 'breakfast' },
+  });
+  if (!existingScan) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    await prisma.mealScanLog.create({
+      data: {
+        mealPassId: mealPass.id,
+        scannedById: adminUser.id,
+        mealPeriod: 'breakfast',
+        scannedDate: today,
+        diningHall: 'Main Campus Dining Hall 02',
+      },
+    });
+    console.log('Sample breakfast meal scan recorded at Dining Hall 02');
   }
 
   console.log('Database seed completed successfully! 🚀');

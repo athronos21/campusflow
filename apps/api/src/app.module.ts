@@ -16,6 +16,10 @@ import { UploadModule } from './upload/upload.module';
 import { HousingModule } from './housing/housing.module';
 import { EventsModule } from './events/events.module';
 import { LearningModule } from './learning/learning.module';
+import { WalletModule } from './wallet/wallet.module';
+import { CafeteriaModule } from './cafeteria/cafeteria.module';
+import { StudentModule } from './student/student.module';
+import { AssistantModule } from './assistant/assistant.module';
 
 @Module({
   imports: [
@@ -36,6 +40,10 @@ import { LearningModule } from './learning/learning.module';
     HousingModule,
     EventsModule,
     LearningModule,
+    WalletModule,
+    CafeteriaModule,
+    StudentModule,
+    AssistantModule,
   ],
 })
 export class AppModule {}

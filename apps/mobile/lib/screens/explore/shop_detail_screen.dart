@@ -4,6 +4,8 @@ import '../../core/utils/formatters.dart';
 import '../../models/business.dart';
 import '../../models/product.dart';
 import '../../services/business_service.dart';
+import '../../services/order_service.dart';
+import '../orders/orders_screen.dart';
 
 class ShopDetailScreen extends StatefulWidget {
   final Business business;
@@ -35,6 +37,50 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
   }
 
   List<Product> _demoProducts() {
+    final nameLower = widget.business.name.toLowerCase();
+    if (nameLower.contains('stationery') || nameLower.contains('print') || nameLower.contains('thesis')) {
+      return [
+        Product(
+          id: 'p-stat-1',
+          businessId: widget.business.id,
+          name: 'A4 Double-Sided Thesis Printing & Spiral Binding',
+          description: 'High-speed laser printing with clear plastic cover.',
+          priceMinor: 6000,
+        ),
+        Product(
+          id: 'p-stat-2',
+          businessId: widget.business.id,
+          name: 'Casio Scientific Calculator FX-991ES',
+          description: 'Approved for engineering & natural science exams.',
+          priceMinor: 45000,
+        ),
+        Product(
+          id: 'p-stat-3',
+          businessId: widget.business.id,
+          name: 'Examination Pen & Highlighter 5-Pack',
+          description: 'Smooth writing ballpoint pens for campus tests.',
+          priceMinor: 5000,
+        ),
+      ];
+    } else if (nameLower.contains('tech') || nameLower.contains('electronic')) {
+      return [
+        Product(
+          id: 'p-tech-1',
+          businessId: widget.business.id,
+          name: 'USB-C 65W Fast Laptop & Phone Charger',
+          description: 'Universal fast charger compatible with Dell, Lenovo & Android.',
+          priceMinor: 65000,
+        ),
+        Product(
+          id: 'p-tech-2',
+          businessId: widget.business.id,
+          name: 'Kingston 64GB High-Speed USB 3.2 Drive',
+          description: 'Metal body flash drive for lecture slides and assignments.',
+          priceMinor: 38000,
+        ),
+      ];
+    }
+
     return [
       Product(
         id: 'p-1',
@@ -49,6 +95,13 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
         name: 'Ful with Egg and Bread',
         description: 'Hearty fava bean stew served with fresh bread.',
         priceMinor: 8000,
+      ),
+      Product(
+        id: 'p-3',
+        businessId: widget.business.id,
+        name: 'Fresh Mango & Avocado Juice',
+        description: 'Blended organic Ethiopian tropical fruits.',
+        priceMinor: 6500,
       ),
     ];
   }
@@ -178,14 +231,40 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Order placed successfully! Check your Orders tab.'),
-                            backgroundColor: AppColors.success,
-                          ),
+                      onPressed: () async {
+                        final items = _cart.entries.map((e) {
+                          final prod = _products.firstWhere((p) => p.id == e.key);
+                          return {
+                            'productId': prod.id,
+                            'productName': prod.name,
+                            'quantity': e.value,
+                            'unitPriceMinor': prod.priceMinor,
+                          };
+                        }).toList();
+
+                        final order = await OrderService.createOrder(
+                          campusId: widget.business.campusId,
+                          businessId: widget.business.id,
+                          items: items,
                         );
-                        setState(() => _cart.clear());
+
+                        if (context.mounted) {
+                          setState(() => _cart.clear());
+                          final shortId = order?.id.length != null && order!.id.length > 8 ? order.id.substring(0, 8).toUpperCase() : 'PENDING';
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Order #$shortId placed! Pay now in Orders tab via Campus Wallet or Telebirr.'),
+                              backgroundColor: AppColors.success,
+                              action: SnackBarAction(
+                                label: 'View Orders',
+                                textColor: Colors.white,
+                                onPressed: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const OrdersScreen()));
+                                },
+                              ),
+                            ),
+                          );
+                        }
                       },
                       child: const Text('Confirm Pickup Order', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     ),

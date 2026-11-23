@@ -1,8 +1,23 @@
+import '../core/api/api_client.dart';
+import '../core/api/api_endpoints.dart';
 import '../models/marketplace_item.dart';
 
 class MarketplaceService {
   static Future<List<MarketplaceItem>> getItems() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    try {
+      final response = await ApiClient.client.get(ApiEndpoints.products);
+      final List<dynamic> data = response.data is List ? response.data : [];
+      if (data.isNotEmpty) {
+        return data.map((item) => MarketplaceItem.fromJson(item as Map<String, dynamic>)).toList();
+      }
+    } catch (e) {
+      print('Fetch marketplace items error (using fallback): $e');
+    }
+
+    return _fallbackItems();
+  }
+
+  static List<MarketplaceItem> _fallbackItems() {
     return [
       MarketplaceItem(
         id: 'm-1',

@@ -44,4 +44,24 @@ class ApiEndpoints {
   // Payments (Telebirr & CBE Birr)
   static const String paymentsInitialize = '/payments/initialize';
   static const String paymentsVerify = '/payments/verify';
+
+  // Wallet
+  static const String walletMe = '/wallet/me';
+  static const String walletTransfer = '/wallet/transfer';
+  static const String walletTopup = '/wallet/topup';
+
+  // Cafeteria Dining
+  static const String cafeteriaPass = '/cafeteria/pass';
+  static const String cafeteriaVerify = '/cafeteria/verify';
+  static const String cafeteriaScan = '/cafeteria/scan';
+
+  // Student Digital ID
+  static const String studentMe = '/student/me';
+  static const String studentVerify = '/student/verify';
+
+  // Announcements
+  static const String announcements = '/announcements';
+
+  // Campus AI Assistant
+  static const String assistantQuery = '/assistant/query';
 }

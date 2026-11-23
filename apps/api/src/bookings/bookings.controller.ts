@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { BookingsService } from './bookings.service';
-import { CreateBookingDto } from '@campusflow/contracts';
+import { CreateBookingDto, UpdateBookingStatusDto } from '@campusflow/contracts';
+import { BookingStatus } from '@prisma/client';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser, AuthenticatedUser } from '../common/decorators/current-user.decorator';
 
@@ -25,5 +26,23 @@ export class BookingsController {
   @ApiOperation({ summary: 'List customer booked appointments' })
   async getMyBookings(@CurrentUser() user: AuthenticatedUser) {
     return this.bookingsService.findUserBookings(user.id);
+  }
+
+  @Patch(':id/cancel')
+  @ApiOperation({ summary: 'Cancel a booked appointment' })
+  async cancelBooking(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+  ) {
+    return this.bookingsService.cancelBooking(user.id, id);
+  }
+
+  @Patch(':id/status')
+  @ApiOperation({ summary: 'Update appointment status (merchant / provider)' })
+  async updateStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateBookingStatusDto,
+  ) {
+    return this.bookingsService.updateBookingStatus(id, dto.status as BookingStatus);
   }
 }

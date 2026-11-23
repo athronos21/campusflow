@@ -32,4 +32,14 @@ class BookingService {
 
     return Booking.fromJson(response.data);
   }
+
+  Future<bool> cancelBooking(String bookingId) async {
+    try {
+      await _apiClient.patch('${ApiEndpoints.bookings}/$bookingId/cancel');
+      return true;
+    } catch (e) {
+      print('Cancel booking error: $e');
+      return false;
+    }
+  }
 }

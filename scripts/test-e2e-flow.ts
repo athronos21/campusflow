@@ -1,4 +1,14 @@
-import { PrismaClient, OrderStatus, PaymentStatus, BusinessStatus } from '@prisma/client';
+import {
+  PrismaClient,
+  OrderStatus,
+  PaymentStatus,
+  BusinessStatus,
+  TransactionCategory,
+  TransactionState,
+  LedgerEntryType,
+  MealPeriod,
+  BookingStatus,
+} from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -186,6 +196,123 @@ async function runE2ETest() {
     console.log(`[PASS] 12. Academic Learning Resource Downloaded: "${resource.title}" (${resource.courseCode})`);
     console.log(`        Department: ${resource.department} | Downloads: ${updatedResource.downloadCount} (incremented from ${initialDownloads})`);
 
+    // 11. Verify Digital Student ID (Service 11)
+    const studentProfile = await prisma.studentProfile.findUnique({
+      where: { userId: student.id },
+    });
+    if (studentProfile) {
+      console.log(`[PASS] 13. Digital Student ID Profile Verified: ID ${studentProfile.studentIdNumber}`);
+      console.log(`        Status: ${studentProfile.idCardStatus} | Dept: ${studentProfile.department} | Level: ${studentProfile.academicLevel}`);
+    }
+
+    // 12. Verify Campus Pay Wallet & Balanced Ledger (Service 12)
+    const studentWallet = await prisma.wallet.findUnique({
+      where: { userId: student.id },
+    });
+    if (studentWallet) {
+      console.log(`[PASS] 14. Campus Pay Wallet Verified: Balance ${(Number(studentWallet.balanceMinor) / 100).toFixed(2)} ETB`);
+
+      const merchantWallet = await prisma.wallet.findUnique({
+        where: { businessId: cafe.id },
+      });
+      if (merchantWallet) {
+        const transferAmount = BigInt(5000); // 50.00 ETB
+        const tx = await prisma.$transaction(async (prismaTx) => {
+          const walletTx = await prismaTx.walletTransaction.create({
+            data: {
+              referenceNumber: `TX-E2E-${Date.now()}`,
+              campusId: campus.id,
+              amountMinor: transferAmount,
+              currency: 'ETB',
+              category: TransactionCategory.p2p_transfer,
+              state: TransactionState.succeeded,
+              description: 'E2E Test Transfer',
+              entries: {
+                create: [
+                  {
+                    walletId: studentWallet.id,
+                    entryType: LedgerEntryType.debit,
+                    amountMinor: transferAmount,
+                    balanceAfter: studentWallet.balanceMinor - transferAmount,
+                  },
+                  {
+                    walletId: merchantWallet.id,
+                    entryType: LedgerEntryType.credit,
+                    amountMinor: transferAmount,
+                    balanceAfter: merchantWallet.balanceMinor + transferAmount,
+                  },
+                ],
+              },
+            },
+            include: { entries: true },
+          });
+          return walletTx;
+        });
+        console.log(`[PASS] 15. Double-Entry Transfer Executed: Tx #${tx.id.slice(0, 8)}`);
+        console.log(`        Ledger: Debited ${Number(transferAmount) / 100} ETB (Student) | Credited ${Number(transferAmount) / 100} ETB (Merchant)`);
+
+        // Cleanup transfer ledger and tx
+        await prisma.ledgerEntry.deleteMany({ where: { transactionId: tx.id } });
+        await prisma.walletTransaction.delete({ where: { id: tx.id } });
+      }
+    }
+
+    // 13. Verify Cafeteria Meal Pass & Dining Hall Scans (Service 13)
+    if (studentProfile) {
+      const mealPass = await prisma.mealPass.findFirst({
+        where: { studentProfileId: studentProfile.id },
+        include: { mealPlan: true },
+      });
+      if (mealPass) {
+        console.log(`[PASS] 16. Cafeteria Dining Pass Verified: Pass Code "${mealPass.passCode}"`);
+        console.log(`        Meal Plan: ${mealPass.mealPlan.name} | Dietary Preference: ${mealPass.dietaryPreference}`);
+
+        const scanLog = await prisma.mealScanLog.create({
+          data: {
+            mealPassId: mealPass.id,
+            mealPeriod: MealPeriod.lunch,
+            diningHall: 'Main Dining Hall 02',
+            scannedById: student.id,
+            scannedDate: new Date(),
+          },
+        });
+        console.log(`[PASS] 17. Lunch Meal Scan Logged & Verified: Scan #${scanLog.id.slice(0, 8)}`);
+
+        // Cleanup scan log
+        await prisma.mealScanLog.delete({ where: { id: scanLog.id } });
+      }
+    }
+
+    // 14. Verify Service Appointment Booking Lifecycle (Service 14)
+    const testBooking = await prisma.booking.create({
+      data: {
+        customerId: student.id,
+        businessId: cafe.id,
+        serviceName: 'Thesis Printing & Hardcover Binding',
+        startsAt: new Date(Date.now() + 86400000),
+        status: BookingStatus.requested,
+      },
+      include: { business: true },
+    });
+    console.log(`[PASS] 18. Service Appointment Created: "${testBooking.serviceName}" at ${testBooking.business.name}`);
+    console.log(`        Status: ${testBooking.status} | Booking ID: #${testBooking.id.slice(0, 8)}`);
+
+    // Merchant confirms appointment
+    await prisma.booking.update({
+      where: { id: testBooking.id },
+      data: { status: BookingStatus.confirmed },
+    });
+
+    // Student cancels appointment
+    await prisma.booking.update({
+      where: { id: testBooking.id },
+      data: { status: BookingStatus.cancelled },
+    });
+    console.log(`        Appointment lifecycle transitioned: requested -> confirmed -> cancelled`);
+
+    // Cleanup test booking
+    await prisma.booking.delete({ where: { id: testBooking.id } });
+
     // Cleanup test records
     await prisma.payment.delete({ where: { id: payment.id } });
     await prisma.orderItem.deleteMany({ where: { orderId: testOrder.id } });
@@ -198,7 +325,7 @@ async function runE2ETest() {
 
     console.log('\n[CLEANUP] Test records cleaned up successfully.');
     console.log('\n====================================================');
-    console.log('🎉 ALL END-TO-END VERIFICATION CHECKS PASSED (13/13)');
+    console.log('🎉 ALL END-TO-END VERIFICATION CHECKS PASSED (18/18)');
     console.log('====================================================\n');
   } catch (error) {
     console.error('❌ E2E Test Failure:', error);

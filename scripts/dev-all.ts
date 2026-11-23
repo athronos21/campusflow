@@ -1,6 +1,7 @@
 import { spawn, execSync } from 'child_process';
 import * as net from 'net';
 import * as path from 'path';
+import * as fs from 'fs';
 
 /**
  * CampusFlow Unified One-Command Launcher
@@ -75,18 +76,31 @@ async function preflightChecks() {
     freePortWindows(4000);
   }
 
-  // 2. Check Database (Port 5432)
-  log('PREFLIGHT', 'Verifying PostgreSQL database connection on port 5432...');
-  const dbConnected = await isPortOpen(5432);
-  if (!dbConnected) {
-    log('DATABASE', 'PostgreSQL not responding on port 5432. Attempting docker compose up -d...', ANSI.yellow);
+  // 2. Check Database
+  const dbPort = (() => {
     try {
-      execSync('docker compose up -d postgres', { stdio: 'inherit' });
+      const envPath = path.resolve(process.cwd(), '.env');
+      if (fs.existsSync(envPath)) {
+        const content = fs.readFileSync(envPath, 'utf-8');
+        const match = content.match(/DATABASE_URL=["']?postgresql:\/\/[^:]+:[^@]+@[^:]+:(\d+)\//);
+        if (match) return parseInt(match[1], 10);
+      }
+    } catch {}
+    return 5432;
+  })();
+
+  log('PREFLIGHT', `Verifying PostgreSQL database connection on port ${dbPort}...`);
+  const dbConnected = await isPortOpen(dbPort);
+  if (!dbConnected) {
+    log('DATABASE', `PostgreSQL not responding on port ${dbPort}. Attempting docker compose up -d...`, ANSI.yellow);
+    try {
+      const composeCmd = process.platform === 'win32' ? 'docker-compose up -d postgres' : 'docker compose up -d postgres';
+      execSync(composeCmd, { stdio: 'inherit' });
       // Wait up to 3 seconds for port to open
       let retries = 6;
       while (retries > 0) {
         await new Promise((r) => setTimeout(r, 500));
-        if (await isPortOpen(5432)) {
+        if (await isPortOpen(dbPort)) {
           break;
         }
         retries--;
@@ -95,7 +109,7 @@ async function preflightChecks() {
       log('DATABASE', 'Could not auto-start Docker container. Ensure PostgreSQL is active.', ANSI.yellow);
     }
   } else {
-    log('DATABASE', 'PostgreSQL is active and accepting connections.', ANSI.green);
+    log('DATABASE', `PostgreSQL is active and accepting connections on port ${dbPort}.`, ANSI.green);
   }
 
   // 3. Print service endpoints
@@ -103,10 +117,15 @@ async function preflightChecks() {
   console.log(`  - Web Application:       ${ANSI.cyan}http://localhost:3000${ANSI.reset}`);
   console.log(`  - Backend REST API:      ${ANSI.cyan}http://localhost:4000/api/v1${ANSI.reset}`);
   console.log(`  - Swagger Documentation: ${ANSI.cyan}http://localhost:4000/api/docs${ANSI.reset}`);
-  console.log(`\n${ANSI.bold}Test Credentials:${ANSI.reset}`);
-  console.log(`  - Student:  ${ANSI.yellow}student@haramaya.edu.et${ANSI.reset}  /  ${ANSI.yellow}password123${ANSI.reset}`);
-  console.log(`  - Merchant: ${ANSI.yellow}merchant@haramayacafe.et${ANSI.reset} /  ${ANSI.yellow}password123${ANSI.reset}`);
-  console.log(`  - Admin:    ${ANSI.yellow}admin@campusflow.et${ANSI.reset}      /  ${ANSI.yellow}password123${ANSI.reset}\n`);
+  console.log(`\n${ANSI.bold}Pilot Test Credentials (Haramaya University):${ANSI.reset}`);
+  console.log(`  - Student:  ${ANSI.yellow}student@haramaya.edu.et${ANSI.reset}  /  ${ANSI.yellow}password123${ANSI.reset} (ID: HU-8921 · Balance: 1,250.00 ETB)`);
+  console.log(`  - Merchant: ${ANSI.yellow}merchant@haramayacafe.et${ANSI.reset} /  ${ANSI.yellow}password123${ANSI.reset} (Haramaya Cafe & Stationery)`);
+  console.log(`  - Admin:    ${ANSI.yellow}admin@campusflow.et${ANSI.reset}      /  ${ANSI.yellow}password123${ANSI.reset}`);
+  console.log(`\n${ANSI.bold}Campus Super-App Modules Active:${ANSI.reset}`);
+  console.log(`  - Campus Pay Wallet (Double-Entry Ledger & Zero-Fee P2P Transfers)`);
+  console.log(`  - Official Digital Student ID (HU-8921 & Dynamic QR Gate Pass)`);
+  console.log(`  - Cafeteria Dining Pass (Boarding Pass & Meal Scan Verification)`);
+  console.log(`  - Verified Merchant Order Pickup & Counter Appointment Booking\n`);
 }
 
 async function main() {

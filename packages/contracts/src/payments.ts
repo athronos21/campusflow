@@ -4,6 +4,7 @@ export const PaymentProviderSchema = z.enum([
   'telebirr',
   'cbe_birr',
   'chapa',
+  'campus_wallet',
   'cash_on_pickup',
   'cash_at_station',
 ]);
@@ -13,6 +14,7 @@ export type PaymentProvider = z.infer<typeof PaymentProviderSchema>;
 export const InitializePaymentSchema = z.object({
   orderId: z.string().uuid().optional(),
   reservationId: z.string().uuid().optional(),
+  walletId: z.string().uuid().optional(),
   provider: PaymentProviderSchema,
   returnUrl: z.string().url().optional(),
 });
@@ -24,6 +26,7 @@ export const PaymentWebhookSchema = z.object({
   providerReference: z.string(),
   orderId: z.string().uuid().optional(),
   reservationId: z.string().uuid().optional(),
+  walletId: z.string().uuid().optional(),
   amountMinor: z.union([z.string(), z.number()]),
   currency: z.string().default('ETB'),
   status: z.enum(['succeeded', 'failed', 'refunded']),
@@ -36,6 +39,8 @@ export interface PaymentDto {
   id: string;
   orderId?: string | null;
   reservationId?: string | null;
+  walletId?: string | null;
+  walletTransactionId?: string | null;
   provider: string;
   providerReference?: string | null;
   amountMinor: string;

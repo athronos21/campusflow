@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateBookingDto, UpdateBookingStatusDto } from '@campusflow/contracts';
+import { CreateBookingDto } from '@campusflow/contracts';
 import { BookingStatus } from '@prisma/client';
 
 @Injectable()
@@ -27,6 +27,42 @@ export class BookingsService {
       where: { customerId },
       include: { business: { select: { name: true } } },
       orderBy: { startsAt: 'asc' },
+    });
+  }
+
+  async cancelBooking(customerId: string, bookingId: string) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+    });
+
+    if (!booking) {
+      throw new NotFoundException(`Booking #${bookingId} not found`);
+    }
+
+    if (booking.customerId !== customerId) {
+      throw new ForbiddenException('You can only cancel your own appointments');
+    }
+
+    return this.prisma.booking.update({
+      where: { id: bookingId },
+      data: { status: BookingStatus.cancelled },
+      include: { business: { select: { name: true } } },
+    });
+  }
+
+  async updateBookingStatus(bookingId: string, status: BookingStatus) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+    });
+
+    if (!booking) {
+      throw new NotFoundException(`Booking #${bookingId} not found`);
+    }
+
+    return this.prisma.booking.update({
+      where: { id: bookingId },
+      data: { status },
+      include: { business: { select: { name: true } } },
     });
   }
 }

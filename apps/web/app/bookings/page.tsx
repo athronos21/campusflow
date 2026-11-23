@@ -97,6 +97,16 @@ export default function BookingsPage() {
     }
   };
 
+  const handleCancelBooking = async (bookingId: string) => {
+    if (!confirm('Are you sure you want to cancel this appointment?')) return;
+    try {
+      await apiClient(`/bookings/${bookingId}/cancel`, { method: 'PATCH' });
+      await fetchBookings();
+    } catch (err: any) {
+      alert(err.message || 'Failed to cancel appointment');
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col justify-between bg-slate-50">
       <Navbar />
@@ -301,14 +311,27 @@ export default function BookingsPage() {
                       <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
                         Guaranteed Slot
                       </span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setActivePassBooking(b)}
-                        className="h-8 text-xs font-bold border-indigo-200 text-indigo-700 hover:bg-indigo-50 flex items-center gap-1.5"
-                      >
-                        <QrCode className="w-3.5 h-3.5" /> Counter QR Pass
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setActivePassBooking(b)}
+                          className="h-8 text-xs font-bold border-indigo-200 text-indigo-700 hover:bg-indigo-50 flex items-center gap-1.5"
+                        >
+                          <QrCode className="w-3.5 h-3.5" /> Counter QR Pass
+                        </Button>
+                        {b.status !== 'cancelled' && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleCancelBooking(b.id)}
+                            className="h-8 text-xs text-rose-600 hover:bg-rose-50 hover:text-rose-700 px-2"
+                            title="Cancel Appointment"
+                          >
+                            <X className="w-3.5 h-3.5 mr-1" /> Cancel
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </CardContent>

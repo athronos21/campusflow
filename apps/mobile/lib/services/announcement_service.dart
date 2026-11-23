@@ -1,8 +1,23 @@
+import '../core/api/api_client.dart';
+import '../core/api/api_endpoints.dart';
 import '../models/announcement.dart';
 
 class AnnouncementService {
   static Future<List<Announcement>> getAnnouncements() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    try {
+      final response = await ApiClient.client.get(ApiEndpoints.announcements);
+      final List<dynamic> data = response.data is List ? response.data : [];
+      if (data.isNotEmpty) {
+        return data.map((item) => Announcement.fromJson(item as Map<String, dynamic>)).toList();
+      }
+    } catch (e) {
+      print('Fetch announcements error (using fallback): $e');
+    }
+
+    return _fallbackAnnouncements();
+  }
+
+  static List<Announcement> _fallbackAnnouncements() {
     return [
       Announcement(
         id: 'ann-1',

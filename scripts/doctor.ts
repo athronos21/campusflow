@@ -74,6 +74,18 @@ async function runDoctor() {
   }
 
   // 6. PostgreSQL Database Connection Port Probe
+  const dbPort = (() => {
+    try {
+      const envPath = path.resolve(process.cwd(), '.env');
+      if (fs.existsSync(envPath)) {
+        const content = fs.readFileSync(envPath, 'utf-8');
+        const match = content.match(/DATABASE_URL=["']?postgresql:\/\/[^:]+:[^@]+@[^:]+:(\d+)\//);
+        if (match) return parseInt(match[1], 10);
+      }
+    } catch {}
+    return 5432;
+  })();
+
   const isPostgresPortOpen = await new Promise<boolean>((resolve) => {
     const socket = new net.Socket();
     socket.setTimeout(1500);
@@ -89,13 +101,13 @@ async function runDoctor() {
       socket.destroy();
       resolve(false);
     });
-    socket.connect(5432, '127.0.0.1');
+    socket.connect(dbPort, '127.0.0.1');
   });
 
   if (isPostgresPortOpen) {
-    results.push({ name: 'PostgreSQL Database Port (5432)', status: 'PASS', detail: 'Port 5432 is OPEN and accepting connections' });
+    results.push({ name: `PostgreSQL Database Port (${dbPort})`, status: 'PASS', detail: `Port ${dbPort} is OPEN and accepting connections` });
   } else {
-    results.push({ name: 'PostgreSQL Database Port (5432)', status: 'WARN', detail: 'Port 5432 is CLOSED (Start Docker: docker compose up -d)' });
+    results.push({ name: `PostgreSQL Database Port (${dbPort})`, status: 'WARN', detail: `Port ${dbPort} is CLOSED (Start Docker: docker compose up -d)` });
   }
 
   // 7. Monorepo App Directories Check
@@ -113,6 +125,25 @@ async function runDoctor() {
     } else {
       results.push({ name: `App: ${dir.name}`, status: 'FAIL', detail: `Missing directory ${dir.path}` });
     }
+  }
+
+  // 8. Database Architecture & Seed Artifacts
+  const prismaSchemaPath = path.resolve(process.cwd(), 'prisma/schema.prisma');
+  const migrationPath = path.resolve(process.cwd(), 'prisma/migrations/20261121000000_init_database/migration.sql');
+  const seedScriptPath = path.resolve(process.cwd(), 'prisma/seed.ts');
+
+  if (fs.existsSync(prismaSchemaPath) && fs.existsSync(migrationPath) && fs.existsSync(seedScriptPath)) {
+    results.push({
+      name: 'Database Architecture Artifacts',
+      status: 'PASS',
+      detail: 'Schema, hardened SQL migration DDL, and seed script present',
+    });
+  } else {
+    results.push({
+      name: 'Database Architecture Artifacts',
+      status: 'WARN',
+      detail: 'One or more database migration or seed files missing',
+    });
   }
 
   // Print Results Summary
