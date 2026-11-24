@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { BusinessStatus, ReportStatus } from '@prisma/client';
+import { BusinessStatus, CampusRole, MembershipStatus, ReportStatus } from '@prisma/client';
 
 @Injectable()
 export class ModerationService {
@@ -19,9 +19,35 @@ export class ModerationService {
   }
 
   async verifyBusiness(businessId: string) {
-    return this.prisma.business.update({
-      where: { id: businessId },
-      data: { status: BusinessStatus.verified },
+    return this.prisma.$transaction(async (tx) => {
+      const existing = await tx.business.findUnique({ where: { id: businessId } });
+      if (!existing) {
+        throw new NotFoundException(`Business with ID ${businessId} not found`);
+      }
+
+      const verifiedBusiness = await tx.business.update({
+        where: { id: businessId },
+        data: { status: BusinessStatus.verified },
+      });
+
+      await tx.campusMembership.upsert({
+        where: {
+          userId_campusId_role: {
+            userId: existing.ownerId,
+            campusId: existing.campusId,
+            role: CampusRole.merchant,
+          },
+        },
+        update: { status: MembershipStatus.active },
+        create: {
+          userId: existing.ownerId,
+          campusId: existing.campusId,
+          role: CampusRole.merchant,
+          status: MembershipStatus.active,
+        },
+      });
+
+      return verifiedBusiness;
     });
   }
 

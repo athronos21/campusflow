@@ -1,5 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { verifyAccessToken } from '../auth-token';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -10,7 +11,6 @@ export class JwtAuthGuard implements CanActivate {
     const authHeader = request.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      // In development, if header is missing, we still allow with default student for quick testing
       const defaultUser = await this.prisma.user.findFirst({
         where: { email: 'student@haramaya.edu.et' },
         include: { memberships: true },
@@ -29,8 +29,28 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     const token = authHeader.split(' ')[1];
-    
-    // Check if token specifies merchant or admin
+    const claims = verifyAccessToken(token);
+
+    if (claims) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: claims.sub },
+        include: { memberships: true },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      request.user = {
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName,
+        roles: user.memberships.map((m) => m.role),
+      };
+      return true;
+    }
+
+    // Legacy dev-token compatibility for seeded accounts and UUID tokens
     let targetEmail = 'student@haramaya.edu.et';
     if (token.includes('merchant')) {
       targetEmail = 'merchant@haramayacafe.et';

@@ -1,5 +1,9 @@
 import { BookingsService } from '../apps/api/src/bookings/bookings.service';
-import { BookingStatus } from '@prisma/client';
+import { AuthService } from '../apps/api/src/auth/auth.service';
+import { ModerationService } from '../apps/api/src/moderation/moderation.service';
+import { BusinessesService } from '../apps/api/src/businesses/businesses.service';
+import { signAccessToken, verifyAccessToken } from '../apps/api/src/common/auth-token';
+import { BookingStatus, BusinessStatus, CampusRole, MembershipStatus } from '@prisma/client';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 
 async function runServicesUnitTests() {
@@ -106,6 +110,149 @@ async function runServicesUnitTests() {
   const creditEntry = { type: 'credit', amount: transferAmt };
   assert(debitEntry.amount === creditEntry.amount, 'Financial Invariant: Debit amount strictly matches Credit amount');
   assert(senderBalance - transferAmt >= BigInt(0), 'Non-negative Balance Invariant: Post-transfer balance >= 0');
+
+  // Test 8: Signed Access Token round-trip & tamper rejection
+  const signedToken = signAccessToken({
+    sub: 'user-admin-1',
+    email: 'first@haramaya.edu.et',
+    roles: ['campus_admin'],
+  });
+  const verifiedClaims = verifyAccessToken(signedToken);
+  assert(verifiedClaims !== null && verifiedClaims.sub === 'user-admin-1', 'signAccessToken/verifyAccessToken preserves sub claim');
+  assert(verifiedClaims !== null && verifiedClaims.roles.includes('campus_admin'), 'signAccessToken/verifyAccessToken preserves roles');
+  assert(verifyAccessToken(`${signedToken}tampered`) === null, 'verifyAccessToken rejects tampered token');
+  assert(verifyAccessToken('sample-jwt-access-token') === null, 'verifyAccessToken rejects unsigned sample string');
+
+  // Test 9: First registered user becomes campus_admin, second becomes student
+  const createdUsers: any[] = [];
+  const authMockPrisma: any = {
+    user: {
+      findUnique: async () => null,
+    },
+    $transaction: async (fn: (tx: any) => Promise<any>) =>
+      fn({
+        user: {
+          count: async () => createdUsers.length,
+          create: async ({ data }: any) => {
+            const newUser = {
+              id: `user-${createdUsers.length + 1}`,
+              email: data.email,
+              phone: data.phone ?? null,
+              displayName: data.displayName,
+              status: 'active',
+              memberships: [
+                {
+                  campusId: data.memberships.create.campusId,
+                  role: data.memberships.create.role,
+                },
+              ],
+            };
+            createdUsers.push(newUser);
+            return newUser;
+          },
+        },
+      }),
+  };
+  const authService = new AuthService(authMockPrisma);
+  const firstSignup = await authService.register({
+    campusId: '1c271dbc-bfa3-48fe-b184-5b35211e4076',
+    displayName: 'First Admin',
+    email: 'first@haramaya.edu.et',
+    password: 'password123',
+  });
+  assert(firstSignup.user.memberships[0].role === CampusRole.campus_admin, 'First signup receives campus_admin role');
+  const firstClaims = verifyAccessToken(firstSignup.accessToken);
+  assert(firstClaims !== null && firstClaims.sub === 'user-1', 'First signup issues signed JWT for user-1');
+
+  const secondSignup = await authService.register({
+    campusId: '1c271dbc-bfa3-48fe-b184-5b35211e4076',
+    displayName: 'Second Student',
+    email: 'second@haramaya.edu.et',
+    password: 'password123',
+  });
+  assert(secondSignup.user.memberships[0].role === CampusRole.student, 'Second signup receives student role');
+
+  // Test 10: Business verification grants merchant role to ownerId
+  const upsertedMemberships: any[] = [];
+  const modMockPrisma: any = {
+    $transaction: async (fn: (tx: any) => Promise<any>) =>
+      fn({
+        business: {
+          findUnique: async () => ({
+            id: 'biz-pending-1',
+            campusId: 'campus-1',
+            ownerId: 'user-2',
+            status: BusinessStatus.pending,
+          }),
+          update: async ({ data }: any) => ({
+            id: 'biz-pending-1',
+            campusId: 'campus-1',
+            ownerId: 'user-2',
+            status: data.status,
+          }),
+        },
+        campusMembership: {
+          upsert: async ({ create }: any) => {
+            upsertedMemberships.push(create);
+            return create;
+          },
+        },
+      }),
+  };
+  const moderationService = new ModerationService(modMockPrisma);
+  const verifiedBiz = await moderationService.verifyBusiness('biz-pending-1');
+  assert(verifiedBiz.status === BusinessStatus.verified, 'verifyBusiness marks business as verified');
+  assert(
+    upsertedMemberships.some(
+      (m) => m.userId === 'user-2' && m.role === CampusRole.merchant && m.status === MembershipStatus.active,
+    ),
+    'verifyBusiness grants active merchant CampusMembership to business owner',
+  );
+
+  // Test 11: BusinessesService serializes BigInt product priceMinor for JSON responses
+  const sampleBizRow = {
+    id: 'biz-1',
+    campusId: 'campus-1',
+    ownerId: 'user-2',
+    name: 'Haramaya Coffee Spot',
+    description: 'Fresh roasted buna',
+    status: BusinessStatus.verified,
+    createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    products: [
+      {
+        id: 'prod-1',
+        businessId: 'biz-1',
+        categoryId: null,
+        name: 'Macchiato',
+        description: null,
+        priceMinor: BigInt(4500),
+        currency: 'ETB',
+        stockQuantity: 10,
+        isAvailable: true,
+        version: 1,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      },
+    ],
+  };
+  const bizMockPrisma: any = {
+    business: {
+      findMany: async () => [sampleBizRow],
+      findUnique: async () => sampleBizRow,
+    },
+  };
+  const businessesService = new BusinessesService(bizMockPrisma);
+  const listedBiz = await businessesService.findAll({} as any);
+  const parsedList = JSON.parse(JSON.stringify(listedBiz));
+  assert(
+    parsedList[0]?.products?.[0]?.priceMinor === 4500,
+    'BusinessesService.findAll serializes BigInt product priceMinor to JSON number',
+  );
+  const singleBiz = await businessesService.findOne('biz-1');
+  const parsedSingle = JSON.parse(JSON.stringify(singleBiz));
+  assert(
+    parsedSingle?.products?.[0]?.priceMinor === 4500,
+    'BusinessesService.findOne serializes BigInt product priceMinor to JSON number',
+  );
 
   console.log(`\n====================================================`);
   console.log(`🎉 ALL SERVICE UNIT TESTS PASSED (${passed}/${total})`);

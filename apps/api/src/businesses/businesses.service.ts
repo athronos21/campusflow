@@ -7,8 +7,20 @@ import { BusinessStatus } from '@prisma/client';
 export class BusinessesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private serializeBusinessProducts<
+    T extends { products?: Array<{ priceMinor: bigint | number | string }> },
+  >(business: T) {
+    return {
+      ...business,
+      products: (business.products ?? []).map((product) => ({
+        ...product,
+        priceMinor: Number(product.priceMinor),
+      })),
+    };
+  }
+
   async findAll(query: BusinessQueryDto) {
-    return this.prisma.business.findMany({
+    const businesses = await this.prisma.business.findMany({
       where: {
         campusId: query.campusId,
         status: (query.status as BusinessStatus) || BusinessStatus.verified,
@@ -29,6 +41,8 @@ export class BusinessesService {
       },
       take: query.limit || 20,
     });
+
+    return businesses.map((business) => this.serializeBusinessProducts(business));
   }
 
   async findOne(id: string) {
@@ -43,7 +57,7 @@ export class BusinessesService {
       throw new NotFoundException(`Business with ID ${id} not found`);
     }
 
-    return business;
+    return this.serializeBusinessProducts(business);
   }
 
   async register(ownerId: string, dto: CreateBusinessDto) {
