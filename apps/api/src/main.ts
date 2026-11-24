@@ -1,3 +1,24 @@
+import * as fs from 'fs';
+import * as path from 'path';
+
+// Guarantee DATABASE_URL and environment variables are loaded across monorepo runners
+for (const p of [path.resolve(process.cwd(), '.env'), path.resolve(process.cwd(), '../../.env'), path.resolve(__dirname, '../../../.env')]) {
+  try {
+    if (fs.existsSync(p)) {
+      const lines = fs.readFileSync(p, 'utf-8').split(/\r?\n/);
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+          const idx = trimmed.indexOf('=');
+          const k = trimmed.slice(0, idx).trim();
+          const v = trimmed.slice(idx + 1).trim().replace(/^["']|["']$/g, '');
+          if (!process.env[k]) process.env[k] = v;
+        }
+      }
+    }
+  } catch {}
+}
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';

@@ -2,6 +2,13 @@ packages:
   - 'apps/api'
   - 'apps/web'
   - 'packages/*'
+allowBuilds:
+  '@nestjs/core': true
+  '@prisma/client': true
+  '@prisma/engines': true
+  '@scarf/scarf': true
+  bcrypt: true
+  prisma: true
 minimumReleaseAgeExclude:
   - '@better-auth/core@1.7.27'
   - '@better-auth/drizzle-adapter@1.7.27'

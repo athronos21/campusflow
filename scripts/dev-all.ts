@@ -63,7 +63,28 @@ function freePortWindows(port: number) {
   }
 }
 
+function loadEnv() {
+  try {
+    const envPath = path.resolve(process.cwd(), '.env');
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, 'utf-8');
+      for (const line of content.split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+          const idx = trimmed.indexOf('=');
+          const key = trimmed.slice(0, idx).trim();
+          const val = trimmed.slice(idx + 1).trim().replace(/^["']|["']$/g, '');
+          if (!process.env[key]) {
+            process.env[key] = val;
+          }
+        }
+      }
+    }
+  } catch {}
+}
+
 async function preflightChecks() {
+  loadEnv();
   console.log(`${ANSI.blue}${ANSI.bold}====================================================${ANSI.reset}`);
   console.log(`${ANSI.blue}${ANSI.bold}CampusFlow - One-Command Full Stack Launcher${ANSI.reset}`);
   console.log(`${ANSI.gray}Institution: Haramaya University Pilot MVP · Ethiopian Higher Ed${ANSI.reset}`);
@@ -141,6 +162,7 @@ async function main() {
   const child = spawn(turboCmd, ['turbo', 'run', 'dev'], {
     stdio: 'inherit',
     shell: isWindows,
+    env: process.env,
   });
 
   let mobileChild: ReturnType<typeof spawn> | null = null;
