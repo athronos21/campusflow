@@ -12,13 +12,11 @@ class HousingService {
         queryParameters: propertyType != null && propertyType != 'all' ? {'propertyType': propertyType} : null,
       );
       final List<dynamic> data = response.data is List ? response.data : [];
-      if (data.isNotEmpty) {
-        return data.map((item) => HousingListing.fromJson(item)).toList();
-      }
+      return data.map((item) => HousingListing.fromJson(item)).toList();
     } catch (e) {
       print('Fetch housing listings error: $e');
+      return _fallbackListings();
     }
-    return _fallbackListings();
   }
 
   Future<HousingViewingRequest> requestViewing({
@@ -27,50 +25,27 @@ class HousingService {
     required String studentPhone,
     String? message,
   }) async {
-    try {
-      final response = await _apiClient.post(
-        ApiEndpoints.housingViewings,
-        data: {
-          'listingId': listingId,
-          'preferredDate': preferredDate,
-          'studentPhone': studentPhone,
-          if (message != null && message.isNotEmpty) 'message': message,
-        },
-      );
-      return HousingViewingRequest.fromJson(response.data);
-    } catch (e) {
-      print('Request viewing fallback');
-      return HousingViewingRequest(
-        id: 'vr-${DateTime.now().millisecondsSinceEpoch}',
-        listingId: listingId,
-        preferredDate: preferredDate,
-        studentPhone: studentPhone,
-        status: 'pending',
-        createdAt: DateTime.now().toIso8601String(),
-      );
-    }
+    final response = await _apiClient.post(
+      ApiEndpoints.housingViewings,
+      data: {
+        'listingId': listingId,
+        'preferredDate': preferredDate,
+        'studentPhone': studentPhone,
+        if (message != null && message.isNotEmpty) 'message': message,
+      },
+    );
+    return HousingViewingRequest.fromJson(response.data);
   }
 
   Future<List<HousingViewingRequest>> getMyViewings() async {
     try {
       final response = await _apiClient.get(ApiEndpoints.housingMyViewings);
       final List<dynamic> data = response.data is List ? response.data : [];
-      if (data.isNotEmpty) {
-        return data.map((item) => HousingViewingRequest.fromJson(item)).toList();
-      }
+      return data.map((item) => HousingViewingRequest.fromJson(item)).toList();
     } catch (e) {
       print('Fetch my viewings error: $e');
+      return [];
     }
-    return [
-      HousingViewingRequest(
-        id: 'vr-101',
-        listingId: 'house-1',
-        preferredDate: DateTime.now().add(const Duration(days: 2)).toIso8601String(),
-        studentPhone: '+251 92 233 4455',
-        status: 'confirmed',
-        createdAt: DateTime.now().subtract(const Duration(days: 1)).toIso8601String(),
-      ),
-    ];
   }
 
   List<HousingListing> _fallbackListings() {

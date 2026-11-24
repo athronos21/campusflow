@@ -12,50 +12,27 @@ class EventService {
         queryParameters: category != null && category != 'All' ? {'category': category} : null,
       );
       final List<dynamic> data = response.data is List ? response.data : [];
-      if (data.isNotEmpty) {
-        return data.map((item) => CampusEvent.fromJson(item)).toList();
-      }
+      return data.map((item) => CampusEvent.fromJson(item)).toList();
     } catch (e) {
       print('Fetch events error: $e');
+      return _fallbackEvents();
     }
-    return _fallbackEvents();
   }
 
   Future<EventRsvp> rsvpEvent(String eventId) async {
-    try {
-      final response = await _apiClient.post('${ApiEndpoints.events}/$eventId/rsvp');
-      return EventRsvp.fromJson(response.data);
-    } catch (e) {
-      print('RSVP event fallback');
-      return EventRsvp(
-        id: 'rsvp-${DateTime.now().millisecondsSinceEpoch}',
-        eventId: eventId,
-        ticketCode: 'TICKET-HU-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
-        status: 'confirmed',
-        createdAt: DateTime.now().toIso8601String(),
-      );
-    }
+    final response = await _apiClient.post('${ApiEndpoints.events}/$eventId/rsvp');
+    return EventRsvp.fromJson(response.data);
   }
 
   Future<List<EventRsvp>> getMyRsvps() async {
     try {
       final response = await _apiClient.get(ApiEndpoints.myEventRsvps);
       final List<dynamic> data = response.data is List ? response.data : [];
-      if (data.isNotEmpty) {
-        return data.map((item) => EventRsvp.fromJson(item)).toList();
-      }
+      return data.map((item) => EventRsvp.fromJson(item)).toList();
     } catch (e) {
       print('Fetch my RSVPs error: $e');
+      return [];
     }
-    return [
-      EventRsvp(
-        id: 'rsvp-1',
-        eventId: 'evt-101',
-        ticketCode: 'TICKET-HU-8921',
-        status: 'confirmed',
-        createdAt: DateTime.now().subtract(const Duration(days: 1)).toIso8601String(),
-      ),
-    ];
   }
 
   List<CampusEvent> _fallbackEvents() {

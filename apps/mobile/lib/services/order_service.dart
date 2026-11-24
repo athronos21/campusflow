@@ -7,13 +7,11 @@ class OrderService {
     try {
       final response = await ApiClient.client.get(ApiEndpoints.myOrders);
       final List<dynamic> list = response.data is List ? response.data : [];
-      if (list.isNotEmpty) {
-        return list.map((o) => Order.fromJson(o)).toList();
-      }
+      return list.map((o) => Order.fromJson(o)).toList();
     } catch (e) {
       print('Fetch my orders error: $e');
+      return [];
     }
-    return _fallbackOrders();
   }
 
   static Future<Order?> createOrder({
@@ -21,20 +19,15 @@ class OrderService {
     required String businessId,
     required List<Map<String, dynamic>> items,
   }) async {
-    try {
-      final response = await ApiClient.client.post(
-        ApiEndpoints.orders,
-        data: {
-          'campusId': campusId,
-          'businessId': businessId,
-          'items': items,
-        },
-      );
-      return Order.fromJson(response.data);
-    } catch (e) {
-      print('Create order error: $e');
-      return _fallbackOrders().first;
-    }
+    final response = await ApiClient.client.post(
+      ApiEndpoints.orders,
+      data: {
+        'campusId': campusId,
+        'businessId': businessId,
+        'items': items,
+      },
+    );
+    return Order.fromJson(response.data);
   }
 
   static Future<Map<String, dynamic>> initializePayment(String orderId, {String provider = 'telebirr'}) async {
@@ -65,25 +58,5 @@ class OrderService {
       print('Verify payment fallback: $e');
       return {'status': 'success', 'reference': reference};
     }
-  }
-
-  static List<Order> _fallbackOrders() {
-    return [
-      Order(
-        id: 'ord-101',
-        campusId: 'haramaya-main',
-        customerId: 'demo-user',
-        businessId: 'demo-biz',
-        businessName: 'Haramaya Campus Cafe & Snack',
-        status: 'ready',
-        paymentStatus: 'unpaid',
-        totalMinor: 13000,
-        createdAt: DateTime.now().subtract(const Duration(minutes: 15)),
-        items: [
-          OrderItem(id: '1', productName: 'Special Buna (Coffee)', unitPriceMinor: 2500, quantity: 2),
-          OrderItem(id: '2', productName: 'Ful with Egg and Bread', unitPriceMinor: 8000, quantity: 1),
-        ],
-      ),
-    ];
   }
 }

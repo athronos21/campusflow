@@ -38,35 +38,10 @@ class _BookingsScreenState extends State<BookingsScreen> {
     final bizList = await BusinessService.getBusinesses();
     if (!mounted) return;
     setState(() {
-      _bookings = results.isNotEmpty ? results : _demoBookings();
+      _bookings = results;
       _businesses = bizList;
       _isLoading = false;
     });
-  }
-
-  List<Booking> _demoBookings() {
-    return [
-      Booking(
-        id: 'bk-8821',
-        businessId: 'biz-102',
-        customerId: 'HU-8921',
-        serviceName: 'Thesis Printing & Hardcover Binding',
-        startsAt: 'Tomorrow, 10:30 AM',
-        status: 'confirmed',
-        createdAt: DateTime.now().subtract(const Duration(hours: 3)).toIso8601String(),
-        businessName: 'Afras Campus Stationery & Thesis Binding',
-      ),
-      Booking(
-        id: 'bk-8822',
-        businessId: 'biz-101',
-        customerId: 'HU-8921',
-        serviceName: 'Laptop OS & Software Diagnostics',
-        startsAt: 'Friday, 2:00 PM',
-        status: 'pending',
-        createdAt: DateTime.now().subtract(const Duration(days: 1)).toIso8601String(),
-        businessName: 'Haramaya Campus Tech & Electronics',
-      ),
-    ];
   }
 
   void _showNewBookingDialog() {
@@ -211,27 +186,12 @@ class _BookingsScreenState extends State<BookingsScreen> {
                           }
 
                           final targetBizId = matchedBiz?.id ?? (_businesses.isNotEmpty ? _businesses.first.id : 'biz-102');
-                          final targetBizName = matchedBiz?.name ?? (_businesses.isNotEmpty ? _businesses.first.name : 'Afras Campus Stationery & Thesis Binding');
 
-                          late final Booking createdBooking;
-                          try {
-                            createdBooking = await _bookingService.createBooking(
-                              businessId: targetBizId,
-                              serviceName: selectedService,
-                              startsAt: selectedDateTime.toIso8601String(),
-                            );
-                          } catch (_) {
-                            createdBooking = Booking(
-                              id: 'bk-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
-                              businessId: targetBizId,
-                              customerId: 'HU-8921',
-                              serviceName: selectedService,
-                              startsAt: selectedDateTime.toLocal().toString().substring(0, 16),
-                              status: 'confirmed',
-                              createdAt: DateTime.now().toIso8601String(),
-                              businessName: targetBizName,
-                            );
-                          }
+                          final createdBooking = await _bookingService.createBooking(
+                            businessId: targetBizId,
+                            serviceName: selectedService,
+                            startsAt: selectedDateTime.toIso8601String(),
+                          );
 
                           if (mounted) {
                             setState(() {

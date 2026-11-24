@@ -6,8 +6,8 @@ class ApiClient {
   static final Dio _dio = Dio(
     BaseOptions(
       baseUrl: ApiEndpoints.baseUrl,
-      connectTimeout: const Duration(seconds: 2),
-      receiveTimeout: const Duration(seconds: 2),
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -24,7 +24,7 @@ class ApiClient {
         InterceptorsWrapper(
           onRequest: (options, handler) async {
             try {
-              final token = await StorageService.getToken().timeout(const Duration(milliseconds: 500), onTimeout: () => null);
+              final token = await StorageService.getToken().timeout(const Duration(seconds: 2), onTimeout: () => null);
               if (token != null && token.isNotEmpty) {
                 options.headers['Authorization'] = 'Bearer $token';
               }

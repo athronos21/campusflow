@@ -43,71 +43,8 @@ interface MarketplaceItem {
   createdAt: string;
 }
 
-const INITIAL_ITEMS: MarketplaceItem[] = [
-  {
-    id: 'mp-1',
-    title: 'Calculus: Early Transcendentals (8th Ed)',
-    category: 'textbooks',
-    priceMinor: 45000, // 450.00 ETB
-    condition: 'Like New',
-    sellerName: 'Dawit Mengistu',
-    sellerDorm: 'Block 42, Room 310',
-    phone: '+251911223344',
-    description: 'Clean textbook without highlights. Essential for Freshman engineering and mathematics courses.',
-    createdAt: '2026-11-19T10:00:00.000Z',
-  },
-  {
-    id: 'mp-2',
-    title: 'Casio Scientific Calculator FX-991ES Plus',
-    category: 'electronics',
-    priceMinor: 65000, // 650.00 ETB
-    condition: 'Good',
-    sellerName: 'Selamawit Tadesse',
-    sellerDorm: 'Block 18, Room 102',
-    phone: '+251922334455',
-    description: 'Original solar + battery dual power Casio calculator. Used for one semester in civil engineering.',
-    createdAt: '2026-11-19T12:30:00.000Z',
-  },
-  {
-    id: 'mp-3',
-    title: 'Dorm Study Desk LED Lamp & Rechargeable Battery',
-    category: 'dorm',
-    priceMinor: 35000, // 350.00 ETB
-    condition: 'Like New',
-    sellerName: 'Ephrem Bekele',
-    sellerDorm: 'Block 5, Room 114',
-    phone: '+251933445566',
-    description: 'Has 4-hour backup battery during campus power cuts. 3 adjustable brightness levels with USB-C charging.',
-    createdAt: '2026-11-18T16:00:00.000Z',
-  },
-  {
-    id: 'mp-4',
-    title: 'Animal Genetics & Livestock Breeding Reference Book',
-    category: 'textbooks',
-    priceMinor: 30000, // 300.00 ETB
-    condition: 'Good',
-    sellerName: 'Chala Gemechu',
-    sellerDorm: 'Block 24, Room 204',
-    phone: '+251944556677',
-    description: 'Required reading for College of Agriculture 3rd year students. Includes past exam summaries.',
-    createdAt: '2026-11-18T09:15:00.000Z',
-  },
-  {
-    id: 'mp-5',
-    title: 'Folding Dorm Mattress & Washable Cover',
-    category: 'dorm',
-    priceMinor: 95000, // 950.00 ETB
-    condition: 'Good',
-    sellerName: 'Hanan Mohammed',
-    sellerDorm: 'Block 12, Room 402',
-    phone: '+251955667788',
-    description: 'High-density foam mattress, comfortable for dorm bunk beds. Clean sanitized cover included.',
-    createdAt: '2026-11-17T14:40:00.000Z',
-  },
-];
-
 export default function MarketplacePage() {
-  const [items, setItems] = useState<MarketplaceItem[]>(INITIAL_ITEMS);
+  const [items, setItems] = useState<MarketplaceItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [search, setSearch] = useState<string>('');
@@ -141,9 +78,12 @@ export default function MarketplacePage() {
             };
           });
           setItems(mapped);
+        } else {
+          setItems([]);
         }
       } catch (err) {
         console.error('Failed to load live marketplace items:', err);
+        setItems([]);
       } finally {
         setIsLoading(false);
       }

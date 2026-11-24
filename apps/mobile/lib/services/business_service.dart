@@ -17,7 +17,7 @@ class BusinessService {
           if (search != null) 'search': search,
           'status': 'verified',
         },
-      ).timeout(const Duration(seconds: 1));
+      );
 
       final List<dynamic> list = response.data is List ? response.data : [];
       if (list.isNotEmpty && search == null) {
@@ -37,7 +37,7 @@ class BusinessService {
         queryParameters: {
           if (businessId != null) 'businessId': businessId,
         },
-      ).timeout(const Duration(seconds: 1));
+      );
 
       final List<dynamic> list = response.data is List ? response.data : [];
       return list.map((p) => Product.fromJson(p)).toList();

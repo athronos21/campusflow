@@ -41,51 +41,8 @@ interface WorkOrder {
   createdAt: string;
 }
 
-const INITIAL_ORDERS: WorkOrder[] = [
-  {
-    id: 'wo-101',
-    category: 'plumbing',
-    title: 'Shower Faucet Low Pressure & Leakage',
-    dormBlock: 'Block 42 (Main Campus)',
-    roomNumber: 'Room 312',
-    description: 'The bathroom faucet has continuous dripping and low water pressure since Tuesday morning.',
-    status: 'in_progress',
-    createdAt: '2026-11-19T08:30:00.000Z',
-  },
-  {
-    id: 'wo-102',
-    category: 'electrical',
-    title: 'Ceiling Fluorescent Tube Flickering',
-    dormBlock: 'Block 18 (Freshman Compound)',
-    roomNumber: 'Room 104',
-    description: 'Main study area tube light turns off intermittently after 10 minutes of usage.',
-    status: 'assigned',
-    createdAt: '2026-11-19T14:15:00.000Z',
-  },
-  {
-    id: 'wo-103',
-    category: 'network',
-    title: 'Ethernet Wall Port Disconnected',
-    dormBlock: 'Block 5 (Postgraduate Hall)',
-    roomNumber: 'Room 205',
-    description: 'Physical RJ-45 jack pin 3 is bent. Campus intranet and EthERNet LAN cannot sync.',
-    status: 'resolved',
-    createdAt: '2026-11-18T11:00:00.000Z',
-  },
-  {
-    id: 'wo-104',
-    category: 'carpentry',
-    title: 'Study Desk Drawer Track Jammed',
-    dormBlock: 'Block 42 (Main Campus)',
-    roomNumber: 'Room 218',
-    description: 'Wooden runner broke and drawer cannot be pushed in properly.',
-    status: 'pending',
-    createdAt: '2026-11-20T10:00:00.000Z',
-  },
-];
-
 export default function MaintenancePage() {
-  const [orders, setOrders] = useState<WorkOrder[]>(INITIAL_ORDERS);
+  const [orders, setOrders] = useState<WorkOrder[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -107,10 +64,13 @@ export default function MaintenancePage() {
               createdAt: r.createdAt,
             };
           });
-          setOrders([...mapped, ...INITIAL_ORDERS]);
+          setOrders(mapped);
+        } else {
+          setOrders([]);
         }
       } catch (err) {
         console.error('Failed to load maintenance reports:', err);
+        setOrders([]);
       }
     }
     loadReports();
@@ -276,40 +236,53 @@ export default function MaintenancePage() {
         </div>
 
         {/* Work Orders List */}
-        <div className="space-y-4">
-          {filteredOrders.map((order) => (
-            <Card
-              key={order.id}
-              className="border-slate-200 hover:border-slate-300 transition shadow-xs p-5"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
-                <div className="flex items-center gap-2.5">
-                  <span className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 shrink-0">
-                    {getCategoryIcon(order.category)}
-                  </span>
-                  <h3 className="font-bold text-base text-slate-900">{order.title}</h3>
+        {filteredOrders.length === 0 ? (
+          <div className="text-center py-12 border border-dashed border-slate-300 rounded-xl bg-white space-y-3">
+            <Wrench className="w-8 h-8 text-slate-400 mx-auto" />
+            <h3 className="font-semibold text-slate-800 text-sm">No maintenance work orders found</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              There are no active issues reported in this category. Report an issue to notify campus facilities.
+            </p>
+            <Button size="sm" onClick={() => setIsModalOpen(true)} className="mt-2 text-xs font-semibold">
+              <Plus className="w-3.5 h-3.5 mr-1" /> Submit Work Order
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredOrders.map((order) => (
+              <Card
+                key={order.id}
+                className="border-slate-200 hover:border-slate-300 transition shadow-xs p-5"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+                  <div className="flex items-center gap-2.5">
+                    <span className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 shrink-0">
+                      {getCategoryIcon(order.category)}
+                    </span>
+                    <h3 className="font-bold text-base text-slate-900">{order.title}</h3>
+                  </div>
+                  {getStatusBadge(order.status)}
                 </div>
-                {getStatusBadge(order.status)}
-              </div>
 
-              <p className="text-xs text-slate-600 mb-3 leading-relaxed">{order.description}</p>
+                <p className="text-xs text-slate-600 mb-3 leading-relaxed">{order.description}</p>
 
-              <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-500 font-medium pt-2 border-t border-slate-100">
-                <span className="flex items-center gap-1">
-                  <Building className="w-3.5 h-3.5 text-slate-400" />
-                  {order.dormBlock}
-                </span>
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                  {order.roomNumber}
-                </span>
-                <span className="text-slate-400">
-                  Logged: {new Date(order.createdAt).toLocaleDateString()}
-                </span>
-              </div>
-            </Card>
-          ))}
-        </div>
+                <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-500 font-medium pt-2 border-t border-slate-100">
+                  <span className="flex items-center gap-1">
+                    <Building className="w-3.5 h-3.5 text-slate-400" />
+                    {order.dormBlock}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                    {order.roomNumber}
+                  </span>
+                  <span className="text-slate-400">
+                    Logged: {new Date(order.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </main>
 
       {/* New Work Order Modal */}

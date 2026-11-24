@@ -11,13 +11,11 @@ class TransportService {
         queryParameters: destination != null && destination != 'all' ? {'destination': destination} : null,
       );
       final List<dynamic> data = response.data is List ? response.data : [];
-      if (data.isNotEmpty) {
-        return data.map((item) => Trip.fromJson(item)).toList();
-      }
+      return data.map((item) => Trip.fromJson(item)).toList();
     } catch (e) {
       print('Fetch trips error: $e');
+      return _fallbackTrips();
     }
-    return _fallbackTrips();
   }
 
   Future<Map<String, dynamic>> getTripDetails(String tripId) async {
@@ -36,57 +34,28 @@ class TransportService {
     required String passengerPhone,
     String paymentProvider = 'telebirr',
   }) async {
-    try {
-      final response = await _apiClient.post(
-        '/transport/reservations',
-        data: {
-          'tripId': tripId,
-          'seatNumber': seatNumber,
-          'passengerName': passengerName,
-          'passengerPhone': passengerPhone,
-          'paymentProvider': paymentProvider,
-        },
-      );
-      return TicketReservation.fromJson(response.data);
-    } catch (e) {
-      print('Reserve seat fallback');
-      return TicketReservation(
-        id: 'res-${DateTime.now().millisecondsSinceEpoch}',
-        passengerName: passengerName,
-        passengerPhone: passengerPhone,
-        seatNumber: seatNumber,
-        qrCode: 'HU-BUS-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
-        amountMinor: '1500',
-        status: 'confirmed',
-        paymentStatus: 'paid',
-        createdAt: DateTime.now(),
-      );
-    }
+    final response = await _apiClient.post(
+      '/transport/reservations',
+      data: {
+        'tripId': tripId,
+        'seatNumber': seatNumber,
+        'passengerName': passengerName,
+        'passengerPhone': passengerPhone,
+        'paymentProvider': paymentProvider,
+      },
+    );
+    return TicketReservation.fromJson(response.data);
   }
 
   Future<List<TicketReservation>> getMyTickets() async {
     try {
       final response = await _apiClient.get('/transport/reservations/my');
       final List<dynamic> data = response.data is List ? response.data : [];
-      if (data.isNotEmpty) {
-        return data.map((item) => TicketReservation.fromJson(item)).toList();
-      }
+      return data.map((item) => TicketReservation.fromJson(item)).toList();
     } catch (e) {
       print('Fetch my tickets error: $e');
+      return [];
     }
-    return [
-      TicketReservation(
-        id: 'res-1',
-        passengerName: 'Tigist Haile',
-        passengerPhone: '+251922334455',
-        seatNumber: 8,
-        qrCode: 'HU-BUS-8921',
-        amountMinor: '1500',
-        status: 'confirmed',
-        paymentStatus: 'paid',
-        createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-      ),
-    ];
   }
 
   Future<void> cancelTicket(String reservationId) async {
