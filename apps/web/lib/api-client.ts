@@ -1,5 +1,15 @@
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
 
+export class ApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
 export async function apiClient<T>(
   endpoint: string,
   options: RequestInit = {},
@@ -11,7 +21,6 @@ export async function apiClient<T>(
     headers.set('Content-Type', 'application/json');
   }
 
-  // Retrieve token from localStorage if in browser
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('campusflow_token');
     if (token) {
@@ -26,7 +35,11 @@ export async function apiClient<T>(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error?.message || errorData.message || `Request failed with status ${response.status}`);
+    const message =
+      errorData.error?.message ||
+      errorData.message ||
+      `Request failed with status ${response.status}`;
+    throw new ApiError(message, response.status);
   }
 
   return response.json();
@@ -36,7 +49,7 @@ apiClient.get = function <T>(endpoint: string, options: RequestInit = {}): Promi
   return apiClient<T>(endpoint, { ...options, method: 'GET' });
 };
 
-apiClient.post = function <T>(endpoint: string, body?: any, options: RequestInit = {}): Promise<T> {
+apiClient.post = function <T>(endpoint: string, body?: unknown, options: RequestInit = {}): Promise<T> {
   return apiClient<T>(endpoint, {
     ...options,
     method: 'POST',
@@ -44,7 +57,7 @@ apiClient.post = function <T>(endpoint: string, body?: any, options: RequestInit
   });
 };
 
-apiClient.put = function <T>(endpoint: string, body?: any, options: RequestInit = {}): Promise<T> {
+apiClient.put = function <T>(endpoint: string, body?: unknown, options: RequestInit = {}): Promise<T> {
   return apiClient<T>(endpoint, {
     ...options,
     method: 'PUT',

@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authClient } from './auth-client';
+import { apiClient } from './api-client';
+import { shouldPreferStoredBackendSession } from './auth-helpers';
 
 export interface UserSession {
   id: string;
@@ -32,10 +34,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Sync with Better Auth session
   const { data: session, isPending: sessionLoading } = authClient.useSession();
 
   useEffect(() => {
+    const savedToken = localStorage.getItem('campusflow_token');
+    const savedUser = localStorage.getItem('campusflow_user');
+
+    // Preserve backend /auth/login session (with campus_admin / merchant roles) over stale Better Auth cookies
+    if (shouldPreferStoredBackendSession(savedToken, savedUser) && savedToken && savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser) as UserSession;
+        setToken(savedToken);
+        setUser(parsedUser);
+        setIsLoading(false);
+
+        // Refresh live roles from /auth/me (e.g. after System Admin approves merchant shop)
+        apiClient<{
+          id: string;
+          displayName: string;
+          email: string | null;
+          phone: string | null;
+          roles: string[];
+        }>('/auth/me')
+          .then((fresh) => {
+            if (fresh && fresh.id === parsedUser.id && Array.isArray(fresh.roles)) {
+              const updated: UserSession = {
+                id: fresh.id,
+                displayName: fresh.displayName,
+                email: fresh.email,
+                phone: fresh.phone,
+                roles: fresh.roles,
+              };
+              setUser(updated);
+              localStorage.setItem('campusflow_user', JSON.stringify(updated));
+            }
+          })
+          .catch(() => null);
+        return;
+      } catch (e) {
+        console.error('Failed to parse saved user', e);
+      }
+    }
+
     if (session?.user) {
       setUser({
         id: session.user.id,
@@ -49,10 +89,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Fallback: check localStorage for legacy or dev sessions
-    const savedToken = localStorage.getItem('campusflow_token');
-    const savedUser = localStorage.getItem('campusflow_user');
-
     if (savedToken && savedUser) {
       try {
         setToken(savedToken);
@@ -60,6 +96,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (e) {
         console.error('Failed to parse saved user', e);
       }
+    } else {
+      setToken(null);
+      setUser(null);
     }
     setIsLoading(sessionLoading);
   }, [session, sessionLoading]);
@@ -74,8 +113,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await authClient.signOut();
-    } catch (e) {
-      // ignore client signout errors if local only
+    } catch {
+      // Ignore client signout errors if local only
     }
     setToken(null);
     setUser(null);

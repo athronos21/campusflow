@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Navbar } from '@/components/layout/navbar';
-import { Footer } from '@/components/layout/footer';
+import { AppShell } from '@/components/layout/app-shell';
+import { PageHeader } from '@/components/layout/page-header';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,19 +16,11 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { LoadingState, EmptyState } from '@/components/ui/state-views';
+import { useToast } from '@/components/ui/toast';
 import { formatETB } from '@/lib/utils';
 import { apiClient } from '@/lib/api-client';
-import {
-  Tag,
-  Book,
-  Smartphone,
-  Bed,
-  PenTool,
-  Phone,
-  Search,
-  Plus,
-  Loader2,
-} from 'lucide-react';
+import { Tag, Book, Smartphone, Bed, PenTool, Phone, Search, Plus } from 'lucide-react';
 
 interface MarketplaceItem {
   id: string;
@@ -44,25 +36,54 @@ interface MarketplaceItem {
 }
 
 export default function MarketplacePage() {
+  const { toast } = useToast();
   const [items, setItems] = useState<MarketplaceItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [search, setSearch] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const [title, setTitle] = useState('');
+  const [category, setCategory] = useState<MarketplaceItem['category']>('textbooks');
+  const [priceETB, setPriceETB] = useState('');
+  const [condition, setCondition] = useState<MarketplaceItem['condition']>('Good');
+  const [sellerName, setSellerName] = useState('');
+  const [sellerDorm, setSellerDorm] = useState('Block 42, Room 204');
+  const [phone, setPhone] = useState('+2519');
+  const [description, setDescription] = useState('');
+
   useEffect(() => {
     async function loadLiveProducts() {
       try {
         setIsLoading(true);
-        const data = await apiClient<any[]>('/products').catch(() => []);
+        const data = await apiClient<
+          {
+            id: string;
+            name: string;
+            priceMinor: number | string;
+            description?: string;
+            createdAt: string;
+            category?: { slug?: string };
+            business?: { name?: string };
+          }[]
+        >('/products').catch(() => []);
         if (data && data.length > 0) {
           const mapped: MarketplaceItem[] = data.map((p) => {
-            let cat: 'textbooks' | 'electronics' | 'dorm' | 'stationery' = 'stationery';
+            let cat: MarketplaceItem['category'] = 'stationery';
             const slug = (p.category?.slug || '').toLowerCase();
             const nameLower = (p.name || '').toLowerCase();
-            if (slug.includes('textbook') || nameLower.includes('book') || nameLower.includes('calculus')) cat = 'textbooks';
-            else if (slug.includes('tech') || slug.includes('electronic') || nameLower.includes('calculator') || nameLower.includes('lamp')) cat = 'electronics';
-            else if (slug.includes('dorm') || nameLower.includes('bed') || nameLower.includes('mattress')) cat = 'dorm';
+            if (slug.includes('textbook') || nameLower.includes('book') || nameLower.includes('calculus')) {
+              cat = 'textbooks';
+            } else if (
+              slug.includes('tech') ||
+              slug.includes('electronic') ||
+              nameLower.includes('calculator') ||
+              nameLower.includes('lamp')
+            ) {
+              cat = 'electronics';
+            } else if (slug.includes('dorm') || nameLower.includes('bed') || nameLower.includes('mattress')) {
+              cat = 'dorm';
+            }
 
             return {
               id: p.id,
@@ -91,16 +112,6 @@ export default function MarketplacePage() {
 
     loadLiveProducts();
   }, []);
-
-  // Form state
-  const [title, setTitle] = useState('');
-  const [category, setCategory] = useState<'textbooks' | 'electronics' | 'dorm' | 'stationery'>('textbooks');
-  const [priceETB, setPriceETB] = useState('');
-  const [condition, setCondition] = useState<'Like New' | 'Good' | 'Fair'>('Good');
-  const [sellerName, setSellerName] = useState('');
-  const [sellerDorm, setSellerDorm] = useState('Block 42, Room 204');
-  const [phone, setPhone] = useState('+2519');
-  const [description, setDescription] = useState('');
 
   const filteredItems = items.filter((item) => {
     const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
@@ -132,6 +143,11 @@ export default function MarketplacePage() {
 
     setItems([newItem, ...items]);
     setIsModalOpen(false);
+    toast({
+      title: 'Listing posted',
+      description: `${title} is now visible in your marketplace view.`,
+      variant: 'success',
+    });
     setTitle('');
     setPriceETB('');
     setSellerName('');
@@ -141,184 +157,142 @@ export default function MarketplacePage() {
   const getCategoryIcon = (cat: string) => {
     switch (cat) {
       case 'textbooks':
-        return <Book className="w-4 h-4 text-purple-600" />;
+        return <Book className="w-4 h-4 text-primary" />;
       case 'electronics':
-        return <Smartphone className="w-4 h-4 text-blue-600" />;
+        return <Smartphone className="w-4 h-4 text-teal-700" />;
       case 'dorm':
-        return <Bed className="w-4 h-4 text-amber-600" />;
+        return <Bed className="w-4 h-4 text-secondary" />;
       case 'stationery':
-        return <PenTool className="w-4 h-4 text-emerald-600" />;
+        return <PenTool className="w-4 h-4 text-emerald-700" />;
       default:
-        return <Tag className="w-4 h-4 text-slate-600" />;
+        return <Tag className="w-4 h-4 text-muted-foreground" />;
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-slate-50 text-slate-900 font-sans">
-      <Navbar />
+    <AppShell maxWidth="6xl">
+      <div className="space-y-6">
+        <PageHeader
+          title="Peer Student Marketplace"
+          description="Buy and sell textbooks, scientific calculators, dorm essentials, and electronics across Haramaya University."
+          action={
+            <Button onClick={() => setIsModalOpen(true)}>
+              <Plus className="w-4 h-4 mr-1.5" /> Post Item
+            </Button>
+          }
+        />
 
-      <main className="max-w-6xl mx-auto px-4 py-8 flex-1 w-full space-y-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
-              Peer Student Marketplace
-            </h1>
-            <p className="text-sm text-slate-600 max-w-2xl mt-1 leading-relaxed">
-              Buy and sell textbooks, calculators, dorm essentials, and electronics directly between Haramaya University students.
-            </p>
-          </div>
-
-          <Button
-            onClick={() => setIsModalOpen(true)}
-            className="font-bold flex items-center gap-2 self-start sm:self-center shrink-0 shadow-sm"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Post Item for Sale</span>
-          </Button>
-        </div>
-
-        {/* Filter and Search Bar */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1 flex items-center">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />
+        {/* Search & Category Pills */}
+        <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+          <div className="relative flex items-center">
+            <Search className="w-4 h-4 text-muted-foreground absolute left-3.5 pointer-events-none" />
             <Input
               type="text"
               placeholder="Search textbooks, calculators, desk lamps, mattresses..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 h-11 bg-white border-slate-300 text-sm shadow-xs"
+              className="pl-10"
             />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            {[
+              { id: 'all', label: `All Items (${items.length})`, icon: null },
+              { id: 'textbooks', label: 'Textbooks', icon: Book },
+              { id: 'electronics', label: 'Electronics', icon: Smartphone },
+              { id: 'dorm', label: 'Dorm Essentials', icon: Bed },
+              { id: 'stationery', label: 'Stationery', icon: PenTool },
+            ].map((cat) => {
+              const Icon = cat.icon;
+              return (
+                <Button
+                  key={cat.id}
+                  type="button"
+                  variant={selectedCategory === cat.id ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className="rounded-full"
+                >
+                  {Icon && <Icon className="w-3.5 h-3.5 mr-1.5" />}
+                  {cat.label}
+                </Button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Category Pills */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant={selectedCategory === 'all' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedCategory('all')}
-            className="h-8 rounded-full text-xs font-bold"
-          >
-            All Items ({items.length})
-          </Button>
-          <Button
-            variant={selectedCategory === 'textbooks' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedCategory('textbooks')}
-            className="h-8 rounded-full text-xs font-bold flex items-center gap-1.5"
-          >
-            <Book className="w-3.5 h-3.5 text-purple-600" /> Textbooks
-          </Button>
-          <Button
-            variant={selectedCategory === 'electronics' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedCategory('electronics')}
-            className="h-8 rounded-full text-xs font-bold flex items-center gap-1.5"
-          >
-            <Smartphone className="w-3.5 h-3.5 text-blue-600" /> Electronics
-          </Button>
-          <Button
-            variant={selectedCategory === 'dorm' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedCategory('dorm')}
-            className="h-8 rounded-full text-xs font-bold flex items-center gap-1.5"
-          >
-            <Bed className="w-3.5 h-3.5 text-amber-600" /> Dorm Essentials
-          </Button>
-          <Button
-            variant={selectedCategory === 'stationery' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedCategory('stationery')}
-            className="h-8 rounded-full text-xs font-bold flex items-center gap-1.5"
-          >
-            <PenTool className="w-3.5 h-3.5 text-emerald-600" /> Stationery
-          </Button>
-        </div>
-
         {/* Marketplace Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {isLoading ? (
-            <div className="col-span-full py-16 text-center text-slate-500">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-600 mb-2" />
-              <p className="text-xs font-medium">Loading live campus marketplace items...</p>
-            </div>
-          ) : filteredItems.length === 0 ? (
-            <div className="col-span-full py-16 text-center text-slate-500">
-              <p className="text-sm font-semibold">No marketplace items found</p>
-              <p className="text-xs mt-1">Be the first to list a textbook, electronics, or dorm supply!</p>
-            </div>
-          ) : (
-            filteredItems.map((item) => (
-              <Card
-                key={item.id}
-                className="flex flex-col justify-between border-slate-200 hover:border-slate-300 hover:shadow-xs transition p-5"
-              >
-              <div>
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <span className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 shrink-0">
-                    {getCategoryIcon(item.category)}
-                  </span>
-                  <Badge variant="secondary" className="text-[10px] font-bold">
-                    {item.condition}
-                  </Badge>
-                </div>
-
-                <h3 className="font-bold text-base text-slate-900 leading-snug mb-1">
-                  {item.title}
-                </h3>
-                <p className="text-xs text-slate-600 line-clamp-3 mb-4 leading-relaxed font-normal">
-                  {item.description}
-                </p>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 space-y-3">
-                <div className="flex items-baseline justify-between">
-                  <span className="text-lg font-black text-slate-900">
-                    {formatETB(item.priceMinor)}
-                  </span>
-                  <span className="text-[11px] text-slate-400">
-                    {item.sellerDorm}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between gap-2 pt-1">
-                  <div className="flex items-center gap-1.5 text-xs text-slate-600 font-medium">
-                    <span className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold">
-                      {item.sellerName[0]}
+        {isLoading ? (
+          <LoadingState label="Loading campus marketplace listings..." count={3} />
+        ) : filteredItems.length === 0 ? (
+          <EmptyState
+            icon={<Tag className="w-5 h-5" />}
+            title="No marketplace items found"
+            description="No listings match your current search or category. Post an item to share with students."
+            actionLabel="Post Item"
+            onAction={() => setIsModalOpen(true)}
+          />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filteredItems.map((item) => (
+              <Card key={item.id} className="flex flex-col justify-between p-5">
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <span className="p-2 rounded-lg bg-muted border border-border shrink-0">
+                      {getCategoryIcon(item.category)}
                     </span>
-                    <span className="truncate max-w-[110px]">{item.sellerName}</span>
+                    <Badge variant="outline">{item.condition}</Badge>
                   </div>
 
-                  <a
-                    href={`tel:${item.phone}`}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline bg-primary/10 px-2.5 py-1.5 rounded-md transition"
-                  >
-                    <Phone className="w-3.5 h-3.5" />
-                    <span>Call Seller</span>
-                  </a>
+                  <h2 className="font-display font-bold text-base text-foreground leading-snug mb-1">
+                    {item.title}
+                  </h2>
+                  <p className="text-xs text-muted-foreground line-clamp-3 mb-4 leading-relaxed">
+                    {item.description}
+                  </p>
                 </div>
-              </div>
-            </Card>
-          )))}
-        </div>
-      </main>
 
-      {/* Post Item Modal */}
+                <div className="pt-3 border-t border-border space-y-3">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="font-mono text-lg font-black text-foreground tabular-nums">
+                      {formatETB(item.priceMinor)}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground truncate">{item.sellerDorm}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium min-w-0">
+                      <span className="w-6 h-6 rounded-full bg-muted border border-border flex items-center justify-center text-[10px] font-bold text-foreground shrink-0">
+                        {(item.sellerName.trim()[0] || 'S').toUpperCase()}
+                      </span>
+                      <span className="truncate">{item.sellerName}</span>
+                    </div>
+
+                    <Button asChild size="sm" variant="outline">
+                      <a href={`tel:${item.phone}`}>
+                        <Phone className="w-3.5 h-3.5 mr-1.5 text-primary" /> Call Seller
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-slate-900">
-              List Item on Campus Marketplace
-            </DialogTitle>
-            <DialogDescription className="text-xs text-slate-500">
-              Direct peer-to-peer sale between verified Haramaya University students.
+            <DialogTitle>List Item on Campus Marketplace</DialogTitle>
+            <DialogDescription>
+              Direct peer-to-peer listing for Haramaya University students.
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleCreateListing} className="space-y-4 mt-2">
+          <form onSubmit={handleCreateListing} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="itemTitle" className="text-xs font-semibold uppercase text-slate-700">
+              <Label htmlFor="itemTitle" className="text-xs font-semibold">
                 Item Title
               </Label>
               <Input
@@ -327,20 +301,19 @@ export default function MarketplacePage() {
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Casio Scientific Calculator, Economics textbook"
                 required
-                className="h-10 text-sm"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="category" className="text-xs font-semibold uppercase text-slate-700">
+                <Label htmlFor="category" className="text-xs font-semibold">
                   Category
                 </Label>
                 <select
                   id="category"
                   value={category}
                   onChange={(e) => setCategory(e.target.value as MarketplaceItem['category'])}
-                  className="w-full h-10 px-3 py-2 rounded-md border border-input bg-transparent text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  className="w-full h-11 px-3 rounded-lg border border-input bg-card text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <option value="textbooks">Textbooks</option>
                   <option value="electronics">Electronics</option>
@@ -350,14 +323,14 @@ export default function MarketplacePage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="condition" className="text-xs font-semibold uppercase text-slate-700">
+                <Label htmlFor="condition" className="text-xs font-semibold">
                   Condition
                 </Label>
                 <select
                   id="condition"
                   value={condition}
                   onChange={(e) => setCondition(e.target.value as MarketplaceItem['condition'])}
-                  className="w-full h-10 px-3 py-2 rounded-md border border-input bg-transparent text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  className="w-full h-11 px-3 rounded-lg border border-input bg-card text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <option value="Like New">Like New</option>
                   <option value="Good">Good</option>
@@ -367,24 +340,24 @@ export default function MarketplacePage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="price" className="text-xs font-semibold uppercase text-slate-700">
+              <Label htmlFor="price" className="text-xs font-semibold">
                 Price (ETB)
               </Label>
               <Input
                 id="price"
                 type="number"
                 step="0.01"
+                min="0"
                 value={priceETB}
                 onChange={(e) => setPriceETB(e.target.value)}
                 placeholder="e.g. 450"
                 required
-                className="h-10 text-sm"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="name" className="text-xs font-semibold uppercase text-slate-700">
+                <Label htmlFor="name" className="text-xs font-semibold">
                   Seller Name
                 </Label>
                 <Input
@@ -393,12 +366,11 @@ export default function MarketplacePage() {
                   onChange={(e) => setSellerName(e.target.value)}
                   placeholder="Your Name"
                   required
-                  className="h-10 text-sm"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="dorm" className="text-xs font-semibold uppercase text-slate-700">
+                <Label htmlFor="dorm" className="text-xs font-semibold">
                   Dorm Location
                 </Label>
                 <Input
@@ -407,13 +379,12 @@ export default function MarketplacePage() {
                   onChange={(e) => setSellerDorm(e.target.value)}
                   placeholder="Block 42, Room 204"
                   required
-                  className="h-10 text-sm"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="phone" className="text-xs font-semibold uppercase text-slate-700">
+              <Label htmlFor="phone" className="text-xs font-semibold">
                 Contact Phone
               </Label>
               <Input
@@ -422,12 +393,11 @@ export default function MarketplacePage() {
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+251911223344"
                 required
-                className="h-10 text-sm"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="desc" className="text-xs font-semibold uppercase text-slate-700">
+              <Label htmlFor="desc" className="text-xs font-semibold">
                 Item Description
               </Label>
               <textarea
@@ -437,28 +407,19 @@ export default function MarketplacePage() {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe edition, working condition, accessories included..."
                 required
-                className="w-full p-2.5 rounded-md border border-input bg-transparent text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="w-full p-3 rounded-lg border border-input bg-card text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
 
-            <DialogFooter className="pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setIsModalOpen(false)}
-              >
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" size="sm" className="font-bold">
-                Publish Listing
-              </Button>
+              <Button type="submit">Publish Listing</Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
-
-      <Footer />
-    </div>
+    </AppShell>
   );
 }

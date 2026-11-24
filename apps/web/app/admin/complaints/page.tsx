@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { PageHeader } from '@/components/layout/page-header';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { LoadingState, EmptyState } from '@/components/ui/state-views';
+import { useToast } from '@/components/ui/toast';
 import { apiClient } from '@/lib/api-client';
 import { CheckCircle2, RefreshCw, User, Phone, Calendar, Check } from 'lucide-react';
 
@@ -19,17 +22,20 @@ interface ReportItem {
 }
 
 export default function AdminComplaintsPage() {
+  const { toast } = useToast();
   const [reports, setReports] = useState<ReportItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
 
   const fetchReports = async () => {
     try {
       setIsLoading(true);
+      setFetchError(null);
       const data = await apiClient<ReportItem[]>('/moderation/reports');
       setReports(data);
     } catch (e) {
-      console.error(e);
+      setFetchError(e instanceof Error ? e.message : 'Unable to load dispute registry');
     } finally {
       setIsLoading(false);
     }
@@ -45,9 +51,14 @@ export default function AdminComplaintsPage() {
       await apiClient(`/moderation/reports/${id}/resolve`, {
         method: 'PATCH',
       });
+      toast({ title: 'Report marked resolved', variant: 'success' });
       await fetchReports();
-    } catch (e) {
-      console.error(e);
+    } catch (e: unknown) {
+      toast({
+        title: 'Resolution failed',
+        description: e instanceof Error ? e.message : 'Could not resolve report',
+        variant: 'error',
+      });
     } finally {
       setResolvingId(null);
     }
@@ -55,86 +66,83 @@ export default function AdminComplaintsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Complaints & Dispute Moderation</h1>
-          <p className="text-slate-600 mt-1 text-sm">
-            Investigate reported orders, missing deliveries, and disputes for Haramaya campus marketplace transactions.
-          </p>
-        </div>
-
-        <Button variant="outline" size="sm" onClick={fetchReports} className="text-xs">
-          <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Refresh Reports
-        </Button>
-      </div>
+      <PageHeader
+        title="Complaints & Dispute Moderation"
+        description="Investigate reported orders, facility work orders, and marketplace disputes across Haramaya campus."
+        action={
+          <Button variant="outline" size="sm" onClick={fetchReports}>
+            <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Refresh Reports
+          </Button>
+        }
+      />
 
       {isLoading && reports.length === 0 ? (
-        <div className="text-center py-20 text-slate-500 font-medium">Checking dispute registry...</div>
+        <LoadingState label="Checking dispute registry..." count={2} />
+      ) : fetchError ? (
+        <EmptyState
+          icon={<CheckCircle2 className="w-6 h-6 text-destructive" />}
+          title="Could not load dispute registry"
+          description={fetchError}
+          actionLabel="Retry"
+          onAction={fetchReports}
+        />
       ) : reports.length === 0 ? (
-        <Card className="text-center py-16 text-slate-500">
-          <CardContent>
-            <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-3" />
-            <p className="font-bold text-slate-800">No active complaints or disputes filed</p>
-            <p className="text-xs text-slate-500 mt-1">Campus marketplace transactions are smooth and verified.</p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={<CheckCircle2 className="w-6 h-6 text-emerald-700" />}
+          title="No active complaints or disputes"
+          description="Campus marketplace transactions and service orders are clear."
+        />
       ) : (
         <div className="space-y-4">
-          <div className="text-xs text-slate-500 font-semibold px-1">
-            {reports.length} Report{reports.length > 1 ? 's' : ''} on File
+          <div className="text-xs font-semibold text-muted-foreground">
+            {reports.length} {reports.length === 1 ? 'Report' : 'Reports'} on File
           </div>
 
           {reports.map((report) => (
-            <Card key={report.id} className="p-6 hover:border-slate-300 transition shadow-sm">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div>
-                  <div className="flex items-center gap-2.5 mb-2 flex-wrap">
-                    <span className="font-bold text-slate-900 text-base">{report.reason}</span>
+            <Card key={report.id} className="p-5 sm:p-6">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                <div className="space-y-2 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="font-display font-bold text-foreground text-base">{report.reason}</h2>
                     <Badge variant={report.status === 'resolved' ? 'success' : 'danger'}>
                       {report.status.toUpperCase()}
                     </Badge>
-                    <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-                      Target: {report.entityType}
-                    </span>
+                    <Badge variant="muted">{report.entityType}</Badge>
                   </div>
 
                   {report.details && (
-                    <p className="text-sm text-slate-600 max-w-2xl mt-1">{report.details}</p>
+                    <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">{report.details}</p>
                   )}
 
-                  <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100">
-                    <span className="flex items-center gap-1 font-semibold text-slate-700">
-                      <User className="w-3.5 h-3.5 text-slate-400" />
-                      Reported by: {report.reporter?.displayName || 'Student'}
+                  <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground pt-2 border-t border-border">
+                    <span className="flex items-center gap-1 font-semibold text-foreground">
+                      <User className="w-3.5 h-3.5" />
+                      {report.reporter?.displayName || 'Student'}
                     </span>
-                    <span className="flex items-center gap-1">
-                      <Phone className="w-3.5 h-3.5 text-slate-400" />
+                    <span className="flex items-center gap-1 font-mono">
+                      <Phone className="w-3.5 h-3.5" />
                       {report.reporter?.phone || report.reporter?.email || 'N/A'}
                     </span>
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                      Filed: {new Date(report.createdAt).toLocaleDateString()}
+                    <span className="flex items-center gap-1 font-mono">
+                      <Calendar className="w-3.5 h-3.5" />
+                      Filed {new Date(report.createdAt).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
 
                 {report.status !== 'resolved' ? (
-                  <div className="flex items-center gap-2 shrink-0 self-start lg:self-auto">
-                    <Button
-                      size="sm"
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
-                      disabled={resolvingId === report.id}
-                      onClick={() => handleResolve(report.id)}
-                    >
-                      <Check className="w-3.5 h-3.5 mr-1.5" />
-                      {resolvingId === report.id ? 'Resolving...' : 'Resolve Dispute'}
-                    </Button>
-                  </div>
+                  <Button
+                    disabled={resolvingId === report.id}
+                    onClick={() => handleResolve(report.id)}
+                    className="shrink-0"
+                  >
+                    <Check className="w-4 h-4 mr-1.5" />
+                    {resolvingId === report.id ? 'Resolving...' : 'Resolve Dispute'}
+                  </Button>
                 ) : (
-                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full shrink-0">
-                    ✓ Resolved by Admin
-                  </span>
+                  <Badge variant="success" className="shrink-0">
+                    Resolved by Admin
+                  </Badge>
                 )}
               </div>
             </Card>

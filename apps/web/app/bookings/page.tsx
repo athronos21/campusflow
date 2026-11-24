@@ -1,18 +1,28 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Navbar } from '@/components/layout/navbar';
-import { Footer } from '@/components/layout/footer';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import React, { useCallback, useEffect, useState } from 'react';
+import { AppShell } from '@/components/layout/app-shell';
+import { PageHeader } from '@/components/layout/page-header';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { TicketStub } from '@/components/ui/ticket-stub';
+import { LoadingState, EmptyState, AuthPromptCard } from '@/components/ui/state-views';
+import { useToast } from '@/components/ui/toast';
 import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
-import { QRCodeSVG } from 'qrcode.react';
-import Link from 'next/link';
-import { MapPin, Calendar, Clock, Plus, ShieldCheck, Wrench, X, QrCode } from 'lucide-react';
+import { MapPin, Calendar, Clock, Plus, ShieldCheck, QrCode, X } from 'lucide-react';
 
 interface Booking {
   id: string;
@@ -22,20 +32,30 @@ interface Booking {
   business?: { name: string };
 }
 
+function getDefaultBookingInput(): string {
+  const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  tomorrow.setHours(10, 0, 0, 0);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth() + 1)}-${pad(tomorrow.getDate())}T10:00`;
+}
+
 export default function BookingsPage() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
+  const { toast } = useToast();
+
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [businesses, setBusinesses] = useState<{ id: string; name: string }[]>([]);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [serviceName, setServiceName] = useState('Thesis Printing & Hardcover Binding');
-  const [bookingDate, setBookingDate] = useState('2026-11-20T14:00:00.000Z');
+  const [bookingInput, setBookingInput] = useState<string>(getDefaultBookingInput);
   const [activePassBooking, setActivePassBooking] = useState<Booking | null>(null);
+  const [cancelBookingId, setCancelBookingId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     try {
       setIsLoading(true);
       const [bookingsData, bizData] = await Promise.all([
@@ -44,15 +64,15 @@ export default function BookingsPage() {
       ]);
       setBookings(bookingsData);
       setBusinesses(bizData);
-      if (bizData.length > 0 && !selectedBusinessId) {
-        setSelectedBusinessId(bizData[0].id);
+      if (bizData.length > 0) {
+        setSelectedBusinessId((prev) => prev || bizData[0].id);
       }
     } catch (err) {
       console.error('Failed to load appointments:', err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -60,13 +80,16 @@ export default function BookingsPage() {
     } else {
       setIsLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, fetchBookings]);
 
   const handleCreateBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
-      alert('Please sign in to schedule an appointment.');
+      toast({
+        title: 'Sign in required',
+        description: 'Please sign in to schedule a campus appointment.',
+        variant: 'warning',
+      });
       return;
     }
 
@@ -84,315 +107,293 @@ export default function BookingsPage() {
         body: JSON.stringify({
           businessId: targetBizId,
           serviceName,
-          startsAt: bookingDate,
+          startsAt: new Date(bookingInput).toISOString(),
         }),
       });
-
       setShowModal(false);
+      toast({
+        title: 'Appointment scheduled',
+        description: `${serviceName} slot reserved.`,
+        variant: 'success',
+      });
       await fetchBookings();
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to request booking');
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Failed to request booking');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleCancelBooking = async (bookingId: string) => {
-    if (!confirm('Are you sure you want to cancel this appointment?')) return;
+  const handleConfirmCancelBooking = async () => {
+    if (!cancelBookingId) return;
     try {
-      await apiClient(`/bookings/${bookingId}/cancel`, { method: 'PATCH' });
+      setIsSubmitting(true);
+      await apiClient(`/bookings/${cancelBookingId}/cancel`, { method: 'PATCH' });
+      setCancelBookingId(null);
+      toast({ title: 'Appointment cancelled', variant: 'success' });
       await fetchBookings();
-    } catch (err: any) {
-      alert(err.message || 'Failed to cancel appointment');
+    } catch (err: unknown) {
+      toast({
+        title: 'Cancellation failed',
+        description: err instanceof Error ? err.message : 'Failed to cancel appointment',
+        variant: 'error',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-slate-50">
-      <Navbar />
-
-      <main className="max-w-5xl mx-auto px-4 py-8 flex-1 w-full">
-        {/* Editorial Header */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-white mb-8 shadow-sm">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-              <div className="flex items-center gap-2 mb-2 text-indigo-400 text-xs font-semibold uppercase tracking-wider">
-                <Wrench className="w-4 h-4" />
-                <span>Service 09 • Appointments & Campus Services</span>
-              </div>
-              <h1 className="text-3xl font-black tracking-tight text-white">
-                Campus Service Appointments
-              </h1>
-              <p className="mt-2 text-slate-300 text-sm leading-relaxed max-w-2xl">
-                Reserve timeslots for thesis printing, hardcover binding, dorm laundry, electronics repair, and document lamination with verified campus merchants.
-              </p>
-            </div>
-
-            <Button
-              onClick={() => setShowModal(true)}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white shrink-0 self-start md:self-auto"
-            >
-              <Plus className="w-4 h-4 mr-1.5" /> Book Appointment
-            </Button>
-          </div>
-        </div>
-
-        {/* Modal Dialog */}
-        {showModal && (
-          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <Card className="max-w-lg w-full shadow-2xl bg-white border-slate-200">
-              <CardHeader className="pb-4 border-b border-slate-100 flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg">Request Service Appointment</CardTitle>
-                  <CardDescription className="text-xs">
-                    Choose a provider and select your preferred timeslot
-                  </CardDescription>
-                </div>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="text-slate-400 hover:text-slate-600"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </CardHeader>
-
-              <form onSubmit={handleCreateBooking}>
-                <CardContent className="pt-5 space-y-4">
-                  {errorMsg && (
-                    <div className="p-3 bg-rose-50 text-rose-700 border border-rose-200 rounded-lg text-xs font-semibold">
-                      {errorMsg}
-                    </div>
-                  )}
-
-                  {businesses.length > 0 && (
-                    <div>
-                      <Label className="text-xs">Select Campus Provider</Label>
-                      <select
-                        value={selectedBusinessId}
-                        onChange={(e) => setSelectedBusinessId(e.target.value)}
-                        className="w-full mt-1.5 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-medium"
-                      >
-                        {businesses.map((b) => (
-                          <option key={b.id} value={b.id}>
-                            {b.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
-                  <div>
-                    <Label className="text-xs">Service Type</Label>
-                    <select
-                      value={serviceName}
-                      onChange={(e) => setServiceName(e.target.value)}
-                      className="w-full mt-1.5 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-medium"
-                    >
-                      <option value="Thesis Printing & Hardcover Binding">Thesis Printing & Hardcover Binding</option>
-                      <option value="Laptop Diagnostic & Software Repair">Laptop Diagnostic & Software Repair</option>
-                      <option value="Dorm Laundry & Ironing Service">Dorm Laundry & Ironing Service</option>
-                      <option value="ID Card & Document Lamination">ID Card & Document Lamination</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <Label className="text-xs">Appointment Date & Time</Label>
-                    <Input
-                      type="datetime-local"
-                      required
-                      defaultValue="2026-11-20T14:00"
-                      onChange={(e) => setBookingDate(new Date(e.target.value).toISOString())}
-                      className="mt-1.5"
-                    />
-                  </div>
-
-                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-600 flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>Free reservation. Settlement occurs upon service delivery at the campus shop.</span>
-                  </div>
-                </CardContent>
-
-                <CardFooter className="pt-4 border-t border-slate-100 flex gap-2 justify-end">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowModal(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? 'Requesting...' : 'Confirm Appointment'}
-                  </Button>
-                </CardFooter>
-              </form>
-            </Card>
-          </div>
-        )}
-
-        {/* Content Section */}
-        {!user ? (
-          <Card className="text-center py-16">
-            <CardContent>
-              <Wrench className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-700 font-bold mb-1">Sign in to view your appointments</p>
-              <p className="text-xs text-slate-500 mb-4">Keep track of your scheduled print jobs, repairs, and bookings.</p>
-              <Link href="/login">
-                <Button>Sign In</Button>
-              </Link>
-            </CardContent>
-          </Card>
-        ) : isLoading && bookings.length === 0 ? (
-          <div className="text-center py-16 text-slate-500 font-medium">Checking scheduled appointments...</div>
-        ) : bookings.length === 0 ? (
-          <Card className="text-center py-16 text-slate-500">
-            <CardContent>
-              <Calendar className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-              <p className="font-bold text-slate-800">No scheduled appointments</p>
-              <p className="text-xs text-slate-500 mt-1 mb-4">
-                Schedule your thesis binding, electronics repair, or campus laundry ahead of time to skip the line.
-              </p>
+    <AppShell maxWidth="5xl">
+      <div className="space-y-6">
+        <PageHeader
+          title="Campus Service Appointments"
+          description="Reserve timeslots for thesis printing, hardcover binding, dorm laundry, laptop diagnostics, and lamination."
+          action={
+            user ? (
               <Button onClick={() => setShowModal(true)}>
-                <Plus className="w-4 h-4 mr-1.5" /> Book Your First Appointment
+                <Plus className="w-4 h-4 mr-1.5" /> Book Appointment
               </Button>
-            </CardContent>
-          </Card>
+            ) : undefined
+          }
+        />
+
+        {authLoading || (isLoading && bookings.length === 0) ? (
+          <LoadingState label="Checking scheduled appointments..." count={2} />
+        ) : !user ? (
+          <AuthPromptCard
+            title="Sign in to manage appointments"
+            description="Reserve campus printing, repair, and laundry slots and keep your counter QR passes organized."
+            returnTo="/bookings"
+          />
+        ) : bookings.length === 0 ? (
+          <EmptyState
+            icon={<Calendar className="w-6 h-6" />}
+            title="No scheduled appointments"
+            description="Schedule thesis binding, electronics repair, or campus laundry ahead of time to skip the queue."
+            actionLabel="Book First Appointment"
+            onAction={() => setShowModal(true)}
+          />
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center justify-between text-xs text-slate-500 font-semibold px-1">
-              <span>{bookings.length} Appointment{bookings.length > 1 ? 's' : ''} on Record</span>
+            <div className="text-xs font-semibold text-muted-foreground">
+              {bookings.length} {bookings.length === 1 ? 'Appointment' : 'Appointments'} on Record
             </div>
 
             {bookings.map((b) => (
-              <Card key={b.id} className="hover:border-slate-300 transition shadow-sm">
-                <CardContent className="p-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2.5 mb-2">
-                        <Badge
-                          variant={
-                            b.status === 'confirmed'
-                              ? 'success'
-                              : b.status === 'completed'
-                              ? 'secondary'
-                              : 'warning'
-                          }
-                        >
-                          {b.status.toUpperCase()}
-                        </Badge>
-                        <span className="text-xs text-slate-500 font-medium">
-                          Ref: #{b.id.slice(0, 8)}
-                        </span>
-                      </div>
-                      <h3 className="font-bold text-slate-900 text-lg">{b.serviceName}</h3>
-                      <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 mt-2">
-                        <span className="flex items-center gap-1.5">
-                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                          {new Date(b.startsAt).toLocaleDateString('en-US', {
-                            weekday: 'short',
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5 text-slate-400" />
-                          {new Date(b.startsAt).toLocaleTimeString('en-US', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                          {b.business?.name || 'Haramaya Campus Hub'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex sm:flex-col items-center sm:items-end justify-between gap-3 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100">
-                      <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
-                        Guaranteed Slot
+              <Card key={b.id}>
+                <CardContent className="p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-2 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge
+                        variant={
+                          b.status === 'confirmed'
+                            ? 'success'
+                            : b.status === 'cancelled'
+                            ? 'danger'
+                            : b.status === 'completed'
+                            ? 'default'
+                            : 'warning'
+                        }
+                      >
+                        {b.status.toUpperCase()}
+                      </Badge>
+                      <span className="font-mono text-xs text-muted-foreground">
+                        #{b.id.slice(0, 8).toUpperCase()}
                       </span>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setActivePassBooking(b)}
-                          className="h-8 text-xs font-bold border-indigo-200 text-indigo-700 hover:bg-indigo-50 flex items-center gap-1.5"
-                        >
-                          <QrCode className="w-3.5 h-3.5" /> Counter QR Pass
-                        </Button>
-                        {b.status !== 'cancelled' && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleCancelBooking(b.id)}
-                            className="h-8 text-xs text-rose-600 hover:bg-rose-50 hover:text-rose-700 px-2"
-                            title="Cancel Appointment"
-                          >
-                            <X className="w-3.5 h-3.5 mr-1" /> Cancel
-                          </Button>
-                        )}
-                      </div>
                     </div>
+                    <h2 className="font-display font-bold text-foreground text-base sm:text-lg">
+                      {b.serviceName}
+                    </h2>
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {new Date(b.startsAt).toLocaleDateString('en-US', {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </span>
+                      <span className="flex items-center gap-1.5 font-mono">
+                        <Clock className="w-3.5 h-3.5" />
+                        {new Date(b.startsAt).toLocaleTimeString('en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5" />
+                        {b.business?.name || 'Haramaya Campus Hub'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <Button size="sm" variant="outline" onClick={() => setActivePassBooking(b)}>
+                      <QrCode className="w-3.5 h-3.5 mr-1.5 text-primary" /> Counter QR Pass
+                    </Button>
+                    {b.status !== 'cancelled' && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setCancelBookingId(b.id)}
+                        className="text-destructive hover:bg-rose-50"
+                      >
+                        <X className="w-3.5 h-3.5 mr-1" /> Cancel
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
         )}
+      </div>
 
-        {/* Counter Pass QR Modal */}
-        {activePassBooking && (
-          <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-            <Card className="w-full max-w-sm p-6 bg-white border-slate-200 shadow-2xl relative text-center space-y-4">
-              <button
-                onClick={() => setActivePassBooking(null)}
-                className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 font-bold"
-              >
-                <X className="w-4 h-4" />
-              </button>
+      {/* Create Booking Dialog */}
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Request Service Appointment</DialogTitle>
+            <DialogDescription>
+              Choose a verified campus provider and preferred timeslot.
+            </DialogDescription>
+          </DialogHeader>
 
-              <div>
-                <Badge variant="success" className="text-[10px] uppercase font-bold">
-                  Verified Appointment
-                </Badge>
-                <h3 className="text-base font-bold text-slate-900 mt-2">
-                  {activePassBooking.serviceName}
-                </h3>
-                <p className="text-xs text-slate-500">
-                  {activePassBooking.business?.name || 'Haramaya Campus Partner'}
-                </p>
+          <form onSubmit={handleCreateBooking} className="space-y-4">
+            {errorMsg && (
+              <div className="p-3 bg-rose-50 text-rose-800 border border-rose-200 rounded-lg text-xs font-semibold">
+                {errorMsg}
               </div>
+            )}
 
-              <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
-                <div className="w-36 h-36 mx-auto bg-white border border-slate-200 rounded-lg p-2.5 flex items-center justify-center shadow-xs">
-                  <QRCodeSVG
-                    value={`CAMPUSFLOW:APPT:${activePassBooking.id}:${activePassBooking.serviceName}`}
-                    size={120}
-                    level="M"
-                    includeMargin={false}
-                  />
-                </div>
-                <div className="font-mono text-xs font-bold text-indigo-700 bg-white py-1 rounded border border-slate-200">
-                  REF: #{activePassBooking.id.slice(0, 8).toUpperCase()}
-                </div>
+            {businesses.length > 0 && (
+              <div className="space-y-1.5">
+                <Label htmlFor="booking-provider" className="text-xs font-semibold">
+                  Campus Provider
+                </Label>
+                <select
+                  id="booking-provider"
+                  value={selectedBusinessId}
+                  onChange={(e) => setSelectedBusinessId(e.target.value)}
+                  className="w-full h-11 px-3 rounded-lg border border-input bg-card text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {businesses.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
               </div>
+            )}
 
-              <p className="text-[11px] text-slate-500">
-                Present this dynamic QR code at the counter for instant booking validation.
-              </p>
-
-              <Button
-                onClick={() => setActivePassBooking(null)}
-                className="w-full h-9 font-bold text-xs"
+            <div className="space-y-1.5">
+              <Label htmlFor="booking-service" className="text-xs font-semibold">
+                Service Type
+              </Label>
+              <select
+                id="booking-service"
+                value={serviceName}
+                onChange={(e) => setServiceName(e.target.value)}
+                className="w-full h-11 px-3 rounded-lg border border-input bg-card text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                Done
+                <option value="Thesis Printing & Hardcover Binding">Thesis Printing &amp; Hardcover Binding</option>
+                <option value="Laptop Diagnostic & Software Repair">Laptop Diagnostic &amp; Software Repair</option>
+                <option value="Dorm Laundry & Ironing Service">Dorm Laundry &amp; Ironing Service</option>
+                <option value="ID Card & Document Lamination">ID Card &amp; Document Lamination</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="booking-datetime" className="text-xs font-semibold">
+                Appointment Date &amp; Time
+              </Label>
+              <Input
+                id="booking-datetime"
+                type="datetime-local"
+                required
+                value={bookingInput}
+                onChange={(e) => setBookingInput(e.target.value)}
+              />
+            </div>
+
+            <div className="rounded-lg border border-border bg-muted/50 p-3 text-xs text-muted-foreground flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
+              <span>Free reservation. Payment settles at the campus shop counter upon completion.</span>
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowModal(false)}>
+                Cancel
               </Button>
-            </Card>
-          </div>
-        )}
-      </main>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Requesting...' : 'Confirm Appointment'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-      <Footer />
-    </div>
+      {/* Appointment QR Pass Dialog */}
+      <Dialog
+        open={Boolean(activePassBooking)}
+        onOpenChange={(open) => {
+          if (!open) setActivePassBooking(null);
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Appointment Counter Pass</DialogTitle>
+            <DialogDescription>Present this QR stub when checking in at the shop.</DialogDescription>
+          </DialogHeader>
+
+          {activePassBooking && (
+            <TicketStub
+              accent="ink"
+              title={activePassBooking.serviceName}
+              subtitle={activePassBooking.business?.name || 'Haramaya Campus Partner'}
+              badge={<Badge variant="success">{activePassBooking.status.toUpperCase()}</Badge>}
+              code={`APPT-${activePassBooking.id.slice(0, 8).toUpperCase()}`}
+              qrValue={`CAMPUSFLOW:APPT:${activePassBooking.id}:${activePassBooking.serviceName}`}
+              meta={[
+                {
+                  label: 'Date',
+                  value: new Date(activePassBooking.startsAt).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                  }),
+                },
+                {
+                  label: 'Time',
+                  value: new Date(activePassBooking.startsAt).toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  }),
+                },
+              ]}
+            />
+          )}
+
+          <DialogFooter>
+            <Button type="button" onClick={() => setActivePassBooking(null)} className="w-full">
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={Boolean(cancelBookingId)}
+        onOpenChange={(open) => {
+          if (!open) setCancelBookingId(null);
+        }}
+        title="Cancel service appointment?"
+        description="This releases your reserved slot at the campus shop."
+        confirmLabel="Cancel Appointment"
+        variant="destructive"
+        isLoading={isSubmitting}
+        onConfirm={handleConfirmCancelBooking}
+      />
+    </AppShell>
   );
 }

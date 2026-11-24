@@ -2,17 +2,19 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Navbar } from '@/components/layout/navbar';
-import { Footer } from '@/components/layout/footer';
+import Link from 'next/link';
+import { AppShell } from '@/components/layout/app-shell';
+import { PageHeader } from '@/components/layout/page-header';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { LoadingState, EmptyState } from '@/components/ui/state-views';
+import { useToast } from '@/components/ui/toast';
 import { formatETB } from '@/lib/utils';
 import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import { useCart } from '@/lib/cart-context';
-import Link from 'next/link';
-import { ShoppingCart, CheckCircle2, ChevronLeft, Plus, Minus, Store } from 'lucide-react';
+import { ShoppingCart, CheckCircle2, ChevronLeft, Plus, Minus, Store, AlertCircle } from 'lucide-react';
 
 interface Product {
   id: string;
@@ -35,11 +37,20 @@ export default function ShopDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
-  const { addItem, updateQuantity: updateGlobalQuantity, clearCart } = useCart();
+  const { toast } = useToast();
+  const {
+    items: cartItems,
+    businessId: cartBusinessId,
+    addItem,
+    updateQuantity,
+    clearCart,
+    totalMinor: cartTotalMinor,
+    itemCount: cartItemCount,
+  } = useCart();
+
   const businessId = params.id as string;
 
   const [business, setBusiness] = useState<Business | null>(null);
-  const [cart, setCart] = useState<{ [productId: string]: number }>({});
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [orderError, setOrderError] = useState<string | null>(null);
@@ -61,54 +72,49 @@ export default function ShopDetailPage() {
     }
   }, [businessId]);
 
-  const updateQuantity = (productId: string, delta: number) => {
-    setCart((prev) => {
-      const current = prev[productId] || 0;
-      const next = current + delta;
-      if (next <= 0) {
-        const copy = { ...prev };
-        delete copy[productId];
-        return copy;
-      }
-      return { ...prev, [productId]: next };
-    });
+  const isThisShopInCart = Boolean(business && cartBusinessId === business.id);
+  const shopCartItems = isThisShopInCart ? cartItems : [];
+  const shopItemCount = shopCartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const shopTotalMinor = isThisShopInCart ? cartTotalMinor : 0;
+
+  const getProductQty = (productId: string) => {
+    if (!isThisShopInCart) return 0;
+    return cartItems.find((i) => i.id === productId)?.quantity || 0;
   };
 
   const handleAddItem = (product: Product) => {
-    updateQuantity(product.id, 1);
-    if (business) {
-      addItem(
-        {
-          id: product.id,
-          name: product.name,
-          priceMinor: product.priceMinor,
-          businessId: business.id,
-          businessName: business.name,
-          campusId: business.campusId,
-        },
-        1,
-      );
+    if (!business) return;
+    const added = addItem(
+      {
+        id: product.id,
+        name: product.name,
+        priceMinor: product.priceMinor,
+        businessId: business.id,
+        businessName: business.name,
+        campusId: business.campusId,
+      },
+      1,
+    );
+    if (added) {
+      toast({
+        title: `Added ${product.name}`,
+        description: `1x added to your ${business.name} pickup order.`,
+        variant: 'success',
+        durationMs: 2200,
+      });
     }
   };
 
-  const handleRemoveItem = (product: Product) => {
-    updateQuantity(product.id, -1);
-    updateGlobalQuantity(product.id, -1);
-  };
-
-  const totalMinor = Object.entries(cart).reduce((sum, [productId, qty]) => {
-    const p = business?.products.find((prod) => prod.id === productId);
-    return sum + (p ? Number(p.priceMinor) * qty : 0);
-  }, 0);
-
-  const cartCount = Object.values(cart).reduce((sum, q) => sum + q, 0);
-
   const handlePlaceOrder = async () => {
-    if (!business || cartCount === 0) return;
+    if (!business || shopItemCount === 0) return;
 
     if (!user) {
-      alert('Please sign in or create an account to place an order.');
-      router.push('/login');
+      toast({
+        title: 'Sign in required',
+        description: 'Please sign in to submit your pickup order.',
+        variant: 'warning',
+      });
+      router.push(`/login?next=${encodeURIComponent(`/shop/${business.id}`)}`);
       return;
     }
 
@@ -116,170 +122,233 @@ export default function ShopDetailPage() {
       setIsSubmitting(true);
       setOrderError(null);
 
-      const items = Object.entries(cart).map(([productId, quantity]) => ({
-        productId,
-        quantity,
-      }));
-
       await apiClient('/orders', {
         method: 'POST',
         body: JSON.stringify({
           campusId: business.campusId,
           businessId: business.id,
-          items,
+          items: shopCartItems.map((i) => ({
+            productId: i.id,
+            quantity: i.quantity,
+          })),
         }),
       });
 
       clearCart();
+      toast({
+        title: 'Order placed',
+        description: `Sent to ${business.name}. Track preparation live on My Orders.`,
+        variant: 'success',
+      });
       router.push('/orders');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error creating order';
       setOrderError(msg);
+      toast({ title: 'Could not place order', description: msg, variant: 'error' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col justify-between bg-slate-50 text-slate-900 font-sans">
-        <Navbar />
-        <div className="text-center py-24 text-slate-500 font-medium">Loading shop menu...</div>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (!business) {
-    return (
-      <div className="min-h-screen flex flex-col justify-between bg-slate-50 text-slate-900 font-sans">
-        <Navbar />
-        <div className="text-center py-24">
-          <Store className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-          <h2 className="text-xl font-bold text-slate-900">Shop Not Found</h2>
-          <Button variant="outline" size="sm" asChild className="mt-3">
-            <Link href="/directory">Return to Directory</Link>
-          </Button>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-slate-50 text-slate-900 font-sans">
-      <Navbar />
+    <AppShell maxWidth="5xl">
+      {isLoading ? (
+        <LoadingState label="Loading shop menu..." count={4} />
+      ) : !business ? (
+        <EmptyState
+          icon={<Store className="h-6 w-6" />}
+          title="Shop not found"
+          description="This merchant may no longer be active or the link is invalid."
+          actionLabel="Return to Directory"
+          actionHref="/directory"
+        />
+      ) : (
+        <div className="space-y-6 pb-20 lg:pb-0">
+          <div>
+            <Link
+              href="/directory"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors mb-3"
+            >
+              <ChevronLeft className="w-4 h-4" /> Back to Directory
+            </Link>
 
-      <main className="max-w-4xl mx-auto px-4 py-8 flex-1 w-full pb-32 space-y-6">
-        <div>
-          <Link
-            href="/directory"
-            className="text-xs font-semibold text-slate-500 hover:text-slate-900 flex items-center gap-1 transition"
-          >
-            <ChevronLeft className="w-4 h-4" /> Back to Directory
-          </Link>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-3 gap-2">
-            <div>
-              <h1 className="text-3xl font-black tracking-tight text-slate-900">{business.name}</h1>
-              <p className="text-slate-600 text-sm mt-0.5">{business.description}</p>
+            <PageHeader
+              title={business.name}
+              description={business.description || 'Verified Haramaya campus partner serving student pickup orders.'}
+              badge={
+                <Badge variant="success">
+                  <CheckCircle2 className="w-3 h-3" /> VERIFIED PARTNER
+                </Badge>
+              }
+            />
+          </div>
+
+          {orderError && (
+            <div className="p-4 rounded-xl bg-rose-50 text-rose-800 border border-rose-200 text-xs font-semibold flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{orderError}</span>
             </div>
-            <Badge variant="success" className="text-[10px] font-bold flex items-center gap-1 self-start sm:self-center">
-              <CheckCircle2 className="w-3.5 h-3.5" /> VERIFIED PARTNER
-            </Badge>
-          </div>
-        </div>
+          )}
 
-        {orderError && (
-          <div className="p-4 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 text-xs font-semibold">
-            {orderError}
-          </div>
-        )}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Menu List */}
+            <div className="lg:col-span-8 space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="font-display text-lg font-bold text-foreground">Menu &amp; Items</h2>
+                <span className="text-xs text-muted-foreground">
+                  {business.products.length} {business.products.length === 1 ? 'item' : 'items'}
+                </span>
+              </div>
 
-        <div className="border-b border-slate-200 pb-2">
-          <h2 className="text-xl font-bold text-slate-900">Available Menu & Items</h2>
-          <p className="text-xs text-slate-500">Fast pickup ordering between lectures with audio alerts</p>
-        </div>
+              {business.products.length === 0 ? (
+                <EmptyState
+                  icon={<Store className="h-5 w-5" />}
+                  title="No menu items listed yet"
+                  description="This merchant hasn't published active menu items yet."
+                />
+              ) : (
+                business.products.map((product) => {
+                  const qty = getProductQty(product.id);
+                  const available = product.isAvailable !== false;
 
-        <div className="space-y-3">
-          {business.products.map((product) => {
-            const qty = cart[product.id] || 0;
+                  return (
+                    <Card
+                      key={product.id}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5"
+                    >
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-display font-bold text-foreground text-base">
+                            {product.name}
+                          </h3>
+                          {!available && <Badge variant="muted">Sold Out</Badge>}
+                        </div>
+                        {product.description && (
+                          <p className="text-xs text-muted-foreground leading-relaxed">{product.description}</p>
+                        )}
+                        <div className="font-mono font-bold text-primary text-sm pt-1 tabular-nums">
+                          {formatETB(product.priceMinor)}
+                        </div>
+                      </div>
 
-            return (
-              <Card
-                key={product.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 border-slate-200 hover:border-slate-300 transition"
-              >
-                <div className="space-y-1">
-                  <h3 className="font-bold text-slate-900 text-base">{product.name}</h3>
-                  {product.description && (
-                    <p className="text-xs text-slate-500 font-normal leading-relaxed">{product.description}</p>
-                  )}
-                  <span className="font-black text-primary text-base font-mono block mt-1">
-                    {formatETB(product.priceMinor)}
-                  </span>
+                      <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                        {qty > 0 && (
+                          <div className="flex items-center gap-1.5">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              aria-label={`Decrease quantity of ${product.name}`}
+                              onClick={() => updateQuantity(product.id, -1)}
+                            >
+                              <Minus className="w-4 h-4" />
+                            </Button>
+                            <span className="font-mono font-bold text-foreground w-7 text-center text-sm tabular-nums">
+                              {qty}
+                            </span>
+                          </div>
+                        )}
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={!available}
+                          onClick={() => handleAddItem(product)}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          {qty > 0 ? 'Add' : 'Add to Cart'}
+                        </Button>
+                      </div>
+                    </Card>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Desktop Order Summary Rail */}
+            <aside className="lg:col-span-4 lg:sticky lg:top-24">
+              <Card className="p-5 space-y-4">
+                <div className="flex items-center justify-between border-b border-border pb-3">
+                  <h3 className="font-display font-bold text-base text-foreground">Pickup Summary</h3>
+                  <Badge variant="default" className="font-mono">
+                    {shopItemCount} {shopItemCount === 1 ? 'item' : 'items'}
+                  </Badge>
                 </div>
 
-                <div className="flex items-center gap-2 self-end sm:self-center">
-                  {qty > 0 && (
-                    <div className="flex items-center gap-2 mr-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleRemoveItem(product)}
-                        className="h-8 w-8 p-0 rounded-lg"
-                      >
-                        <Minus className="w-3.5 h-3.5" />
-                      </Button>
-                      <span className="font-bold text-slate-900 w-6 text-center text-sm font-mono">
-                        {qty}
+                {shopItemCount === 0 ? (
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Add items from {business.name} to start a direct counter pickup order.
+                    {cartItemCount > 0 && !isThisShopInCart
+                      ? ' Adding an item here will prompt to switch your active cart.'
+                      : ''}
+                  </p>
+                ) : (
+                  <>
+                    <ul className="space-y-2 text-xs">
+                      {shopCartItems.map((item) => (
+                        <li key={item.id} className="flex items-center justify-between gap-2">
+                          <span className="text-foreground font-medium truncate">
+                            <span className="font-mono font-bold">{item.quantity}x</span> {item.name}
+                          </span>
+                          <span className="font-mono font-semibold text-foreground shrink-0 tabular-nums">
+                            {formatETB(Number(item.priceMinor) * item.quantity)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <div className="pt-3 border-t border-border flex items-baseline justify-between">
+                      <span className="text-xs font-semibold text-muted-foreground">Total</span>
+                      <span className="font-mono text-xl font-black text-foreground tabular-nums">
+                        {formatETB(shopTotalMinor)}
                       </span>
                     </div>
-                  )}
-                  <Button
-                    size="sm"
-                    onClick={() => handleAddItem(product)}
-                    className="h-8 px-3 font-bold text-xs flex items-center gap-1"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> {qty > 0 ? 'Add' : 'Add to Cart'}
+
+                    <div className="space-y-2">
+                      <Button
+                        type="button"
+                        disabled={isSubmitting}
+                        onClick={handlePlaceOrder}
+                        className="w-full font-bold"
+                      >
+                        {isSubmitting ? 'Placing Order...' : 'Confirm Pickup Order'}
+                      </Button>
+                      <Button asChild variant="outline" size="sm" className="w-full">
+                        <Link href="/cart">
+                          <ShoppingCart className="w-3.5 h-3.5 mr-1.5" /> Review Full Cart
+                        </Link>
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </Card>
+            </aside>
+          </div>
+
+          {/* Sticky Mobile Summary Bar */}
+          {shopItemCount > 0 && (
+            <div className="lg:hidden fixed bottom-16 inset-x-0 z-30 border-t border-border bg-card/95 backdrop-blur-sm p-3 shadow-drawer">
+              <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-[11px] font-semibold text-muted-foreground">
+                    {shopItemCount} {shopItemCount === 1 ? 'item' : 'items'}
+                  </div>
+                  <div className="font-mono text-base font-black text-foreground tabular-nums">
+                    {formatETB(shopTotalMinor)}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button asChild variant="outline" size="sm">
+                    <Link href="/cart">Cart</Link>
+                  </Button>
+                  <Button size="sm" disabled={isSubmitting} onClick={handlePlaceOrder}>
+                    {isSubmitting ? 'Placing...' : 'Order Now'}
                   </Button>
                 </div>
-              </Card>
-            );
-          })}
-        </div>
-      </main>
-
-      {/* Floating Checkout Drawer */}
-      {cartCount > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-slate-200 shadow-xl p-4 z-50">
-          <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
-            <div>
-              <div className="text-[11px] text-slate-500 uppercase font-bold tracking-wider">
-                {cartCount} {cartCount === 1 ? 'item' : 'items'} in pickup cart
               </div>
-              <div className="text-xl font-black text-slate-900 font-mono">{formatETB(totalMinor)}</div>
             </div>
-
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" asChild className="h-9 font-semibold text-xs border-slate-300">
-                <Link href="/cart" className="flex items-center gap-1.5">
-                  <ShoppingCart className="w-4 h-4 text-primary" /> Review Cart ({cartCount})
-                </Link>
-              </Button>
-              <Button
-                size="sm"
-                disabled={isSubmitting}
-                onClick={handlePlaceOrder}
-                className="h-9 font-bold text-xs px-4"
-              >
-                {isSubmitting ? 'Placing Order...' : 'Confirm Pickup Order →'}
-              </Button>
-            </div>
-          </div>
+          )}
         </div>
       )}
-
-      <Footer />
-    </div>
+    </AppShell>
   );
 }

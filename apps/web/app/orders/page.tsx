@@ -1,18 +1,28 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Navbar } from '@/components/layout/navbar';
-import { Footer } from '@/components/layout/footer';
-import { Card, CardTitle } from '@/components/ui/card';
+import React, { useCallback, useEffect, useState } from 'react';
+import { AppShell } from '@/components/layout/app-shell';
+import { PageHeader } from '@/components/layout/page-header';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { TicketStub } from '@/components/ui/ticket-stub';
+import { LoadingState, EmptyState, AuthPromptCard } from '@/components/ui/state-views';
 import { OrderStatusBadge } from '@/components/commerce/order-status-badge';
+import { useToast } from '@/components/ui/toast';
 import { formatETB } from '@/lib/utils';
 import { apiClient, API_BASE_URL } from '@/lib/api-client';
+import { getPaymentVerifyEndpoint } from '@/lib/payment-helpers';
 import { useAuth } from '@/lib/auth-context';
-import { QRCodeSVG } from 'qrcode.react';
-import Link from 'next/link';
-import { Smartphone, RotateCw, ShoppingBag, X, ExternalLink, QrCode } from 'lucide-react';
+import { Smartphone, RotateCw, ShoppingBag, ExternalLink, QrCode, Copy, Check } from 'lucide-react';
 
 interface OrderItem {
   id: string;
@@ -36,21 +46,34 @@ interface PaymentData {
   ussdDial: string;
   instructions: string;
   checkoutUrl?: string;
-  signature?: string;
+}
+
+const ORDER_STEPS = ['pending', 'preparing', 'ready', 'completed'] as const;
+
+function getStepIndex(status: string): number {
+  const s = status.toLowerCase();
+  if (s === 'accepted' || s === 'preparing') return 1;
+  if (s === 'ready') return 2;
+  if (s === 'completed') return 3;
+  return 0;
 }
 
 export default function StudentOrdersPage() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
+  const { toast } = useToast();
+
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  // Telebirr Pay Modal State
   const [payModalOrder, setPayModalOrder] = useState<Order | null>(null);
   const [payData, setPayData] = useState<PaymentData | null>(null);
   const [payLoading, setPayLoading] = useState(false);
   const [pickupModalOrder, setPickupModalOrder] = useState<Order | null>(null);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
     try {
       setIsLoading(true);
       const data = await apiClient<Order[]>('/orders/my-orders');
@@ -60,12 +83,16 @@ export default function StudentOrdersPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
+
     fetchOrders();
 
-    // Setup real-time Server-Sent Events (SSE) for instant live order updates
     let eventSource: EventSource | null = null;
     try {
       eventSource = new EventSource(`${API_BASE_URL}/orders/stream`);
@@ -80,19 +107,19 @@ export default function StudentOrdersPage() {
         }
       };
     } catch {
-      // Fallback polling
+      // Fallback polling handles updates cleanly
     }
 
-    const interval = setInterval(fetchOrders, 8000);
-
+    const interval = window.setInterval(fetchOrders, 8000);
     return () => {
-      clearInterval(interval);
+      window.clearInterval(interval);
       if (eventSource) eventSource.close();
     };
-  }, []);
+  }, [user, fetchOrders]);
 
   async function handleInitiatePayment(order: Order, provider: 'telebirr' | 'cbe_birr') {
     setPayModalOrder(order);
+    setPayData(null);
     setPayLoading(true);
     try {
       const res = await apiClient<PaymentData>('/payments/initialize', {
@@ -105,7 +132,8 @@ export default function StudentOrdersPage() {
       setPayData(res);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Payment initialization failed';
-      alert(msg);
+      setPayModalOrder(null);
+      toast({ title: 'Payment initialization failed', description: msg, variant: 'error' });
     } finally {
       setPayLoading(false);
     }
@@ -114,271 +142,280 @@ export default function StudentOrdersPage() {
   async function handleConfirmMockPayment(ref: string) {
     try {
       setPayLoading(true);
-      await apiClient('/payments/webhook/mock', {
+      await apiClient(getPaymentVerifyEndpoint(ref), {
         method: 'POST',
-        body: JSON.stringify({
-          providerReference: ref,
-          status: 'success',
-        }),
       });
 
       setPayModalOrder(null);
       setPayData(null);
+      toast({
+        title: 'Payment confirmed',
+        description: 'Your counter pickup QR pass is ready.',
+        variant: 'success',
+      });
       await fetchOrders();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to confirm payment';
-      alert(msg);
+      toast({ title: 'Verification failed', description: msg, variant: 'error' });
     } finally {
       setPayLoading(false);
     }
   }
 
+  const copyUssd = async (ussd: string) => {
+    try {
+      await navigator.clipboard.writeText(ussd);
+      toast({ title: 'USSD string copied', description: ussd, variant: 'success' });
+    } catch {
+      toast({ title: 'Copy unavailable', description: ussd, variant: 'warning' });
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-slate-50 text-slate-900 font-sans">
-      <Navbar />
+    <AppShell maxWidth="5xl">
+      <div className="space-y-6">
+        <PageHeader
+          title="Live Campus Orders"
+          description={
+            user
+              ? `Signed in as ${user.displayName}. Real-time kitchen progress and Telebirr/CBE Birr settlement.`
+              : 'Track kitchen preparation live and view counter pickup QR passes.'
+          }
+          action={
+            user ? (
+              <Button variant="outline" size="sm" onClick={fetchOrders}>
+                <RotateCw className="w-3.5 h-3.5 mr-1.5" /> Refresh Queue
+              </Button>
+            ) : undefined
+          }
+        />
 
-      <main className="max-w-4xl mx-auto px-4 py-8 flex-1 w-full space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200 pb-4">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-black tracking-tight text-slate-900">Live Campus Orders</h1>
-            <p className="text-sm text-slate-600">
-              {user ? `Logged in as ${user.displayName} &bull; ` : ''}Real-time kitchen order queue and Telebirr settlement.
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchOrders}
-            className="h-9 font-semibold text-xs border-slate-300 flex items-center gap-1.5 self-start sm:self-center"
-          >
-            <RotateCw className="w-3.5 h-3.5 text-slate-500" /> Refresh Queue
-          </Button>
-        </div>
-
-        {isLoading && orders.length === 0 ? (
-          <div className="text-center py-20 text-slate-500 text-sm font-medium">
-            Loading your campus orders...
-          </div>
+        {authLoading || (isLoading && orders.length === 0) ? (
+          <LoadingState label="Loading your campus orders..." count={2} />
+        ) : !user ? (
+          <AuthPromptCard
+            title="Sign in to view your orders"
+            description="Sign in with your student account to track cafeteria prep updates and access your pickup QR passes."
+            returnTo="/orders"
+          />
         ) : orders.length === 0 ? (
-          <Card className="text-center py-16 p-6 border-slate-200">
-            <ShoppingBag className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-            <p className="text-slate-600 font-semibold text-sm">You haven&apos;t placed any orders yet.</p>
-            <Link
-              href="/directory"
-              className="mt-3 inline-block text-xs font-bold text-primary hover:underline"
-            >
-              Explore campus cafeterias & order food &rarr;
-            </Link>
-          </Card>
+          <EmptyState
+            icon={<ShoppingBag className="w-6 h-6" />}
+            title="No campus orders yet"
+            description="Order a meal, coffee, or printing service from any verified campus shop to track it live here."
+            actionLabel="Explore Campus Directory"
+            actionHref="/directory"
+          />
         ) : (
           <div className="space-y-4">
             {orders.map((order) => {
               const isPaid = order.paymentStatus === 'paid';
+              const isTerminalFailure =
+                order.status.toLowerCase() === 'cancelled' || order.status.toLowerCase() === 'rejected';
+              const stepIdx = getStepIndex(order.status);
+
               return (
-                <Card
-                  key={order.id}
-                  className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 border-slate-200 hover:border-slate-300 transition"
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                      <span className="font-bold text-slate-900 text-base">
-                        {order.business?.name || 'Campus Cafe'}
-                      </span>
-                      <OrderStatusBadge status={order.status} />
-                      <Badge
-                        variant={isPaid ? 'success' : 'warning'}
-                        className="text-[10px] font-bold uppercase tracking-wider"
-                      >
-                        {isPaid ? '✓ PAID' : 'UNPAID'}
-                      </Badge>
+                <Card key={order.id} className="p-5 sm:p-6 space-y-4">
+                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <div className="space-y-2 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="font-display font-bold text-foreground text-base">
+                          {order.business?.name || 'Campus Cafe'}
+                        </h2>
+                        <OrderStatusBadge status={order.status} />
+                        <Badge variant={isPaid ? 'success' : 'warning'}>
+                          {isPaid ? 'PAID' : 'UNPAID'}
+                        </Badge>
+                      </div>
+
+                      <div className="text-xs text-muted-foreground space-y-0.5">
+                        {order.items.map((item) => (
+                          <div key={item.id}>
+                            <span className="font-mono font-bold text-foreground">{item.quantity}x</span>{' '}
+                            {item.productName}{' '}
+                            <span className="font-mono">({formatETB(item.unitPriceMinor)} each)</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="font-mono text-[11px] text-muted-foreground">
+                        #{order.id.slice(0, 8).toUpperCase()} &bull;{' '}
+                        {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} &bull;{' '}
+                        {new Date(order.createdAt).toLocaleDateString()}
+                      </div>
                     </div>
 
-                    <div className="text-xs text-slate-600 space-y-0.5">
-                      {order.items.map((i) => (
-                        <div key={i.id}>
-                          <span className="font-bold text-slate-800">{i.quantity}x</span> {i.productName} (
-                          {formatETB(i.unitPriceMinor)} each)
+                    <div className="flex flex-col sm:flex-row md:flex-col items-start sm:items-center md:items-end justify-between gap-3 pt-3 md:pt-0 border-t md:border-t-0 border-border shrink-0">
+                      <div className="text-left md:text-right">
+                        <div className="text-[11px] font-semibold text-muted-foreground">Total</div>
+                        <div className="font-mono text-lg font-black text-foreground tabular-nums">
+                          {formatETB(order.totalMinor)}
                         </div>
-                      ))}
-                    </div>
+                      </div>
 
-                    <div className="text-[11px] text-slate-400">
-                      Placed at: {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} &bull;{' '}
-                      {new Date(order.createdAt).toLocaleDateString()}
+                      {isPaid && (
+                        <Button size="sm" variant="outline" onClick={() => setPickupModalOrder(order)}>
+                          <QrCode className="w-3.5 h-3.5 mr-1.5 text-primary" /> Pickup QR Pass
+                        </Button>
+                      )}
+
+                      {!isPaid && !isTerminalFailure && (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => handleInitiatePayment(order, 'telebirr')}
+                          >
+                            <Smartphone className="w-3.5 h-3.5 mr-1.5" /> Pay Telebirr
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleInitiatePayment(order, 'cbe_birr')}
+                          >
+                            CBE Birr
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row md:flex-col items-start sm:items-center md:items-end justify-between gap-3 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100">
-                    <div className="text-left md:text-right">
-                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total</div>
-                      <div className="text-lg font-black text-slate-900 font-mono">
-                        {formatETB(order.totalMinor)}
-                      </div>
+                  {/* 4-Step Live Progress Strip */}
+                  {!isTerminalFailure && (
+                    <div className="pt-3 border-t border-border grid grid-cols-4 gap-2">
+                      {ORDER_STEPS.map((step, idx) => {
+                        const reached = idx <= stepIdx;
+                        return (
+                          <div key={step} className="space-y-1">
+                            <div
+                              className={`h-1.5 rounded-full transition-colors ${reached ? 'bg-primary' : 'bg-muted'
+                                }`}
+                            />
+                            <div
+                              className={`text-[11px] font-semibold capitalize flex items-center gap-1 ${reached ? 'text-foreground' : 'text-muted-foreground'
+                                }`}
+                            >
+                              {reached && <Check className="h-3 w-3 text-primary" />}
+                              <span>{step}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-
-                    {isPaid && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setPickupModalOrder(order)}
-                        className="h-8 text-xs font-bold border-emerald-300 text-emerald-800 bg-emerald-50 hover:bg-emerald-100 flex items-center gap-1.5"
-                      >
-                        <QrCode className="w-3.5 h-3.5 text-emerald-700" /> Counter Pickup QR
-                      </Button>
-                    )}
-
-                    {!isPaid && order.status !== 'cancelled' && order.status !== 'rejected' && (
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => handleInitiatePayment(order, 'telebirr')}
-                          className="h-8 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-1"
-                        >
-                          <Smartphone className="w-3.5 h-3.5" /> Pay Telebirr
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleInitiatePayment(order, 'cbe_birr')}
-                          className="h-8 text-xs font-bold border-purple-300 text-purple-900 bg-purple-50 hover:bg-purple-100"
-                        >
-                          CBE Birr
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </Card>
               );
             })}
           </div>
         )}
-      </main>
+      </div>
 
-      <Footer />
+      {/* Telebirr / CBE Birr Checkout Dialog */}
+      <Dialog
+        open={Boolean(payModalOrder)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPayModalOrder(null);
+            setPayData(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Instant USSD Settlement</DialogTitle>
+            <DialogDescription>
+              {payModalOrder
+                ? `Complete payment of ${formatETB(payModalOrder.totalMinor)} to ${payModalOrder.business?.name || 'merchant'}.`
+                : ''}
+            </DialogDescription>
+          </DialogHeader>
 
-      {/* Telebirr / CBE Payment Modal */}
-      {payModalOrder && payData && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <Card className="w-full max-w-sm p-6 bg-white border-slate-200 shadow-2xl relative space-y-4">
-            <button
-              onClick={() => {
-                setPayModalOrder(null);
-                setPayData(null);
-              }}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 font-bold"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <div className="text-center space-y-1">
-              <Badge variant="warning" className="text-[10px] uppercase font-bold">
-                Instant USSD Settlement
-              </Badge>
-              <CardTitle className="text-lg font-black text-slate-900">
-                {formatETB(payModalOrder.totalMinor)}
-              </CardTitle>
-              <div className="text-xs text-slate-500">
-                Ref: <code className="font-mono font-bold text-primary">{payData.providerReference}</code>
-              </div>
-            </div>
-
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-800 space-y-2">
-              <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                <Smartphone className="w-4 h-4 text-primary" /> Payment Instruction:
-              </div>
-              <div className="bg-white p-2.5 rounded-lg border border-slate-200 font-mono text-center font-black text-primary text-sm select-all">
-                {payData.ussdDial}
-              </div>
-              <p className="text-[11px] text-slate-600 leading-relaxed font-normal">
-                {payData.instructions}
-              </p>
-              {payData.checkoutUrl && (
-                <div className="pt-1">
-                  <a
-                    href={payData.checkoutUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition font-bold text-xs"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" /> Open Telebirr App / Web Pay
-                  </a>
+          {payLoading && !payData ? (
+            <LoadingState label="Generating payment instructions..." count={1} />
+          ) : payData ? (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-border bg-muted/50 p-4 space-y-2.5 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-muted-foreground">Reference</span>
+                  <code className="font-mono font-bold text-foreground">{payData.providerReference}</code>
                 </div>
-              )}
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                disabled={payLoading}
-                onClick={() => handleConfirmMockPayment(payData.providerReference)}
-                className="flex-1 h-9 font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
-              >
-                {payLoading ? 'Verifying...' : 'Simulate Verified Payment'}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setPayModalOrder(null);
-                  setPayData(null);
-                }}
-                className="h-9 text-xs font-semibold"
-              >
-                Close
-              </Button>
-            </div>
-          </Card>
-        </div>
-      )}
-      {/* Counter Pickup QR Modal */}
-      {pickupModalOrder && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <Card className="w-full max-w-sm p-6 bg-white border-slate-200 shadow-2xl relative text-center space-y-4">
-            <button
-              onClick={() => setPickupModalOrder(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 font-bold"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <div>
-              <Badge variant="success" className="text-[10px] uppercase font-bold">
-                ✓ Order Paid &bull; Ready for Counter Pickup
-              </Badge>
-              <h3 className="text-base font-bold text-slate-900 mt-2">
-                {pickupModalOrder.business?.name || 'Campus Cafeteria'}
-              </h3>
-              <p className="text-xs text-slate-500 font-mono">
-                Order #{pickupModalOrder.id.slice(0, 8).toUpperCase()}
-              </p>
-            </div>
-
-            <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
-              <div className="w-36 h-36 mx-auto bg-white border border-slate-200 rounded-lg p-2.5 flex items-center justify-center shadow-xs">
-                <QRCodeSVG
-                  value={`CAMPUSFLOW:PICKUP:${pickupModalOrder.id}:${pickupModalOrder.business?.id}`}
-                  size={120}
-                  level="M"
-                  includeMargin={false}
-                />
+                <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card p-2.5">
+                  <span className="font-mono font-black text-primary text-sm select-all">{payData.ussdDial}</span>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => copyUssd(payData.ussdDial)}>
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+                <p className="text-muted-foreground leading-relaxed">{payData.instructions}</p>
+                {payData.checkoutUrl && (
+                  <Button asChild variant="outline" size="sm" className="w-full">
+                    <a href={payData.checkoutUrl} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="w-3.5 h-3.5 mr-1.5" /> Open Payment Checkout
+                    </a>
+                  </Button>
+                )}
               </div>
-              <div className="text-xs font-bold text-slate-700">
-                {pickupModalOrder.items.map((i) => `${i.quantity}x ${i.productName}`).join(', ')}
-              </div>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setPayModalOrder(null);
+                    setPayData(null);
+                  }}
+                >
+                  Close
+                </Button>
+                <Button
+                  type="button"
+                  disabled={payLoading}
+                  onClick={() => handleConfirmMockPayment(payData.providerReference)}
+                >
+                  {payLoading ? 'Verifying...' : 'Simulate Verified Payment'}
+                </Button>
+              </DialogFooter>
             </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
-            <p className="text-[11px] text-slate-500">
-              Present this pass at the cafeteria counter to collect your order.
-            </p>
+      {/* Pickup QR Pass Dialog */}
+      <Dialog
+        open={Boolean(pickupModalOrder)}
+        onOpenChange={(open) => {
+          if (!open) setPickupModalOrder(null);
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Counter Pickup Pass</DialogTitle>
+            <DialogDescription>
+              Show this QR stub at the merchant counter to collect your order.
+            </DialogDescription>
+          </DialogHeader>
 
-            <Button
-              onClick={() => setPickupModalOrder(null)}
-              className="w-full h-9 font-bold text-xs"
-            >
+          {pickupModalOrder && (
+            <TicketStub
+              accent="primary"
+              title={pickupModalOrder.business?.name || 'Campus Cafeteria'}
+              subtitle={pickupModalOrder.items.map((i) => `${i.quantity}x ${i.productName}`).join(', ')}
+              badge={<Badge variant="success">PAID</Badge>}
+              code={`ORD-${pickupModalOrder.id.slice(0, 8).toUpperCase()}`}
+              qrValue={`CAMPUSFLOW:PICKUP:${pickupModalOrder.id}:${pickupModalOrder.business?.id}`}
+              meta={[
+                { label: 'Status', value: pickupModalOrder.status.toUpperCase() },
+                { label: 'Total', value: formatETB(pickupModalOrder.totalMinor) },
+              ]}
+            />
+          )}
+
+          <DialogFooter>
+            <Button type="button" onClick={() => setPickupModalOrder(null)} className="w-full">
               Done
             </Button>
-          </Card>
-        </div>
-      )}
-    </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </AppShell>
   );
 }

@@ -1,142 +1,90 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
-import { ShieldCheck, Bus, Utensils, Home, Calendar, BookOpen, Wrench, Store, ShieldAlert, Tag } from 'lucide-react';
+import { ShieldCheck, Store } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
+import { getRolePortalLinks } from '@/lib/navigation';
 
 export function Footer() {
+  const { user } = useAuth();
+  const portalLinks = getRolePortalLinks(user?.roles);
+
   return (
-    <footer className="border-t border-slate-200 bg-white text-xs text-slate-500 mt-auto">
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
-          {/* Brand Column */}
-          <div className="md:col-span-1 space-y-3">
-            <Link href="/" className="font-black text-lg tracking-tight text-slate-900 flex items-center gap-1.5">
-              <span className="w-6 h-6 rounded-md bg-indigo-600 flex items-center justify-center text-white text-xs font-black">
-                C
+    <footer className="border-t border-border bg-card text-xs text-muted-foreground mt-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-8">
+          {/* Brand & Compliance */}
+          <div className="space-y-3">
+            <Link href="/" className="font-display font-black text-base tracking-tight text-foreground inline-flex items-center gap-2">
+              <span className="w-6 h-6 rounded-md bg-primary flex items-center justify-center text-primary-foreground text-[11px] font-black">
+                CF
               </span>
               <span>
-                Campus<span className="text-indigo-600">Flow</span>
+                Campus<span className="text-primary">Flow</span>
               </span>
             </Link>
-            <p className="text-slate-600 leading-relaxed text-xs">
-              Unified digital campus super-app piloted at Haramaya University Main Campus (Bate).
+            <p className="leading-relaxed max-w-xs">
+              Digital campus super-app piloted at Haramaya University Main Campus (Bate), serving Bate, Harar, and Dire Dawa.
             </p>
-            <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-100 font-semibold w-fit">
+            <div className="inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-800">
               <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
               <span>Proclamation No. 1321/2024 Compliant</span>
             </div>
           </div>
 
-          {/* Student Services */}
-          <div className="space-y-2.5">
-            <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px]">Campus Services</h4>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/directory" className="hover:text-indigo-600 transition flex items-center gap-1.5">
-                  <Utensils className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Food & Cafeterias</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/transport" className="hover:text-indigo-600 transition flex items-center gap-1.5">
-                  <Bus className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Bus Shuttles & Coach</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/housing" className="hover:text-indigo-600 transition flex items-center gap-1.5">
-                  <Home className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Dorm Housing & Rooms</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/events" className="hover:text-indigo-600 transition flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Campus Events & RSVP</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/learning" className="hover:text-indigo-600 transition flex items-center gap-1.5">
-                  <BookOpen className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Past Papers & Notes</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/bookings" className="hover:text-indigo-600 transition flex items-center gap-1.5">
-                  <Wrench className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Print & Repair Appointments</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/marketplace" className="hover:text-indigo-600 transition flex items-center gap-1.5">
-                  <Tag className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Student Marketplace</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/maintenance" className="hover:text-indigo-600 transition flex items-center gap-1.5">
-                  <Wrench className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Dorm Maintenance Orders</span>
-                </Link>
-              </li>
-            </ul>
+          {/* Student & Campus Services */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <h4 className="font-bold text-foreground">Campus Services</h4>
+              <ul className="space-y-1.5">
+                <li><Link href="/directory" className="hover:text-primary transition-colors">Food &amp; Cafeterias</Link></li>
+                <li><Link href="/transport" className="hover:text-primary transition-colors">Bus Shuttles &amp; Coach</Link></li>
+                <li><Link href="/housing" className="hover:text-primary transition-colors">Student Housing</Link></li>
+                <li><Link href="/learning" className="hover:text-primary transition-colors">Past Papers Vault</Link></li>
+              </ul>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-bold text-foreground">Campus Life</h4>
+              <ul className="space-y-1.5">
+                <li><Link href="/events" className="hover:text-primary transition-colors">Campus Events</Link></li>
+                <li><Link href="/bookings" className="hover:text-primary transition-colors">Service Bookings</Link></li>
+                <li><Link href="/marketplace" className="hover:text-primary transition-colors">Student Marketplace</Link></li>
+                <li><Link href="/maintenance" className="hover:text-primary transition-colors">Dorm Maintenance</Link></li>
+              </ul>
+            </div>
           </div>
 
-          {/* Merchant & Operator Portals */}
+          {/* Partners & Financial Standard */}
           <div className="space-y-2.5">
-            <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px]">Merchants & Partners</h4>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/merchant/dashboard" className="hover:text-indigo-600 transition flex items-center gap-1.5">
-                  <Store className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Merchant Dashboard</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/merchant/orders" className="hover:text-indigo-600 transition flex items-center gap-1.5">
-                  <span>Live Kitchen Order Queue</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/merchant/menu" className="hover:text-indigo-600 transition flex items-center gap-1.5">
-                  <span>Menu & Catalog Toggles</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/merchant/register" className="hover:text-indigo-600 transition flex items-center gap-1.5">
-                  <span>Register Campus Shop</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/verifications" className="hover:text-rose-600 transition flex items-center gap-1.5">
-                  <ShieldAlert className="w-3.5 h-3.5 text-rose-500" />
-                  <span>Campus Moderator Panel</span>
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Financial & Trust Pillars */}
-          <div className="space-y-2.5">
-            <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px]">Financial Standards</h4>
-            <p className="text-slate-600 text-xs leading-relaxed">
-              All transactions are settled directly via Telebirr or CBE Birr with zero floating-point rounding errors (stored strictly in integer minor units).
+            <h4 className="font-bold text-foreground">Merchants &amp; Settlement</h4>
+            <p className="leading-relaxed">
+              Settled via Telebirr and CBE Birr in integer ETB cents with zero floating-point rounding drift.
             </p>
-            <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100 text-[11px] text-slate-600 space-y-1">
-              <div><strong>Pilot Campus:</strong> Haramaya University</div>
-              <div><strong>Locations:</strong> Bate Town, Harar, Dire Dawa</div>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <Link
+                href="/merchant/register"
+                className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted px-2.5 py-1.5 font-semibold text-foreground hover:bg-accent transition-colors"
+              >
+                <Store className="w-3.5 h-3.5 text-primary" />
+                <span>Register Campus Shop</span>
+              </Link>
+              {portalLinks.map((portal) => (
+                <Link
+                  key={portal.href}
+                  href={portal.href}
+                  className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2.5 py-1.5 font-semibold text-foreground hover:bg-accent transition-colors"
+                >
+                  {portal.label}
+                </Link>
+              ))}
             </div>
           </div>
         </div>
 
-        <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-slate-400 text-[11px]">
-          <p>© {new Date().getFullYear()} CampusFlow. Built for Ethiopian Higher Education.</p>
-          <div className="flex gap-4">
-            <span>Data Privacy Policy</span>
-            <span>·</span>
-            <span>Terms of Service</span>
-            <span>·</span>
-            <span>Haramaya IT Administration</span>
-          </div>
+        <div className="pt-5 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px]">
+          <p>&copy; {new Date().getFullYear()} CampusFlow &mdash; Haramaya University Pilot.</p>
+          <p className="font-mono">Integer ETB Cents &bull; Offline-First Craft</p>
         </div>
       </div>
     </footer>

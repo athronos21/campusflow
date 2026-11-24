@@ -4,79 +4,119 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 40 29% 97%; /* #FAF8F5 Warm Limestone */
+    --foreground: 100 7% 9%; /* #161815 Deep Charcoal Ink */
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 100 7% 9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 100 7% 9%;
 
-    --primary: 243 75% 59%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 144 61% 20%; /* #14532D Haramaya Highland Forest Green */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 262 83% 58%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 28 90% 37%; /* #B45309 Harar Ochre / Terracotta */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 39 21% 93%; /* #F2EFE9 Warm Stone Well */
+    --muted-foreground: 28 6% 32%; /* #57534E High-contrast Stone */
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 38 24% 90%; /* #ECE7DE Warm Sand Hover */
+    --accent-foreground: 100 7% 9%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 347 77% 41%; /* #BE123C Deep Rose-Crimson */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 243 75% 59%;
+    --border: 37 18% 86%; /* #E2DDD5 Hairline Travertine */
+    --input: 37 18% 80%;
+    --ring: 144 61% 20%;
 
-    --radius: 0.75rem;
-
-    --foreground-rgb: 15, 23, 42;
-    --background-start-rgb: 248, 250, 252;
-    --background-end-rgb: 255, 255, 255;
+    --radius: 0.625rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 145 17% 6%; /* #0C110E Obsidian Pine */
+    --foreground: 43 24% 95%; /* #F5F3EE Warm Chalk */
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 144 17% 9%; /* #141C17 */
+    --card-foreground: 43 24% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 144 17% 9%;
+    --popover-foreground: 43 24% 95%;
 
-    --primary: 243 75% 59%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 142 69% 45%;
+    --primary-foreground: 145 17% 6%;
 
-    --secondary: 262 83% 58%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 38 92% 50%;
+    --secondary-foreground: 145 17% 6%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 145 14% 15%;
+    --muted-foreground: 38 12% 70%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 145 14% 18%;
+    --accent-foreground: 43 24% 95%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 347 77% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 243 75% 59%;
+    --border: 145 13% 18%;
+    --input: 145 13% 22%;
+    --ring: 142 69% 45%;
   }
-}
 
-@layer base {
   * {
     border-color: hsl(var(--border));
   }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     min-height: 100vh;
+    caret-color: hsl(var(--primary));
+    text-rendering: optimizeLegibility;
   }
+
+  ::selection {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+
+  a {
+    text-underline-offset: 3px;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: 'Archivo', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    letter-spacing: -0.025em;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Custom warm scrollbar for desktop ledger panels */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.45);
 }

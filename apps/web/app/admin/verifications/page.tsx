@@ -1,11 +1,14 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import React, { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { PageHeader } from '@/components/layout/page-header';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { LoadingState, EmptyState } from '@/components/ui/state-views';
+import { useToast } from '@/components/ui/toast';
 import { apiClient } from '@/lib/api-client';
-import Link from 'next/link';
 import { ShieldCheck, CheckCircle2, User, Phone, Calendar, RefreshCw, Plus } from 'lucide-react';
 
 interface PendingBusiness {
@@ -22,38 +25,53 @@ interface PendingBusiness {
 }
 
 export default function AdminVerificationsPage() {
+  const { toast } = useToast();
   const [businesses, setBusinesses] = useState<PendingBusiness[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [actionId, setActionId] = useState<string | null>(null);
 
-  // Default Haramaya Campus ID
-  const campusId = '1c271dbc-bfa3-48fe-b184-5b35211e4076';
+  const defaultCampusId = '1c271dbc-bfa3-48fe-b184-5b35211e4076';
 
-  const fetchPending = async () => {
+  const fetchPending = useCallback(async () => {
     try {
       setIsLoading(true);
-      const data = await apiClient<PendingBusiness[]>(`/moderation/businesses/pending?campusId=${campusId}`);
+      setFetchError(null);
+      const campuses = await apiClient<{ id: string }[]>('/campuses').catch(() => []);
+      const activeCampusId = campuses[0]?.id || defaultCampusId;
+      const data = await apiClient<PendingBusiness[]>(
+        `/moderation/businesses/pending?campusId=${activeCampusId}`,
+      );
       setBusinesses(data);
     } catch (e) {
-      console.error(e);
+      setFetchError(e instanceof Error ? e.message : 'Unable to load pending merchant queue');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchPending();
-  }, []);
+  }, [fetchPending]);
 
-  const handleVerify = async (businessId: string) => {
+  const handleVerify = async (biz: PendingBusiness) => {
     try {
-      setActionId(businessId);
-      await apiClient(`/moderation/businesses/${businessId}/verify`, {
+      setActionId(biz.id);
+      await apiClient(`/moderation/businesses/${biz.id}/verify`, {
         method: 'PATCH',
       });
+      toast({
+        title: `${biz.name} approved`,
+        description: 'Merchant storefront is now verified in the Campus Directory.',
+        variant: 'success',
+      });
       await fetchPending();
-    } catch (e) {
-      console.error('Failed to verify:', e);
+    } catch (e: unknown) {
+      toast({
+        title: 'Verification failed',
+        description: e instanceof Error ? e.message : 'Could not verify business',
+        variant: 'error',
+      });
     } finally {
       setActionId(null);
     }
@@ -61,90 +79,80 @@ export default function AdminVerificationsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Merchant Verifications</h1>
-          <p className="text-slate-600 mt-1 text-sm">
-            Review and approve campus merchant licenses for Haramaya University shops and kiosks.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={fetchPending} className="text-xs">
-            <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Refresh
-          </Button>
-          <Link href="/merchant/register">
-            <Button size="sm" className="text-xs">
-              <Plus className="w-3.5 h-3.5 mr-1.5" /> Test Register
+      <PageHeader
+        title="Merchant Verifications"
+        description="Review and approve campus merchant applications for Haramaya University shops and kiosks."
+        action={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={fetchPending}>
+              <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Refresh
             </Button>
-          </Link>
-        </div>
-      </div>
+            <Button size="sm" asChild>
+              <Link href="/merchant/register">
+                <Plus className="w-3.5 h-3.5 mr-1.5" /> New Shop Form
+              </Link>
+            </Button>
+          </div>
+        }
+      />
 
       {isLoading && businesses.length === 0 ? (
-        <div className="text-center py-20 text-slate-500 font-medium">Checking verification queue...</div>
+        <LoadingState label="Checking verification queue..." count={2} />
+      ) : fetchError ? (
+        <EmptyState
+          icon={<ShieldCheck className="w-6 h-6 text-destructive" />}
+          title="Could not load verification queue"
+          description={fetchError}
+          actionLabel="Retry"
+          onAction={fetchPending}
+        />
       ) : businesses.length === 0 ? (
-        <Card className="text-center py-16 text-slate-500">
-          <CardContent>
-            <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-3" />
-            <p className="font-bold text-slate-800">No pending merchant registrations</p>
-            <p className="text-xs text-slate-500 mt-1">
-              All submitted campus businesses have been verified and activated.
-            </p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={<CheckCircle2 className="w-6 h-6 text-emerald-700" />}
+          title="No pending merchant registrations"
+          description="All submitted campus businesses have been verified and activated."
+        />
       ) : (
         <div className="space-y-4">
-          <div className="text-xs text-slate-500 font-semibold px-1">
-            {businesses.length} Business{businesses.length > 1 ? 'es' : ''} Awaiting Moderator Review
+          <div className="text-xs font-semibold text-muted-foreground">
+            {businesses.length} {businesses.length === 1 ? 'Business' : 'Businesses'} Awaiting Review
           </div>
 
           {businesses.map((m) => (
-            <Card key={m.id} className="p-6 hover:border-slate-300 transition shadow-sm">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div>
-                  <div className="flex items-center gap-2.5 mb-2">
-                    <span className="font-bold text-slate-900 text-lg">{m.name}</span>
+            <Card key={m.id} className="p-5 sm:p-6">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                <div className="space-y-2 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="font-display font-bold text-foreground text-lg">{m.name}</h2>
                     <Badge variant="warning">PENDING REVIEW</Badge>
                   </div>
-                  <p className="text-sm text-slate-600 max-w-2xl">
-                    {m.description || 'No business description provided by registrant.'}
+                  <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
+                    {m.description || 'No business description provided by applicant.'}
                   </p>
 
-                  <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100">
-                    <span className="flex items-center gap-1 font-semibold text-slate-700">
-                      <User className="w-3.5 h-3.5 text-slate-400" />
-                      {m.owner?.displayName || 'Registered Merchant'}
+                  <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground pt-2 border-t border-border">
+                    <span className="flex items-center gap-1 font-semibold text-foreground">
+                      <User className="w-3.5 h-3.5" />
+                      {m.owner?.displayName || 'Registered Applicant'}
                     </span>
-                    <span className="flex items-center gap-1">
-                      <Phone className="w-3.5 h-3.5 text-slate-400" />
+                    <span className="flex items-center gap-1 font-mono">
+                      <Phone className="w-3.5 h-3.5" />
                       {m.owner?.phone || m.owner?.email || 'N/A'}
                     </span>
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                      Submitted: {new Date(m.createdAt).toLocaleDateString()}
+                    <span className="flex items-center gap-1 font-mono">
+                      <Calendar className="w-3.5 h-3.5" />
+                      Submitted {new Date(m.createdAt).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0 self-start lg:self-auto">
+                <div className="shrink-0">
                   <Button
-                    size="sm"
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
                     disabled={actionId === m.id}
-                    onClick={() => handleVerify(m.id)}
+                    onClick={() => handleVerify(m)}
                   >
-                    <ShieldCheck className="w-3.5 h-3.5 mr-1.5" />
+                    <ShieldCheck className="w-4 h-4 mr-1.5" />
                     {actionId === m.id ? 'Verifying...' : 'Approve & Activate'}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={actionId === m.id}
-                    className="text-rose-600 border-rose-200 hover:bg-rose-50"
-                  >
-                    Reject
                   </Button>
                 </div>
               </div>

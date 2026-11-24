@@ -1,20 +1,22 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { resolveCartAdd, type CartItem } from './cart-conflict';
 
-export interface CartItem {
-  id: string; // product id
-  name: string;
-  priceMinor: number | string;
+export type { CartItem };
+
+export interface PendingCartConflict {
+  existingBusinessName: string;
+  newItem: Omit<CartItem, 'quantity'>;
   quantity: number;
-  businessId: string;
-  businessName: string;
-  campusId: string;
 }
 
 interface CartContextType {
   items: CartItem[];
-  addItem: (item: Omit<CartItem, 'quantity'>, quantity?: number) => void;
+  addItem: (item: Omit<CartItem, 'quantity'>, quantity?: number) => boolean;
+  confirmCartSwitch: () => void;
+  cancelCartSwitch: () => void;
+  pendingConflict: PendingCartConflict | null;
   updateQuantity: (productId: string, delta: number) => void;
   removeItem: (productId: string) => void;
   clearCart: () => void;
@@ -27,7 +29,10 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType>({
   items: [],
-  addItem: () => {},
+  addItem: () => false,
+  confirmCartSwitch: () => {},
+  cancelCartSwitch: () => {},
+  pendingConflict: null,
   updateQuantity: () => {},
   removeItem: () => {},
   clearCart: () => {},
@@ -41,6 +46,7 @@ const CartContext = createContext<CartContextType>({
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
+  const [pendingConflict, setPendingConflict] = useState<PendingCartConflict | null>(null);
 
   useEffect(() => {
     try {
@@ -61,30 +67,33 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [items, isInitialized]);
 
-  const addItem = (item: Omit<CartItem, 'quantity'>, quantity: number = 1) => {
-    setItems((prev) => {
-      // If adding from a different business, confirm / reset or keep single merchant per order
-      const existingBusinessId = prev[0]?.businessId;
-      if (existingBusinessId && existingBusinessId !== item.businessId) {
-        if (!confirm(`Your cart already contains items from "${prev[0].businessName}". Clear cart and start a new order with "${item.businessName}"?`)) {
-          return prev;
-        }
-        return [{ ...item, quantity }];
-      }
+  const addItem = (item: Omit<CartItem, 'quantity'>, quantity: number = 1): boolean => {
+    const resolution = resolveCartAdd(items, item, quantity);
+    if (resolution.conflict) {
+      setPendingConflict({
+        existingBusinessName: items[0]?.businessName || 'another campus shop',
+        newItem: item,
+        quantity,
+      });
+      return false;
+    }
+    setItems(resolution.nextItems);
+    return true;
+  };
 
-      const existingIndex = prev.findIndex((i) => i.id === item.id);
-      if (existingIndex > -1) {
-        const copy = [...prev];
-        copy[existingIndex].quantity += quantity;
-        return copy;
-      }
-      return [...prev, { ...item, quantity }];
-    });
+  const confirmCartSwitch = () => {
+    if (!pendingConflict) return;
+    setItems([{ ...pendingConflict.newItem, quantity: pendingConflict.quantity }]);
+    setPendingConflict(null);
+  };
+
+  const cancelCartSwitch = () => {
+    setPendingConflict(null);
   };
 
   const updateQuantity = (productId: string, delta: number) => {
-    setItems((prev) => {
-      return prev
+    setItems((prev) =>
+      prev
         .map((item) => {
           if (item.id === productId) {
             const newQty = item.quantity + delta;
@@ -92,8 +101,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           }
           return item;
         })
-        .filter(Boolean) as CartItem[];
-    });
+        .filter(Boolean) as CartItem[],
+    );
   };
 
   const removeItem = (productId: string) => {
@@ -115,6 +124,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       value={{
         items,
         addItem,
+        confirmCartSwitch,
+        cancelCartSwitch,
+        pendingConflict,
         updateQuantity,
         removeItem,
         clearCart,

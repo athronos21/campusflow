@@ -1,32 +1,58 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Navbar } from '@/components/layout/navbar';
-import { Footer } from '@/components/layout/footer';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { AppShell } from '@/components/layout/app-shell';
+import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { TicketStub } from '@/components/ui/ticket-stub';
+import { LoadingState, EmptyState, AuthPromptCard } from '@/components/ui/state-views';
+import { useToast } from '@/components/ui/toast';
 import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import { formatETB } from '@/lib/utils';
 import { TripDto, TicketReservationDto } from '@campusflow/contracts';
-import { QRCodeSVG } from 'qrcode.react';
-import { Bus, Ticket, MapPin, Navigation, Clock, Smartphone, CheckCircle, X, ArrowRight, ShieldCheck, ExternalLink } from 'lucide-react';
-import Link from 'next/link';
+import {
+  Bus,
+  Ticket,
+  MapPin,
+  Navigation,
+  Clock,
+  Smartphone,
+  CheckCircle,
+  ArrowRight,
+  ShieldCheck,
+  ExternalLink,
+  Copy,
+} from 'lucide-react';
 
 export default function TransportPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const router = useRouter();
+
   const [activeTab, setActiveTab] = useState<'trips' | 'tickets'>('trips');
   const [trips, setTrips] = useState<TripDto[]>([]);
   const [userTickets, setUserTickets] = useState<TicketReservationDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDestination, setSelectedDestination] = useState<string>('all');
 
-  // Seat Booking Modal State
+  // Seat Booking Dialog State
   const [selectedTrip, setSelectedTrip] = useState<TripDto | null>(null);
-  const [tripDetails, setTripDetails] = useState<any | null>(null);
+  const [tripDetails, setTripDetails] = useState<{ occupiedSeats?: number[] } | null>(null);
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
   const [passengerName, setPassengerName] = useState('');
   const [passengerPhone, setPassengerPhone] = useState('');
@@ -35,20 +61,21 @@ export default function TransportPage() {
   const [confirmedReservation, setConfirmedReservation] = useState<TicketReservationDto | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Telebirr Pay Modal State
+  // Payment Dialog State
   const [payModalTicket, setPayModalTicket] = useState<TicketReservationDto | null>(null);
-  const [payData, setPayData] = useState<any | null>(null);
+  const [payData, setPayData] = useState<{
+    amountMinor?: number | string;
+    providerReference: string;
+    ussdDial: string;
+    checkoutUrl?: string;
+  } | null>(null);
   const [payLoading, setPayLoading] = useState(false);
 
-  useEffect(() => {
-    fetchTrips();
-    if (user) {
-      fetchUserTickets();
-      setPassengerName(user.displayName || '');
-    }
-  }, [user]);
+  // Cancel Confirm Dialog State
+  const [cancelTicketId, setCancelTicketId] = useState<string | null>(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
-  async function fetchTrips() {
+  const fetchTrips = useCallback(async () => {
     setLoading(true);
     try {
       const data = await apiClient<TripDto[]>('/transport/trips');
@@ -58,24 +85,34 @@ export default function TransportPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  async function fetchUserTickets() {
+  const fetchUserTickets = useCallback(async () => {
     try {
       const data = await apiClient<TicketReservationDto[]>('/transport/reservations/my');
       setUserTickets(data);
     } catch (err) {
       console.error('Failed to load tickets:', err);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    fetchTrips();
+    if (user) {
+      fetchUserTickets();
+      setPassengerName(user.displayName || '');
+      if (user.phone) setPassengerPhone(user.phone);
+    }
+  }, [user, fetchTrips, fetchUserTickets]);
 
   async function openSeatPicker(trip: TripDto) {
     setSelectedTrip(trip);
+    setTripDetails(null);
     setSelectedSeat(null);
     setConfirmedReservation(null);
     setErrorMsg('');
     try {
-      const details = await apiClient<any>(`/transport/trips/${trip.id}`);
+      const details = await apiClient<{ occupiedSeats?: number[] }>(`/transport/trips/${trip.id}`);
       setTripDetails(details);
     } catch (err) {
       console.error('Failed to load seat details:', err);
@@ -84,7 +121,13 @@ export default function TransportPage() {
 
   async function handleBookSeat() {
     if (!user) {
-      alert('Please sign in to reserve a seat.');
+      toast({
+        title: 'Sign in required',
+        description: 'Please sign in to reserve a shuttle seat.',
+        variant: 'warning',
+      });
+      setSelectedTrip(null);
+      router.push('/login?next=/transport');
       return;
     }
     if (!selectedTrip) return;
@@ -113,32 +156,55 @@ export default function TransportPage() {
       });
 
       setConfirmedReservation(res);
+      toast({
+        title: `Seat #${res.seatNumber} reserved`,
+        description: 'Your QR boarding stub is ready.',
+        variant: 'success',
+      });
       fetchTrips();
       fetchUserTickets();
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to complete reservation');
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Failed to complete reservation');
     } finally {
       setBookingLoading(false);
     }
   }
 
-  async function handleCancelTicket(ticketId: string) {
-    if (!confirm('Are you sure you want to cancel this ticket reservation?')) return;
+  async function handleConfirmCancelTicket() {
+    if (!cancelTicketId) return;
+    setCancelLoading(true);
     try {
-      await apiClient(`/transport/reservations/${ticketId}/cancel`, { method: 'POST' });
-      alert('Reservation cancelled and seat released.');
+      await apiClient(`/transport/reservations/${cancelTicketId}/cancel`, { method: 'POST' });
+      setCancelTicketId(null);
+      toast({
+        title: 'Reservation cancelled',
+        description: 'Your seat has been released back to the departure pool.',
+        variant: 'success',
+      });
       fetchUserTickets();
       fetchTrips();
-    } catch (err: any) {
-      alert(err.message || 'Cancellation failed');
+    } catch (err: unknown) {
+      toast({
+        title: 'Cancellation failed',
+        description: err instanceof Error ? err.message : 'Could not cancel ticket',
+        variant: 'error',
+      });
+    } finally {
+      setCancelLoading(false);
     }
   }
 
   async function handleInitiateTicketPayment(ticket: TicketReservationDto) {
     setPayModalTicket(ticket);
+    setPayData(null);
     setPayLoading(true);
     try {
-      const res = await apiClient<any>('/payments/initialize', {
+      const res = await apiClient<{
+        amountMinor?: number | string;
+        providerReference: string;
+        ussdDial: string;
+        checkoutUrl?: string;
+      }>('/payments/initialize', {
         method: 'POST',
         body: JSON.stringify({
           reservationId: ticket.id,
@@ -146,8 +212,13 @@ export default function TransportPage() {
         }),
       });
       setPayData(res);
-    } catch (err: any) {
-      alert(err.message || 'Payment initiation failed');
+    } catch (err: unknown) {
+      setPayModalTicket(null);
+      toast({
+        title: 'Payment initiation failed',
+        description: err instanceof Error ? err.message : 'Could not start payment',
+        variant: 'error',
+      });
     } finally {
       setPayLoading(false);
     }
@@ -156,13 +227,21 @@ export default function TransportPage() {
   async function handleConfirmMockPayment(ref: string) {
     setPayLoading(true);
     try {
-      await apiClient<any>(`/payments/verify/${ref}`, { method: 'POST' });
-      alert('Payment verified! Your ticket is now officially CONFIRMED.');
+      await apiClient(`/payments/verify/${ref}`, { method: 'POST' });
       setPayModalTicket(null);
       setPayData(null);
+      toast({
+        title: 'Ticket confirmed',
+        description: 'Telebirr payment verified. Ready for terminal boarding.',
+        variant: 'success',
+      });
       fetchUserTickets();
-    } catch (err: any) {
-      alert(err.message || 'Verification failed');
+    } catch (err: unknown) {
+      toast({
+        title: 'Verification failed',
+        description: err instanceof Error ? err.message : 'Could not verify payment',
+        variant: 'error',
+      });
     } finally {
       setPayLoading(false);
     }
@@ -174,161 +253,137 @@ export default function TransportPage() {
   });
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      <Navbar />
+    <AppShell maxWidth="6xl">
+      <div className="space-y-6">
+        <PageHeader
+          title="Haramaya Shuttle & Regional Coaches"
+          description="Verified student buses, minibuses, and intercity coaches to Dire Dawa, Harar, and Addis Ababa with digital QR boarding stubs."
+          badge={
+            <Badge variant="secondary">
+              <ShieldCheck className="w-3 h-3" /> Fixed Student Tariff
+            </Badge>
+          }
+        />
 
-      <main className="flex-1 max-w-6xl mx-auto px-4 py-8 w-full">
-        {/* Editorial Header */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-white mb-8 shadow-sm">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="max-w-2xl">
-              <div className="flex items-center gap-2 mb-2 text-indigo-400 text-xs font-semibold uppercase tracking-wider">
-                <Bus className="w-4 h-4" />
-                <span>Service 02 • Campus & Intercity Transport</span>
-              </div>
-              <h1 className="text-3xl font-black tracking-tight text-white">
-                Haramaya Shuttle & Regional Coaches
-              </h1>
-              <p className="mt-2 text-slate-300 text-sm leading-relaxed">
-                Book verified student buses, minibuses, and intercity coaches departing directly from Haramaya University terminal to Dire Dawa, Harar, and Addis Ababa. Real-time seat allocation with digital QR boarding passes.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3 bg-slate-800/80 border border-slate-700/60 rounded-xl p-4 self-start md:self-auto">
-              <ShieldCheck className="w-8 h-8 text-indigo-400 shrink-0" />
-              <div className="text-xs">
-                <div className="font-bold text-white">Verified Carriers</div>
-                <div className="text-slate-400">Fixed student tariff • Cash or Telebirr</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="flex border-b border-slate-200 mb-6 gap-6">
-          <button
+        {/* Tabs */}
+        <div className="flex flex-wrap items-center gap-2 border-b border-border pb-3">
+          <Button
+            type="button"
+            variant={activeTab === 'trips' ? 'default' : 'outline'}
+            size="sm"
             onClick={() => setActiveTab('trips')}
-            className={`pb-3 text-sm font-bold transition border-b-2 flex items-center gap-2 ${
-              activeTab === 'trips'
-                ? 'border-indigo-600 text-indigo-600'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
           >
-            <Bus className="w-4 h-4" /> Available Trips ({trips.length})
-          </button>
-          <button
+            <Bus className="w-4 h-4 mr-1.5" /> Available Departures ({trips.length})
+          </Button>
+          <Button
+            type="button"
+            variant={activeTab === 'tickets' ? 'default' : 'outline'}
+            size="sm"
             onClick={() => setActiveTab('tickets')}
-            className={`pb-3 text-sm font-bold transition border-b-2 flex items-center gap-2 ${
-              activeTab === 'tickets'
-                ? 'border-indigo-600 text-indigo-600'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
           >
-            <Ticket className="w-4 h-4" /> My Boarding Passes ({userTickets.length})
-          </button>
+            <Ticket className="w-4 h-4 mr-1.5" /> My Boarding Passes ({userTickets.length})
+          </Button>
         </div>
 
-        {activeTab === 'trips' && (
-          <div>
-            {/* Filter Controls */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200 mb-6 flex flex-wrap gap-4 items-center justify-between shadow-sm">
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Destination:</span>
-                <div className="flex gap-1.5 flex-wrap">
-                  {[
-                    { id: 'all', label: 'All Routes' },
-                    { id: 'Dire Dawa', label: 'Dire Dawa (~50m)' },
-                    { id: 'Harar', label: 'Harar (~30m)' },
-                    { id: 'Addis Ababa', label: 'Addis Ababa (Coach)' },
-                  ].map((dest) => (
-                    <button
-                      key={dest.id}
-                      onClick={() => setSelectedDestination(dest.id)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                        selectedDestination.toLowerCase() === dest.id.toLowerCase()
-                          ? 'bg-indigo-600 text-white shadow-sm'
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                      }`}
-                    >
-                      {dest.label}
-                    </button>
-                  ))}
-                </div>
+        {activeTab === 'trips' ? (
+          <div className="space-y-5">
+            {/* Destination Filter Strip */}
+            <div className="rounded-xl border border-border bg-card p-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-bold text-muted-foreground mr-1">Destination:</span>
+                {[
+                  { id: 'all', label: 'All Routes' },
+                  { id: 'Dire Dawa', label: 'Dire Dawa (~50m)' },
+                  { id: 'Harar', label: 'Harar (~30m)' },
+                  { id: 'Addis Ababa', label: 'Addis Ababa (Coach)' },
+                ].map((dest) => (
+                  <Button
+                    key={dest.id}
+                    type="button"
+                    size="sm"
+                    variant={selectedDestination.toLowerCase() === dest.id.toLowerCase() ? 'secondary' : 'outline'}
+                    onClick={() => setSelectedDestination(dest.id)}
+                    className="rounded-full"
+                  >
+                    {dest.label}
+                  </Button>
+                ))}
               </div>
-
-              <div className="text-xs text-slate-500">
-                Showing <span className="font-bold text-slate-900">{filteredTrips.length}</span> scheduled departures
+              <div className="text-xs text-muted-foreground">
+                Showing <span className="font-mono font-bold text-foreground">{filteredTrips.length}</span> scheduled trips
               </div>
             </div>
 
-            {/* Trips Grid */}
             {loading ? (
-              <div className="text-center py-20 text-slate-500 font-medium">Loading scheduled departures...</div>
+              <LoadingState label="Loading scheduled departures..." count={3} />
             ) : filteredTrips.length === 0 ? (
-              <Card className="text-center py-16 text-slate-500">
-                <CardContent className="pt-6">
-                  <p className="font-medium">No trips scheduled for the selected destination.</p>
-                  <Button variant="outline" className="mt-4" onClick={() => setSelectedDestination('all')}>
-                    View All Destinations
-                  </Button>
-                </CardContent>
-              </Card>
+              <EmptyState
+                icon={<Bus className="w-5 h-5" />}
+                title="No departures for this destination"
+                description="No scheduled vehicles matched this route filter."
+                actionLabel="Show All Routes"
+                onAction={() => setSelectedDestination('all')}
+              />
             ) : (
               <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
                 {filteredTrips.map((trip) => {
                   const depDate = new Date(trip.departureTime);
                   const isLowSeats = trip.availableSeats <= 3;
+
                   return (
-                    <Card key={trip.id} className="flex flex-col justify-between hover:border-slate-300 transition shadow-sm">
+                    <Card key={trip.id} className="flex flex-col justify-between">
                       <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between mb-2">
-                          <Badge variant="secondary" className="font-bold">
-                            {trip.operator.name}
-                          </Badge>
+                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                          <Badge variant="outline">{trip.operator?.name || 'Campus Shuttle'}</Badge>
                           <Badge variant={isLowSeats ? 'danger' : 'success'}>
                             {trip.availableSeats} seats left
                           </Badge>
                         </div>
                         <CardTitle className="text-lg flex items-center gap-2">
-                          <span>{trip.route.origin}</span>
-                          <ArrowRight className="w-4 h-4 text-slate-400 shrink-0" />
-                          <span className="text-indigo-600">{trip.route.destination}</span>
+                          <span className="truncate">{trip.route.origin}</span>
+                          <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <span className="text-primary truncate">{trip.route.destination}</span>
                         </CardTitle>
                         <CardDescription className="text-xs space-y-1 pt-1">
-                          <span className="flex items-center gap-1.5 text-slate-600">
-                            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" /> {trip.route.departureStation}
+                          <span className="flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5 shrink-0" /> {trip.route.departureStation}
                           </span>
-                          <span className="flex items-center gap-1.5 text-slate-600">
-                            <Navigation className="w-3.5 h-3.5 text-slate-400 shrink-0" /> {trip.route.arrivalStation}
+                          <span className="flex items-center gap-1.5">
+                            <Navigation className="w-3.5 h-3.5 shrink-0" /> {trip.route.arrivalStation}
                           </span>
-                          <span className="flex items-center gap-1.5 text-slate-500">
-                            <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" /> ~{trip.route.estimatedDurationMin} mins {trip.route.distanceKm ? `• ${trip.route.distanceKm} km` : ''}
+                          <span className="flex items-center gap-1.5">
+                            <Clock className="w-3.5 h-3.5 shrink-0" /> ~{trip.route.estimatedDurationMin} mins
+                            {trip.route.distanceKm ? ` • ${trip.route.distanceKm} km` : ''}
                           </span>
                         </CardDescription>
                       </CardHeader>
 
-                      <CardContent className="py-2">
-                        <div className="bg-slate-50 rounded-lg p-3 text-xs border border-slate-100">
-                          <div className="flex justify-between text-slate-600 mb-1">
-                            <span className="text-slate-500">Vehicle Type</span>
-                            <span className="font-semibold text-slate-800">{trip.vehicleType}</span>
+                      <CardContent className="pb-4">
+                        <div className="rounded-lg border border-border bg-muted/50 p-3 text-xs space-y-1">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Vehicle</span>
+                            <span className="font-semibold text-foreground">{trip.vehicleType}</span>
                           </div>
-                          <div className="flex justify-between text-slate-600">
-                            <span className="text-slate-500">Departure</span>
-                            <span className="font-bold text-indigo-700">
-                              {depDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} • {depDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Departure</span>
+                            <span className="font-mono font-bold text-foreground tabular-nums">
+                              {depDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} &bull;{' '}
+                              {depDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
                         </div>
                       </CardContent>
 
-                      <CardFooter className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                      <CardFooter className="pt-3 border-t border-border flex items-center justify-between gap-3">
                         <div>
-                          <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Fare per seat</div>
-                          <div className="text-xl font-black text-slate-900">{formatETB(trip.priceMinor)}</div>
+                          <div className="text-[11px] text-muted-foreground font-medium">Fare per seat</div>
+                          <div className="font-mono text-lg font-black text-foreground tabular-nums">
+                            {formatETB(trip.priceMinor)}
+                          </div>
                         </div>
                         <Button
                           disabled={trip.availableSeats === 0}
+                          variant="secondary"
                           onClick={() => openSeatPicker(trip)}
                         >
                           {trip.availableSeats === 0 ? 'Sold Out' : 'Select Seat'}
@@ -340,406 +395,350 @@ export default function TransportPage() {
               </div>
             )}
           </div>
-        )}
+        ) : !user ? (
+          <AuthPromptCard
+            title="Sign in to view your boarding passes"
+            description="Access your reserved seats, dynamic QR boarding stubs, and Telebirr payment status."
+            returnTo="/transport"
+          />
+        ) : userTickets.length === 0 ? (
+          <EmptyState
+            icon={<Ticket className="w-5 h-5" />}
+            title="No transport reservations yet"
+            description="Choose an upcoming departure to reserve a seat and generate a QR boarding pass."
+            actionLabel="Browse Scheduled Trips"
+            onAction={() => setActiveTab('trips')}
+          />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {userTickets.map((ticket) => {
+              const depDate = ticket.trip ? new Date(ticket.trip.departureTime) : null;
+              const isPaid = ticket.paymentStatus === 'paid';
+              const isCancelled = ticket.status === 'cancelled';
 
-        {/* My Tickets Tab */}
-        {activeTab === 'tickets' && (
-          <div>
-            {!user ? (
-              <Card className="text-center py-16">
-                <CardContent>
-                  <p className="text-slate-600 font-medium mb-4">Please sign in to view your tickets and boarding passes.</p>
-                  <Link href="/login">
-                    <Button>Sign In</Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            ) : userTickets.length === 0 ? (
-              <Card className="text-center py-16 text-slate-500">
-                <CardContent>
-                  <Ticket className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                  <p className="font-medium text-slate-700">You have no booked transport tickets yet.</p>
-                  <p className="text-xs text-slate-500 mt-1">Select an upcoming departure above to reserve a campus shuttle seat.</p>
-                  <Button variant="outline" className="mt-4" onClick={() => setActiveTab('trips')}>
-                    Browse Scheduled Trips
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {userTickets.map((ticket) => {
-                  const depDate = ticket.trip ? new Date(ticket.trip.departureTime) : null;
-                  const isPaid = ticket.paymentStatus === 'paid';
-                  const isCancelled = ticket.status === 'cancelled';
-
-                  return (
-                    <Card
-                      key={ticket.id}
-                      className={`shadow-sm transition ${isCancelled ? 'opacity-60 bg-slate-50' : 'bg-white'}`}
-                    >
-                      <CardContent className="p-6">
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-4 mb-4">
-                          <div>
-                            <div className="flex items-center gap-2 mb-1.5">
-                              <Badge variant="outline" className="font-bold">
-                                {ticket.trip?.operator.name || 'Campus Shuttle'}
-                              </Badge>
-                              <Badge
-                                variant={
-                                  isCancelled
-                                    ? 'danger'
-                                    : ticket.status === 'confirmed'
-                                    ? 'success'
-                                    : 'warning'
-                                }
-                              >
-                                {ticket.status.toUpperCase()}
-                              </Badge>
-                              <Badge variant={isPaid ? 'success' : 'secondary'}>
-                                {isPaid ? 'PAID' : 'PAYMENT PENDING'}
-                              </Badge>
-                            </div>
-                            <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                              <span>{ticket.trip?.route.origin}</span>
-                              <ArrowRight className="w-4 h-4 text-slate-400" />
-                              <span className="text-indigo-600">{ticket.trip?.route.destination}</span>
-                            </h3>
-                          </div>
-
-                          <div className="text-left md:text-right">
-                            <div className="text-2xl font-black text-indigo-600">Seat #{ticket.seatNumber}</div>
-                            <div className="text-xs text-slate-400 font-mono tracking-wider">{ticket.qrCode}</div>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-slate-600 mb-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                          <div>
-                            <span className="text-slate-400 block font-medium">Passenger</span>
-                            <span className="font-bold text-slate-800">{ticket.passengerName}</span>
-                            <div className="text-[11px] text-slate-500">{ticket.passengerPhone}</div>
-                          </div>
-                          <div>
-                            <span className="text-slate-400 block font-medium">Departure Terminal</span>
-                            <span className="font-bold text-slate-800">{ticket.trip?.route.departureStation}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-400 block font-medium">Schedule</span>
-                            <span className="font-bold text-slate-800">
-                              {depDate
-                                ? depDate.toLocaleString('en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  })
-                                : 'N/A'}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-slate-400 block font-medium">Total Fare</span>
-                            <span className="font-black text-slate-900 text-sm">{formatETB(ticket.amountMinor)}</span>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-slate-500">Boarding Token:</span>
-                            <code className="text-xs font-mono font-bold bg-slate-100 text-indigo-700 px-2 py-1 rounded border border-slate-200">
-                              {ticket.qrCode}
-                            </code>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            {!isPaid && !isCancelled && (
-                              <Button
-                                size="sm"
-                                onClick={() => handleInitiateTicketPayment(ticket)}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                              >
-                                <Smartphone className="w-3.5 h-3.5 mr-1.5" /> Pay with Telebirr
-                              </Button>
-                            )}
-                            {!isCancelled && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleCancelTicket(ticket.id)}
-                                className="text-rose-600 border-rose-200 hover:bg-rose-50"
-                              >
-                                Cancel Seat
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
+              return (
+                <div key={ticket.id} className={`space-y-2.5 ${isCancelled ? 'opacity-65' : ''}`}>
+                  <TicketStub
+                    accent={isCancelled ? 'ink' : 'primary'}
+                    title={`${ticket.trip?.route.origin || 'Haramaya'} → ${ticket.trip?.route.destination || 'Destination'}`}
+                    subtitle={`${ticket.trip?.operator.name || 'Campus Shuttle'} • Seat #${ticket.seatNumber}`}
+                    badge={
+                      <Badge variant={isCancelled ? 'danger' : isPaid ? 'success' : 'warning'}>
+                        {isCancelled ? 'CANCELLED' : isPaid ? 'CONFIRMED' : 'PAYMENT PENDING'}
+                      </Badge>
+                    }
+                    code={ticket.qrCode}
+                    qrValue={`CAMPUSFLOW:BUS:${ticket.qrCode}:SEAT${ticket.seatNumber}`}
+                    meta={[
+                      { label: 'Passenger', value: `${ticket.passengerName} (${ticket.passengerPhone})` },
+                      {
+                        label: 'Departure',
+                        value: depDate
+                          ? depDate.toLocaleString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })
+                          : 'Scheduled',
+                      },
+                      { label: 'Terminal', value: ticket.trip?.route.departureStation || 'Main Gate' },
+                      { label: 'Fare', value: formatETB(ticket.amountMinor) },
+                    ]}
+                    footerRight={
+                      <div className="flex items-center gap-2">
+                        {!isPaid && !isCancelled && (
+                          <Button size="sm" variant="secondary" onClick={() => handleInitiateTicketPayment(ticket)}>
+                            <Smartphone className="w-3.5 h-3.5 mr-1" /> Pay Telebirr
+                          </Button>
+                        )}
+                        {!isCancelled && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setCancelTicketId(ticket.id)}
+                            className="text-destructive border-rose-200 hover:bg-rose-50"
+                          >
+                            Cancel Seat
+                          </Button>
+                        )}
+                      </div>
+                    }
+                  />
+                </div>
+              );
+            })}
           </div>
         )}
-      </main>
+      </div>
 
-      {/* Seat Picker & Booking Modal */}
-      {selectedTrip && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-            {confirmedReservation ? (
-              <div className="text-center py-4">
-                <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="w-8 h-8" />
+      {/* Seat Picker Dialog */}
+      <Dialog
+        open={Boolean(selectedTrip)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedTrip(null);
+            setConfirmedReservation(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg">
+          {selectedTrip && confirmedReservation ? (
+            <div className="space-y-4">
+              <div className="flex flex-col items-center text-center pt-2">
+                <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center mb-3">
+                  <CheckCircle className="w-6 h-6" />
                 </div>
-                <h3 className="text-2xl font-black text-slate-900 mb-1">Seat Reserved!</h3>
-                <p className="text-slate-600 text-sm mb-6">
-                  Your seat <span className="font-bold text-indigo-600">#{confirmedReservation.seatNumber}</span> is reserved on {selectedTrip.operator.name}.
-                </p>
-
-                {/* Digital Ticket Card */}
-                <div className="border-2 border-dashed border-indigo-200 rounded-xl p-5 bg-indigo-50/50 mb-6 text-left">
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="text-xs font-bold uppercase tracking-wider text-indigo-700">CampusFlow Boarding Pass</span>
-                    <Badge variant="success">SEAT #{confirmedReservation.seatNumber}</Badge>
-                  </div>
-                  <div className="text-lg font-black text-slate-900 flex items-center gap-2">
-                    <span>{selectedTrip.route.origin}</span>
-                    <ArrowRight className="w-4 h-4 text-slate-400" />
-                    <span className="text-indigo-600">{selectedTrip.route.destination}</span>
-                  </div>
-                  <div className="text-xs text-slate-600 mt-1 mb-3">
-                    Terminal: <span className="font-semibold text-slate-800">{selectedTrip.route.departureStation}</span>
-                  </div>
-                  <div className="bg-white p-3 rounded-lg border border-indigo-100 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-16 h-16 bg-white p-1 rounded border border-slate-200 flex items-center justify-center shrink-0">
-                        <QRCodeSVG
-                          value={`CAMPUSFLOW:BUS:${confirmedReservation.qrCode}:SEAT${confirmedReservation.seatNumber}`}
-                          size={56}
-                          level="M"
-                          includeMargin={false}
-                        />
-                      </div>
-                      <div>
-                        <div className="text-[10px] text-slate-400 uppercase font-bold">Boarding Pass QR</div>
-                        <div className="font-mono text-xs font-bold text-indigo-700">{confirmedReservation.qrCode}</div>
-                        <div className="text-[10px] text-emerald-600 font-semibold">Ready for terminal scan</div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-[10px] text-slate-400 uppercase font-bold">Total Fare</div>
-                      <div className="text-sm font-black text-slate-900">{formatETB(confirmedReservation.amountMinor)}</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <Button
-                    className="flex-1"
-                    onClick={() => {
-                      setSelectedTrip(null);
-                      setActiveTab('tickets');
-                    }}
-                  >
-                    View My Tickets
-                  </Button>
-                  <Button variant="outline" onClick={() => setSelectedTrip(null)}>
-                    Close
-                  </Button>
-                </div>
+                <DialogTitle>Seat #{confirmedReservation.seatNumber} Reserved</DialogTitle>
+                <DialogDescription className="mt-1">
+                  Confirmed on {selectedTrip.operator?.name || 'Campus Shuttle'}. Present this QR stub when boarding.
+                </DialogDescription>
               </div>
-            ) : (
-              <div>
-                <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
-                  <div>
-                    <h3 className="font-bold text-slate-900 text-lg">
-                      Select Seat • {selectedTrip.route.destination}
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      {selectedTrip.vehicleType} • Fare: {formatETB(selectedTrip.priceMinor)}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setSelectedTrip(null)}
-                    className="text-slate-400 hover:text-slate-600"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
 
-                {errorMsg && (
-                  <div className="bg-rose-50 border border-rose-200 text-rose-700 px-3 py-2 rounded-lg text-xs font-semibold mb-4">
-                    {errorMsg}
-                  </div>
-                )}
+              <TicketStub
+                accent="primary"
+                title={`${selectedTrip.route.origin} → ${selectedTrip.route.destination}`}
+                subtitle={`${selectedTrip.route.departureStation} • Seat #${confirmedReservation.seatNumber}`}
+                badge={<Badge variant="success">RESERVED</Badge>}
+                code={confirmedReservation.qrCode}
+                qrValue={`CAMPUSFLOW:BUS:${confirmedReservation.qrCode}:SEAT${confirmedReservation.seatNumber}`}
+                meta={[
+                  { label: 'Passenger', value: confirmedReservation.passengerName },
+                  { label: 'Total Fare', value: formatETB(confirmedReservation.amountMinor) },
+                ]}
+              />
 
-                {/* Seat Map Grid */}
-                <div className="mb-6">
-                  <div className="flex items-center justify-between text-xs text-slate-500 mb-3 px-1">
-                    <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-white border border-slate-300 inline-block"/> Available</span>
-                    <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-indigo-600 inline-block"/> Selected</span>
-                    <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-slate-200 inline-block"/> Occupied</span>
-                  </div>
-
-                  {/* Driver Header */}
-                  <div className="bg-slate-100 rounded-t-lg p-2 text-center text-xs text-slate-500 font-medium mb-2 border border-slate-200 flex items-center justify-center gap-1.5">
-                    <Bus className="w-3.5 h-3.5 text-slate-500" /> Driver Cabin (Front)
-                  </div>
-
-                  {/* Grid */}
-                  <div className="grid grid-cols-4 gap-2.5 bg-slate-50 p-4 rounded-b-lg border border-slate-200 max-h-56 overflow-y-auto">
-                    {Array.from({ length: selectedTrip.totalSeats }, (_, i) => i + 1).map((seatNum) => {
-                      const isOccupied = tripDetails?.occupiedSeats?.includes(seatNum);
-                      const isSelected = selectedSeat === seatNum;
-
-                      return (
-                        <button
-                          key={seatNum}
-                          disabled={isOccupied}
-                          onClick={() => setSelectedSeat(seatNum)}
-                          className={`h-11 rounded-lg text-xs font-bold transition flex items-center justify-center ${
-                            isOccupied
-                              ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                              : isSelected
-                              ? 'bg-indigo-600 text-white shadow-sm ring-2 ring-indigo-300'
-                              : 'bg-white border border-slate-300 text-slate-800 hover:border-indigo-500'
-                          }`}
-                        >
-                          {seatNum}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Passenger Form */}
-                <div className="space-y-3 mb-6">
-                  <div>
-                    <Label className="text-xs">Passenger Name</Label>
-                    <Input
-                      type="text"
-                      value={passengerName}
-                      onChange={(e) => setPassengerName(e.target.value)}
-                      placeholder="e.g. Tigist Haile"
-                      className="mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-xs">Phone Number</Label>
-                    <Input
-                      type="text"
-                      value={passengerPhone}
-                      onChange={(e) => setPassengerPhone(e.target.value)}
-                      placeholder="+251 9..."
-                      className="mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-xs">Payment Method</Label>
-                    <select
-                      value={paymentProvider}
-                      onChange={(e) => setPaymentProvider(e.target.value as any)}
-                      className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 mt-1 font-medium"
-                    >
-                      <option value="telebirr">Telebirr (Instant mobile payment)</option>
-                      <option value="cbe_birr">CBE Birr</option>
-                      <option value="cash_at_station">Cash at Campus Departure Gate</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Submit Action */}
+              <DialogFooter>
                 <Button
-                  disabled={bookingLoading}
-                  onClick={handleBookSeat}
-                  className="w-full py-3 h-auto text-sm font-bold"
+                  type="button"
+                  variant="outline"
+                  onClick={() => setSelectedTrip(null)}
                 >
-                  {bookingLoading
-                    ? 'Reserving Seat...'
-                    : `Confirm Seat ${selectedSeat ? `#${selectedSeat}` : ''} • ${formatETB(selectedTrip.priceMinor)}`}
+                  Close
                 </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Telebirr Payment Modal */}
-      {payModalTicket && payData && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
-              <div className="flex items-center gap-2">
-                <span className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs">
-                  TB
-                </span>
-                <h3 className="font-bold text-slate-900 text-base">Telebirr Checkout</h3>
-              </div>
-              <button
-                onClick={() => {
-                  setPayModalTicket(null);
-                  setPayData(null);
-                }}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setSelectedTrip(null);
+                    setActiveTab('tickets');
+                  }}
+                >
+                  View My Boarding Passes
+                </Button>
+              </DialogFooter>
             </div>
+          ) : selectedTrip ? (
+            <div className="space-y-4">
+              <DialogHeader>
+                <DialogTitle>
+                  Select Seat &bull; {selectedTrip.route.origin} &rarr; {selectedTrip.route.destination}
+                </DialogTitle>
+                <DialogDescription>
+                  {selectedTrip.vehicleType} &bull; Fare per seat:{' '}
+                  <span className="font-mono font-bold text-foreground">{formatETB(selectedTrip.priceMinor)}</span>
+                </DialogDescription>
+              </DialogHeader>
 
-            <div className="text-center py-2 mb-4">
-              <div className="text-xs text-slate-400 uppercase font-semibold">Amount to Pay</div>
-              <div className="text-3xl font-black text-slate-900">{formatETB(payData.amountMinor)}</div>
-              <div className="text-xs text-slate-500 mt-1">Ref: <code className="font-mono font-bold text-indigo-600">{payData.providerReference}</code></div>
-            </div>
-
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-xs text-emerald-900 mb-6 space-y-2">
-              <div className="font-bold flex items-center gap-1.5">
-                <Smartphone className="w-4 h-4 text-emerald-700" /> USSD Quick-Dial Instruction:
-              </div>
-              <div className="bg-white p-2.5 rounded-lg border border-emerald-200 font-mono text-center font-bold text-emerald-700 text-sm">
-                {payData.ussdDial}
-              </div>
-              <p className="text-[11px] text-emerald-800 leading-relaxed">
-                Dial the code on your phone to complete payment directly. In this pilot sandbox, click below to simulate instant payment verification.
-              </p>
-              {payData.checkoutUrl && (
-                <div className="pt-1">
-                  <a
-                    href={payData.checkoutUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-emerald-100/70 border border-emerald-300 text-emerald-900 hover:bg-emerald-200/70 transition font-bold text-xs"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" /> Open Telebirr App / Web Pay
-                  </a>
+              {errorMsg && (
+                <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-800">
+                  {errorMsg}
                 </div>
               )}
-            </div>
 
-            <div className="flex gap-3">
-              <Button
-                disabled={payLoading}
-                onClick={() => handleConfirmMockPayment(payData.providerReference)}
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-              >
-                {payLoading ? 'Verifying...' : 'Simulate Telebirr Payment'}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setPayModalTicket(null);
-                  setPayData(null);
-                }}
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded border border-border bg-card inline-block" /> Available
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded bg-primary inline-block" /> Selected
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded bg-muted inline-block" /> Occupied
+                  </span>
+                </div>
 
-      <Footer />
-    </div>
+                <div className="rounded-t-lg border border-border bg-muted px-3 py-2 text-center text-xs font-semibold text-muted-foreground flex items-center justify-center gap-1.5">
+                  <Bus className="w-3.5 h-3.5" /> Driver Cabin (Front)
+                </div>
+
+                <div className="grid grid-cols-4 gap-2 rounded-b-lg border border-t-0 border-border bg-muted/35 p-3 max-h-52 overflow-y-auto">
+                  {Array.from({ length: selectedTrip.totalSeats }, (_, i) => i + 1).map((seatNum) => {
+                    const isOccupied = tripDetails?.occupiedSeats?.includes(seatNum);
+                    const isSelected = selectedSeat === seatNum;
+
+                    return (
+                      <button
+                        key={seatNum}
+                        type="button"
+                        disabled={isOccupied}
+                        onClick={() => setSelectedSeat(seatNum)}
+                        className={`min-h-[44px] rounded-lg font-mono text-xs font-bold transition-colors flex items-center justify-center ${
+                          isOccupied
+                            ? 'bg-muted text-muted-foreground/50 cursor-not-allowed'
+                            : isSelected
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-card border border-border text-foreground hover:border-primary'
+                        }`}
+                      >
+                        {seatNum}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <Label htmlFor="passenger-name" className="text-xs font-semibold">
+                    Passenger Name
+                  </Label>
+                  <Input
+                    id="passenger-name"
+                    type="text"
+                    value={passengerName}
+                    onChange={(e) => setPassengerName(e.target.value)}
+                    placeholder="e.g. Tigist Haile"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="passenger-phone" className="text-xs font-semibold">
+                    Phone Number
+                  </Label>
+                  <Input
+                    id="passenger-phone"
+                    type="tel"
+                    value={passengerPhone}
+                    onChange={(e) => setPassengerPhone(e.target.value)}
+                    placeholder="+2519..."
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="payment-provider" className="text-xs font-semibold">
+                    Payment Method
+                  </Label>
+                  <select
+                    id="payment-provider"
+                    value={paymentProvider}
+                    onChange={(e) => setPaymentProvider(e.target.value as 'telebirr' | 'cbe_birr' | 'cash_at_station')}
+                    className="w-full h-11 rounded-lg border border-input bg-card px-3 text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="telebirr">Telebirr (Instant mobile payment)</option>
+                    <option value="cbe_birr">CBE Birr</option>
+                    <option value="cash_at_station">Cash at Campus Departure Gate</option>
+                  </select>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setSelectedTrip(null)}>
+                  Cancel
+                </Button>
+                <Button type="button" disabled={bookingLoading} onClick={handleBookSeat}>
+                  {bookingLoading
+                    ? 'Reserving...'
+                    : `Confirm Seat ${selectedSeat ? `#${selectedSeat}` : ''} • ${formatETB(selectedTrip.priceMinor)}`}
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {/* Telebirr Ticket Payment Dialog */}
+      <Dialog
+        open={Boolean(payModalTicket)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPayModalTicket(null);
+            setPayData(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Telebirr Ticket Settlement</DialogTitle>
+            <DialogDescription>
+              {payModalTicket
+                ? `Fare: ${formatETB(payData?.amountMinor ?? payModalTicket.amountMinor)}`
+                : ''}
+            </DialogDescription>
+          </DialogHeader>
+
+          {payLoading && !payData ? (
+            <LoadingState label="Initializing Telebirr checkout..." count={1} />
+          ) : payData ? (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-border bg-muted/50 p-4 space-y-2.5 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground font-semibold">Reference</span>
+                  <code className="font-mono font-bold text-foreground">{payData.providerReference}</code>
+                </div>
+                <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card p-2.5">
+                  <span className="font-mono font-black text-primary text-sm select-all">{payData.ussdDial}</span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(payData.ussdDial).catch(() => null);
+                      toast({ title: 'USSD dial string copied', variant: 'success' });
+                    }}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+                <p className="text-muted-foreground leading-relaxed">
+                  Dial the USSD code on your phone or use the pilot verification button below.
+                </p>
+                {payData.checkoutUrl && (
+                  <Button asChild variant="outline" size="sm" className="w-full">
+                    <a href={payData.checkoutUrl} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="w-3.5 h-3.5 mr-1.5" /> Open Telebirr Web Pay
+                    </a>
+                  </Button>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setPayModalTicket(null);
+                    setPayData(null);
+                  }}
+                >
+                  Close
+                </Button>
+                <Button
+                  type="button"
+                  disabled={payLoading}
+                  onClick={() => handleConfirmMockPayment(payData.providerReference)}
+                >
+                  {payLoading ? 'Verifying...' : 'Simulate Verified Payment'}
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Ticket Confirmation */}
+      <ConfirmDialog
+        open={Boolean(cancelTicketId)}
+        onOpenChange={(open) => {
+          if (!open) setCancelTicketId(null);
+        }}
+        title="Cancel ticket reservation?"
+        description="Your reserved seat will be released immediately for other students."
+        confirmLabel="Cancel Seat"
+        variant="destructive"
+        isLoading={cancelLoading}
+        onConfirm={handleConfirmCancelTicket}
+      />
+    </AppShell>
   );
 }

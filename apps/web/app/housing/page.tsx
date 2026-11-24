@@ -1,17 +1,27 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { AppShell } from '@/components/layout/app-shell';
+import { PageHeader } from '@/components/layout/page-header';
 import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
-import { Navbar } from '@/components/layout/navbar';
-import { Footer } from '@/components/layout/footer';
-import { Card, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { LoadingState, EmptyState } from '@/components/ui/state-views';
+import { useToast } from '@/components/ui/toast';
 import { formatETB } from '@/lib/utils';
-import { Home, MapPin, Droplets, Zap, Wifi, Calendar, CheckCircle2, X } from 'lucide-react';
+import { Home, MapPin, Droplets, Zap, Wifi, Calendar } from 'lucide-react';
 
 interface Landlord {
   displayName: string;
@@ -48,30 +58,30 @@ interface ViewingRequest {
   listing: HousingListing;
 }
 
+function getTomorrowMorningInput(): string {
+  const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  tomorrow.setHours(10, 0, 0, 0);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth() + 1)}-${pad(tomorrow.getDate())}T${pad(tomorrow.getHours())}:00`;
+}
+
 export default function HousingPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
+
   const [listings, setListings] = useState<HousingListing[]>([]);
   const [myViewings, setMyViewings] = useState<ViewingRequest[]>([]);
   const [activeTab, setActiveTab] = useState<'listings' | 'my-viewings'>('listings');
   const [loading, setLoading] = useState(true);
   const [propertyFilter, setPropertyFilter] = useState<string>('all');
 
-  // Viewing Request Modal state
   const [selectedListing, setSelectedListing] = useState<HousingListing | null>(null);
-  const [viewingDate, setViewingDate] = useState('');
-  const [studentPhone, setStudentPhone] = useState(user?.phone || '+251911002233');
+  const [viewingDate, setViewingDate] = useState(getTomorrowMorningInput);
+  const [studentPhone, setStudentPhone] = useState(user?.phone || '');
   const [viewingMessage, setViewingMessage] = useState('');
   const [submittingViewing, setSubmittingViewing] = useState(false);
-  const [successNotice, setSuccessNotice] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchListings();
-    if (user) {
-      fetchMyViewings();
-    }
-  }, [user]);
-
-  async function fetchListings() {
+  const fetchListings = useCallback(async () => {
     try {
       setLoading(true);
       const data = await apiClient.get<HousingListing[]>('/housing/listings');
@@ -81,16 +91,24 @@ export default function HousingPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  async function fetchMyViewings() {
+  const fetchMyViewings = useCallback(async () => {
     try {
       const data = await apiClient.get<ViewingRequest[]>('/housing/viewings/my');
       setMyViewings(data);
     } catch (err) {
       console.error('Failed to load viewing requests', err);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    fetchListings();
+    if (user) {
+      fetchMyViewings();
+      if (user.phone) setStudentPhone(user.phone);
+    }
+  }, [user, fetchListings, fetchMyViewings]);
 
   const filteredListings =
     propertyFilter === 'all'
@@ -110,89 +128,67 @@ export default function HousingPage() {
         message: viewingMessage,
       });
 
-      setSuccessNotice(`Viewing requested for ${selectedListing.title}! The landlord will contact you shortly.`);
+      toast({
+        title: 'Viewing requested',
+        description: `The landlord for ${selectedListing.title} will contact you shortly.`,
+        variant: 'success',
+      });
       setSelectedListing(null);
       setViewingMessage('');
       fetchMyViewings();
-      setTimeout(() => setSuccessNotice(null), 6000);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to submit viewing request';
-      alert(msg);
+      toast({
+        title: 'Request failed',
+        description: err instanceof Error ? err.message : 'Failed to submit viewing request',
+        variant: 'error',
+      });
     } finally {
       setSubmittingViewing(false);
     }
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-slate-50 text-slate-900 font-sans">
-      <Navbar />
+    <AppShell maxWidth="6xl">
+      <div className="space-y-6">
+        <PageHeader
+          title="Student Housing & Dorms"
+          description="Verified off-campus rooms, shared apartments, and studios near Haramaya Main Gate and Bate, audited for water, power, and WiFi."
+          badge={<Badge variant="info">Zero Broker Fees</Badge>}
+        />
 
-      <main className="max-w-6xl mx-auto px-4 py-8 flex-1 w-full space-y-8">
-        {/* Header */}
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
-            <span className="text-xs font-bold text-slate-500 tracking-wide uppercase">
-              Haramaya & Bate Accommodation
-            </span>
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
-            Student Housing & Dorms
-          </h1>
-          <p className="text-sm text-slate-600 max-w-2xl leading-relaxed">
-            Verified off-campus single rooms, shared apartments, and studios near Main Gate and Bate.
-            Audited for water reserves, backup generators, and WiFi connectivity.
-          </p>
-        </div>
-
-        {successNotice && (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>{successNotice}</span>
-            </div>
-            <button
-              onClick={() => setSuccessNotice(null)}
-              className="text-emerald-700 hover:text-emerald-900 font-bold ml-2"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
-        {/* Tabs & Filters */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-200 pb-4">
-          <div className="flex items-center gap-2">
+        {/* Tabs & Type Filter */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
+              type="button"
               variant={activeTab === 'listings' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setActiveTab('listings')}
-              className="h-9 font-bold text-xs"
             >
               Available Rooms ({listings.length})
             </Button>
             {user && (
               <Button
+                type="button"
                 variant={activeTab === 'my-viewings' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setActiveTab('my-viewings')}
-                className="h-9 font-bold text-xs"
               >
-                My Scheduled Viewings ({myViewings.length})
+                My Viewings ({myViewings.length})
               </Button>
             )}
           </div>
 
           {activeTab === 'listings' && (
-            <div className="flex items-center gap-1.5 text-xs font-medium">
-              <span className="text-slate-400 font-semibold mr-1">Type:</span>
+            <div className="flex flex-wrap items-center gap-1.5">
               {['all', 'room', 'shared', 'studio', 'apartment'].map((type) => (
                 <Button
                   key={type}
-                  variant={propertyFilter === type ? 'default' : 'outline'}
+                  type="button"
+                  variant={propertyFilter === type ? 'secondary' : 'outline'}
                   size="sm"
                   onClick={() => setPropertyFilter(type)}
-                  className="h-7 px-2.5 capitalize text-xs"
+                  className="capitalize rounded-full"
                 >
                   {type}
                 </Button>
@@ -201,27 +197,23 @@ export default function HousingPage() {
           )}
         </div>
 
-        {/* Content Section */}
         {activeTab === 'listings' ? (
           loading ? (
-            <div className="py-20 text-center text-slate-500 text-sm font-medium">
-              Loading housing listings near Haramaya campus...
-            </div>
+            <LoadingState label="Loading verified housing listings..." count={3} />
           ) : filteredListings.length === 0 ? (
-            <Card className="py-16 text-center border-slate-200">
-              <Home className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-              <p className="text-slate-600 font-semibold text-sm">No accommodation listings match this filter.</p>
-              <p className="text-slate-400 text-xs mt-1">Try another property type or check back soon.</p>
-            </Card>
+            <EmptyState
+              icon={<Home className="w-5 h-5" />}
+              title="No accommodation listings match this filter"
+              description="Try another property type or check back shortly."
+              actionLabel="Show All Property Types"
+              onAction={() => setPropertyFilter('all')}
+            />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {filteredListings.map((listing) => (
-                <Card
-                  key={listing.id}
-                  className="overflow-hidden flex flex-col justify-between border-slate-200 hover:border-teal-400/60 hover:shadow-xs transition"
-                >
+                <Card key={listing.id} className="overflow-hidden flex flex-col justify-between">
                   <div>
-                    <div className="relative h-44 bg-slate-100 w-full overflow-hidden">
+                    <div className="relative h-44 bg-muted w-full overflow-hidden border-b border-border">
                       {listing.imageUrl ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img
@@ -230,12 +222,12 @@ export default function HousingPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400">
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                           <Home className="w-10 h-10" />
                         </div>
                       )}
-                      <div className="absolute top-2.5 right-2.5">
-                        <Badge variant="secondary" className="capitalize text-[10px] font-bold shadow-xs">
+                      <div className="absolute top-3 right-3">
+                        <Badge variant="outline" className="capitalize bg-card/95">
                           {listing.propertyType}
                         </Badge>
                       </div>
@@ -243,30 +235,37 @@ export default function HousingPage() {
 
                     <div className="p-5 space-y-3">
                       <div>
-                        <h3 className="font-bold text-base text-slate-900 line-clamp-1">{listing.title}</h3>
-                        <p className="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400" /> {listing.location}
+                        <h2 className="font-display font-bold text-base text-foreground line-clamp-1">
+                          {listing.title}
+                        </h2>
+                        <p className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                          <MapPin className="w-3.5 h-3.5 shrink-0" /> {listing.location}
                         </p>
                       </div>
 
-                      <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                         {listing.description || 'Secure student room within walking distance to campus gates.'}
                       </p>
 
-                      {/* Utilities */}
-                      <div className="flex items-center gap-3 pt-2 text-xs text-slate-500 border-t border-slate-100">
+                      <div className="flex flex-wrap items-center gap-3 pt-2 text-xs border-t border-border">
                         <span
-                          className={`flex items-center gap-1 ${listing.hasWater ? 'text-teal-700 font-semibold' : 'text-slate-300 line-through'}`}
+                          className={`flex items-center gap-1 ${
+                            listing.hasWater ? 'text-teal-800 font-semibold' : 'text-muted-foreground/50 line-through'
+                          }`}
                         >
                           <Droplets className="w-3.5 h-3.5" /> Water
                         </span>
                         <span
-                          className={`flex items-center gap-1 ${listing.hasElectricity ? 'text-amber-700 font-semibold' : 'text-slate-300 line-through'}`}
+                          className={`flex items-center gap-1 ${
+                            listing.hasElectricity ? 'text-amber-800 font-semibold' : 'text-muted-foreground/50 line-through'
+                          }`}
                         >
                           <Zap className="w-3.5 h-3.5" /> Power
                         </span>
                         <span
-                          className={`flex items-center gap-1 ${listing.hasWifi ? 'text-indigo-700 font-semibold' : 'text-slate-300 line-through'}`}
+                          className={`flex items-center gap-1 ${
+                            listing.hasWifi ? 'text-primary font-semibold' : 'text-muted-foreground/50 line-through'
+                          }`}
                         >
                           <Wifi className="w-3.5 h-3.5" /> WiFi
                         </span>
@@ -274,10 +273,10 @@ export default function HousingPage() {
                     </div>
                   </div>
 
-                  <div className="p-5 pt-0 flex items-center justify-between border-t border-slate-100 mt-2">
+                  <div className="px-5 py-4 border-t border-border flex items-center justify-between gap-3 bg-muted/25">
                     <div>
-                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Monthly Rent</div>
-                      <div className="text-base font-black text-slate-900 font-mono">
+                      <div className="text-[11px] text-muted-foreground font-medium">Monthly Rent</div>
+                      <div className="font-mono text-base font-black text-foreground tabular-nums">
                         {formatETB(listing.rentMinor)}
                       </div>
                     </div>
@@ -285,12 +284,15 @@ export default function HousingPage() {
                       size="sm"
                       onClick={() => {
                         if (!user) {
-                          alert('Please sign in to schedule an in-person room viewing.');
+                          toast({
+                            title: 'Sign in required',
+                            description: 'Please sign in to schedule an in-person room viewing.',
+                            variant: 'warning',
+                          });
                           return;
                         }
                         setSelectedListing(listing);
                       }}
-                      className="h-8 font-bold text-xs bg-teal-600 hover:bg-teal-700 text-white"
                     >
                       Book Viewing
                     </Button>
@@ -299,150 +301,126 @@ export default function HousingPage() {
               ))}
             </div>
           )
+        ) : myViewings.length === 0 ? (
+          <EmptyState
+            icon={<Calendar className="w-5 h-5" />}
+            title="No scheduled viewings yet"
+            description="Browse available rooms and request an in-person walkthrough with a verified landlord."
+            actionLabel="Browse Available Rooms"
+            onAction={() => setActiveTab('listings')}
+          />
         ) : (
-          /* My Scheduled Viewings Tab */
-          myViewings.length === 0 ? (
-            <Card className="py-16 text-center border-slate-200">
-              <Calendar className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-              <p className="text-slate-600 font-semibold text-sm">You have no scheduled viewings yet.</p>
-              <p className="text-slate-400 text-xs mt-1">Explore available rooms above and schedule an in-person viewing.</p>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {myViewings.map((req) => (
-                <Card key={req.id} className="p-5 border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-sm text-slate-900">{req.listing.title}</h4>
-                      <Badge
-                        variant={
-                          req.status === 'accepted'
-                            ? 'success'
-                            : req.status === 'declined'
-                            ? 'danger'
-                            : 'warning'
-                        }
-                        className="text-[10px] uppercase font-bold"
-                      >
-                        {req.status}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-slate-500 flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5 text-slate-400" /> {req.listing.location} &bull;{' '}
-                      <span className="font-mono font-bold text-slate-700">
-                        {formatETB(req.listing.rentMinor)} / mo
-                      </span>
-                    </p>
-                    <p className="text-xs text-slate-600 flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400" /> Preferred Date:{' '}
-                      <strong className="text-slate-800 font-mono">
-                        {new Date(req.preferredDate).toLocaleString()}
-                      </strong>
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[11px] text-slate-400 block">Contact Phone: {req.studentPhone}</span>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )
-        )}
-      </main>
-
-      <Footer />
-
-      {/* Viewing Request Modal */}
-      {selectedListing && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md p-6 bg-white border-slate-200 shadow-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <CardTitle className="text-base font-bold text-slate-900">Schedule Room Viewing</CardTitle>
-              <button
-                onClick={() => setSelectedListing(null)}
-                className="text-slate-400 hover:text-slate-700 font-bold"
+          <div className="space-y-3">
+            {myViewings.map((req) => (
+              <Card
+                key={req.id}
+                className="p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
               >
-                <X className="w-4 h-4" />
-              </button>
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-display font-bold text-base text-foreground">{req.listing.title}</h3>
+                    <Badge
+                      variant={
+                        req.status === 'accepted'
+                          ? 'success'
+                          : req.status === 'declined'
+                          ? 'danger'
+                          : 'warning'
+                      }
+                    >
+                      {req.status.toUpperCase()}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5" /> {req.listing.location} &bull;{' '}
+                    <span className="font-mono font-bold text-foreground tabular-nums">
+                      {formatETB(req.listing.rentMinor)} / mo
+                    </span>
+                  </p>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5" /> Preferred:{' '}
+                    <span className="font-mono font-semibold text-foreground">
+                      {new Date(req.preferredDate).toLocaleString()}
+                    </span>
+                  </p>
+                </div>
+                <div className="text-xs font-mono text-muted-foreground">Phone: {req.studentPhone}</div>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Viewing Request Dialog */}
+      <Dialog
+        open={Boolean(selectedListing)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedListing(null);
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Schedule Room Viewing</DialogTitle>
+            <DialogDescription>
+              {selectedListing
+                ? `${selectedListing.title} • ${selectedListing.location} • ${formatETB(selectedListing.rentMinor)}/mo`
+                : ''}
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleRequestViewing} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="viewingDate" className="text-xs font-semibold">
+                Preferred Date &amp; Time
+              </Label>
+              <Input
+                id="viewingDate"
+                type="datetime-local"
+                required
+                value={viewingDate}
+                onChange={(e) => setViewingDate(e.target.value)}
+              />
             </div>
 
-            <div className="text-xs text-slate-600 space-y-0.5">
-              <p className="font-bold text-slate-900">{selectedListing.title}</p>
-              <p className="flex items-center gap-1 text-slate-500">
-                <MapPin className="w-3.5 h-3.5 text-slate-400" /> {selectedListing.location}
-              </p>
-              <p className="text-teal-800 font-bold font-mono">
-                {formatETB(selectedListing.rentMinor)} / month
-              </p>
+            <div className="space-y-1.5">
+              <Label htmlFor="studentPhone" className="text-xs font-semibold">
+                Student Phone Number
+              </Label>
+              <Input
+                id="studentPhone"
+                type="tel"
+                required
+                value={studentPhone}
+                onChange={(e) => setStudentPhone(e.target.value)}
+                placeholder="+251911002233"
+              />
             </div>
 
-            <form onSubmit={handleRequestViewing} className="space-y-3">
-              <div className="space-y-1">
-                <Label htmlFor="viewingDate" className="text-xs font-semibold text-slate-700">
-                  Preferred Date & Time
-                </Label>
-                <Input
-                  id="viewingDate"
-                  type="datetime-local"
-                  required
-                  value={viewingDate}
-                  onChange={(e) => setViewingDate(e.target.value)}
-                  className="h-10 text-xs"
-                />
-              </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="viewingMessage" className="text-xs font-semibold">
+                Notes for Landlord (Optional)
+              </Label>
+              <textarea
+                id="viewingMessage"
+                rows={3}
+                value={viewingMessage}
+                onChange={(e) => setViewingMessage(e.target.value)}
+                placeholder="e.g. 3rd year Software Engineering student looking to move next month."
+                className="w-full text-sm p-3 rounded-lg border border-input bg-card text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+            </div>
 
-              <div className="space-y-1">
-                <Label htmlFor="studentPhone" className="text-xs font-semibold text-slate-700">
-                  Student Phone Number
-                </Label>
-                <Input
-                  id="studentPhone"
-                  type="tel"
-                  required
-                  value={studentPhone}
-                  onChange={(e) => setStudentPhone(e.target.value)}
-                  placeholder="+251911002233"
-                  className="h-10 text-xs"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="viewingMessage" className="text-xs font-semibold text-slate-700">
-                  Notes for Landlord (Optional)
-                </Label>
-                <textarea
-                  id="viewingMessage"
-                  rows={2}
-                  value={viewingMessage}
-                  onChange={(e) => setViewingMessage(e.target.value)}
-                  placeholder="e.g. 3rd year Software Engineering student looking to move next month."
-                  className="w-full text-xs p-2.5 rounded-md border border-input bg-transparent shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-                />
-              </div>
-
-              <div className="pt-2 flex items-center justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedListing(null)}
-                  className="h-8 text-xs font-semibold"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={submittingViewing}
-                  size="sm"
-                  className="h-8 text-xs font-bold bg-teal-600 hover:bg-teal-700 text-white"
-                >
-                  {submittingViewing ? 'Sending Request...' : 'Confirm Viewing'}
-                </Button>
-              </div>
-            </form>
-          </Card>
-        </div>
-      )}
-    </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setSelectedListing(null)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={submittingViewing}>
+                {submittingViewing ? 'Sending...' : 'Confirm Viewing'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </AppShell>
   );
 }

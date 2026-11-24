@@ -1,35 +1,79 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useAuth } from '@/lib/auth-context';
 import { useCart } from '@/lib/cart-context';
+import { getPrimaryRoleLabel } from '@/lib/roles';
+import {
+  PRIMARY_NAV_ITEMS,
+  MORE_CAMPUS_ITEMS,
+  MOBILE_DRAWER_SECTIONS,
+  getRolePortalLinks,
+} from '@/lib/navigation';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Bus,
-  Home,
-  Calendar,
-  BookOpen,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   ShoppingCart,
-  Compass,
   Store,
   Shield,
   LogOut,
   Package,
   Clock,
   PhoneCall,
+  Menu,
+  ChevronDown,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-export function Navbar() {
+export function Navbar({
+  externalDrawerOpen,
+  onExternalDrawerOpenChange,
+}: {
+  externalDrawerOpen?: boolean;
+  onExternalDrawerOpenChange?: (open: boolean) => void;
+}) {
   const { user, logout } = useAuth();
   const { itemCount } = useCart();
+  const pathname = usePathname();
   const router = useRouter();
+  const [internalDrawerOpen, setInternalDrawerOpen] = useState(false);
+  const [eatTime, setEatTime] = useState('EAT');
+
+  const drawerOpen = externalDrawerOpen ?? internalDrawerOpen;
+  const setDrawerOpen = onExternalDrawerOpenChange ?? setInternalDrawerOpen;
+
+  useEffect(() => {
+    const updateClock = () => {
+      try {
+        const formatted = new Intl.DateTimeFormat('en-GB', {
+          timeZone: 'Africa/Addis_Ababa',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        }).format(new Date());
+        setEatTime(`${formatted} EAT`);
+      } catch {
+        setEatTime('EAT');
+      }
+    };
+    updateClock();
+    const timer = window.setInterval(updateClock, 30000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
+    setDrawerOpen(false);
     router.push('/login');
   };
 
@@ -43,194 +87,301 @@ export function Navbar() {
       .toUpperCase();
   };
 
-  const isMerchant = user?.roles?.includes('merchant') || user?.roles?.includes('admin');
-  const isAdmin = user?.roles?.includes('admin');
-  const primaryRole = user?.roles?.[0]
-    ? user.roles[0].charAt(0).toUpperCase() + user.roles[0].slice(1)
-    : 'Student';
+  const portalLinks = getRolePortalLinks(user?.roles);
+  const primaryRole = getPrimaryRoleLabel(user?.roles);
 
   return (
-    <header className="border-b border-slate-200 bg-white">
-      {/* Top Institutional Status & Emergency Bar */}
-      <div className="bg-slate-900 text-white text-xs px-4 sm:px-6 py-2">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span className="font-bold text-slate-100">Haramaya University</span>
-            <span className="text-slate-500">&bull;</span>
-            <span className="text-slate-300">Main Campus (Bate) &bull; Academic Term 2026/27</span>
+    <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-sm">
+      {/* Institutional Status & Emergency Strip */}
+      <div className="bg-[#11241A] text-stone-200 text-xs px-4 sm:px-6 py-1.5">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 shrink-0" aria-hidden="true" />
+            <span className="font-semibold text-white truncate">Haramaya University</span>
+            <span className="hidden sm:inline text-stone-400">&bull;</span>
+            <span className="hidden sm:inline text-stone-300">Main Campus (Bate)</span>
           </div>
 
-          <div className="flex items-center gap-4 text-slate-300">
-            <span className="font-mono flex items-center gap-1.5 text-slate-400">
-              <Clock className="w-3.5 h-3.5" /> 14:45 EAT
+          <div className="flex items-center gap-3 text-stone-300">
+            <span className="font-mono text-[11px] flex items-center gap-1 tabular-nums">
+              <Clock className="w-3 h-3 text-stone-400" />
+              <span>{eatTime}</span>
             </span>
-            <span className="text-slate-600">|</span>
+            <span className="text-stone-600" aria-hidden="true">|</span>
             <a
               href="tel:0255530112"
-              className="text-rose-300 hover:text-white font-semibold flex items-center gap-1 transition"
+              className="text-amber-300 hover:text-white font-semibold flex items-center gap-1 transition-colors"
             >
-              <PhoneCall className="w-3.5 h-3.5" /> Clinic Hotline: 025-553-0112
+              <PhoneCall className="w-3 h-3" />
+              <span>Clinic 025-553-0112</span>
             </a>
           </div>
         </div>
       </div>
 
       {/* Main Navigation Bar */}
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        
-        {/* Brand Logo */}
-        <Link
-          href="/"
-          className="font-black text-xl tracking-tight text-slate-900 flex items-center gap-2 transition hover:opacity-90"
-        >
-          <span className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white text-sm font-black shadow-xs">
-            C
-          </span>
-          <span>
-            Campus<span className="text-indigo-600">Flow</span>
-          </span>
-        </Link>
+      <nav aria-label="Primary navigation" className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Open campus menu"
+            className="md:hidden inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-background text-foreground hover:bg-accent transition-colors"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
 
-        {/* Primary Navigation Links (Student-Focused) */}
-        <div className="hidden md:flex items-center gap-6 text-xs font-semibold text-slate-600">
           <Link
-            href="/directory"
-            className="hover:text-indigo-600 transition flex items-center gap-1.5"
+            href="/"
+            className="font-display font-black text-lg sm:text-xl tracking-tight text-foreground flex items-center gap-2"
           >
-            <Compass className="w-4 h-4 text-slate-400" />
-            <span>Directory</span>
+            <span className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground text-xs font-black">
+              CF
+            </span>
+            <span>
+              Campus<span className="text-primary">Flow</span>
+            </span>
           </Link>
-          <Link
-            href="/transport"
-            className="hover:text-indigo-600 transition flex items-center gap-1.5"
-          >
-            <Bus className="w-4 h-4 text-slate-400" />
-            <span>Transport</span>
-          </Link>
-          <Link
-            href="/housing"
-            className="hover:text-indigo-600 transition flex items-center gap-1.5"
-          >
-            <Home className="w-4 h-4 text-slate-400" />
-            <span>Housing</span>
-          </Link>
-          <Link
-            href="/events"
-            className="hover:text-indigo-600 transition flex items-center gap-1.5"
-          >
-            <Calendar className="w-4 h-4 text-slate-400" />
-            <span>Events</span>
-          </Link>
-          <Link
-            href="/learning"
-            className="hover:text-indigo-600 transition flex items-center gap-1.5"
-          >
-            <BookOpen className="w-4 h-4 text-slate-400" />
-            <span>Academic</span>
-          </Link>
+        </div>
 
-          {/* Student Orders Link */}
+        {/* Desktop Primary Links */}
+        <div className="hidden md:flex items-center gap-1 text-sm font-medium">
+          {PRIMARY_NAV_ITEMS.map((item) => {
+            const isActive = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  'px-3 py-2 rounded-lg text-xs font-semibold transition-colors',
+                  isActive
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent',
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  'inline-flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold transition-colors',
+                  MORE_CAMPUS_ITEMS.some((item) => pathname.startsWith(item.href))
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent',
+                )}
+              >
+                <span>More Campus</span>
+                <ChevronDown className="h-3.5 w-3.5" />
+              </button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content
+                align="start"
+                sideOffset={8}
+                className="z-50 w-64 rounded-xl border border-border bg-popover p-1.5 shadow-sm text-popover-foreground animate-in fade-in-0 zoom-in-95"
+              >
+                {MORE_CAMPUS_ITEMS.map((item) => (
+                  <DropdownMenu.Item key={item.href} asChild>
+                    <Link
+                      href={item.href}
+                      className="flex flex-col rounded-lg px-3 py-2 text-left outline-none hover:bg-accent focus:bg-accent transition-colors"
+                    >
+                      <span className="text-xs font-semibold text-foreground">{item.label}</span>
+                      {item.description && (
+                        <span className="text-[11px] text-muted-foreground">{item.description}</span>
+                      )}
+                    </Link>
+                  </DropdownMenu.Item>
+                ))}
+                <DropdownMenu.Separator className="my-1 h-px bg-border" />
+                <DropdownMenu.Item asChild>
+                  <Link
+                    href="/merchant/register"
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-primary outline-none hover:bg-accent focus:bg-accent"
+                  >
+                    <Store className="h-3.5 w-3.5" />
+                    <span>Open a Campus Shop</span>
+                  </Link>
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+
           {user && (
             <Link
               href="/orders"
-              className="hover:text-indigo-600 transition flex items-center gap-1.5"
+              className={cn(
+                'px-3 py-2 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-colors',
+                pathname.startsWith('/orders')
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent',
+              )}
             >
-              <Package className="w-4 h-4 text-slate-400" />
+              <Package className="h-3.5 w-3.5" />
               <span>My Orders</span>
-            </Link>
-          )}
-
-          {/* Role-Gated: Merchant Portal (Only if merchant or admin) */}
-          {isMerchant && (
-            <Link
-              href="/merchant/dashboard"
-              className="text-amber-800 bg-amber-50 hover:bg-amber-100 px-2 py-1 rounded-md transition flex items-center gap-1.5 font-bold"
-            >
-              <Store className="w-3.5 h-3.5 text-amber-600" />
-              <span>Merchant</span>
-            </Link>
-          )}
-
-          {/* Role-Gated: Admin Portal (Only if admin) */}
-          {isAdmin && (
-            <Link
-              href="/admin/verifications"
-              className="text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-md transition flex items-center gap-1.5 font-bold"
-            >
-              <Shield className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Admin</span>
             </Link>
           )}
         </div>
 
-        {/* Right Section: Cart + User Profile / Auth */}
-        <div className="flex items-center gap-3">
-          
-          {/* Shopping Cart Trigger */}
+        {/* Right Actions: Role Portal Pills + Cart + Account */}
+        <div className="flex items-center gap-2">
+          {portalLinks.length > 0 && (
+            <div className="hidden lg:flex items-center gap-1.5">
+              {portalLinks.map((portal) => (
+                <Link
+                  key={portal.href}
+                  href={portal.href}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors',
+                    portal.badge === 'ADMIN'
+                      ? 'border-rose-200 bg-rose-50 text-rose-900 hover:bg-rose-100'
+                      : 'border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100',
+                  )}
+                >
+                  {portal.badge === 'ADMIN' ? (
+                    <Shield className="h-3.5 w-3.5" />
+                  ) : (
+                    <Store className="h-3.5 w-3.5" />
+                  )}
+                  <span>{portal.label}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+
           <Link
             href="/cart"
-            className="relative p-2 rounded-lg text-slate-700 hover:text-indigo-600 hover:bg-slate-100 transition flex items-center gap-1.5 text-xs font-bold"
-            title="View Shopping Cart"
+            aria-label="View pickup cart"
+            className="relative inline-flex min-h-[44px] sm:min-h-[38px] items-center gap-1.5 rounded-lg border border-border bg-background px-3 text-xs font-semibold text-foreground hover:bg-accent transition-colors"
           >
-            <ShoppingCart className="w-4 h-4 text-slate-600" />
+            <ShoppingCart className="h-4 w-4 text-primary" />
             <span className="hidden sm:inline">Cart</span>
             {itemCount > 0 && (
-              <Badge
-                variant="default"
-                className="h-4 min-w-[16px] px-1 text-[10px] font-black rounded-full bg-indigo-600 text-white"
-              >
+              <Badge variant="secondary" className="h-5 min-w-[20px] justify-center px-1.5 font-mono text-[10px] font-bold">
                 {itemCount}
               </Badge>
             )}
           </Link>
 
-          {/* User Account / Auth Actions */}
           {user ? (
-            <div className="flex items-center gap-3 pl-3 border-l border-slate-200">
+            <div className="flex items-center gap-1.5 pl-1.5 border-l border-border">
               <Link
                 href="/profile"
-                className="flex items-center gap-2 p-1 rounded-lg hover:bg-slate-100 transition group"
-                title="View Profile & Digital ID"
+                className="flex items-center gap-2 rounded-lg px-1.5 py-1 hover:bg-accent transition-colors"
+                title="Profile & Digital Student ID"
               >
-                <Avatar className="h-8 w-8 border border-slate-200 bg-indigo-50 group-hover:border-indigo-400 transition">
-                  <AvatarFallback className="text-xs font-bold bg-indigo-100 text-indigo-700 group-hover:bg-indigo-600 group-hover:text-white transition">
+                <Avatar className="h-8 w-8 border border-border bg-primary-50">
+                  <AvatarFallback className="text-xs font-bold bg-primary-50 text-primary">
                     {getInitials(user.displayName)}
                   </AvatarFallback>
                 </Avatar>
-                <div className="hidden lg:flex flex-col text-left">
-                  <span className="text-xs font-bold leading-tight text-slate-900 group-hover:text-indigo-600 transition truncate max-w-[130px]">
+                <div className="hidden xl:flex flex-col text-left">
+                  <span className="text-xs font-semibold leading-tight text-foreground truncate max-w-[120px]">
                     {user.displayName}
                   </span>
-                  <span className="text-[10px] font-semibold text-indigo-700">
-                    {primaryRole}
-                  </span>
+                  <span className="text-[10px] font-semibold text-primary">{primaryRole}</span>
                 </div>
               </Link>
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon"
                 onClick={handleLogout}
-                className="h-8 px-2 text-rose-600 hover:bg-rose-50 text-xs font-semibold"
+                aria-label="Sign out"
                 title="Sign Out"
+                className="text-destructive hover:bg-rose-50"
               >
-                <LogOut className="w-3.5 h-3.5 mr-1" />
-                <span className="hidden sm:inline">Sign Out</span>
+                <LogOut className="h-4 w-4" />
               </Button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" asChild className="h-8 text-xs font-semibold">
+            <div className="flex items-center gap-1.5">
+              <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex">
                 <Link href="/login">Sign In</Link>
               </Button>
-              <Button size="sm" asChild className="h-8 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs">
+              <Button size="sm" asChild>
                 <Link href="/register">Sign Up</Link>
               </Button>
             </div>
           )}
-
         </div>
       </nav>
+
+      {/* Mobile Navigation Drawer */}
+      <Dialog open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <DialogContent className="max-w-sm p-5">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="w-7 h-7 rounded-md bg-primary flex items-center justify-center text-primary-foreground text-xs font-black">
+                CF
+              </span>
+              <span>CampusFlow Navigation</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-5 py-1">
+            {MOBILE_DRAWER_SECTIONS.map((section) => (
+              <div key={section.title} className="space-y-1.5">
+                <div className="text-xs font-bold text-muted-foreground">{section.title}</div>
+                <div className="grid grid-cols-1 gap-1">
+                  {section.items.map((item) => {
+                    const isActive = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setDrawerOpen(false)}
+                        className={cn(
+                          'min-h-[44px] flex items-center justify-between rounded-lg px-3 text-sm font-medium transition-colors',
+                          isActive
+                            ? 'bg-primary text-primary-foreground font-semibold'
+                            : 'bg-muted/50 text-foreground hover:bg-accent',
+                        )}
+                      >
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+
+            {portalLinks.length > 0 && (
+              <div className="space-y-1.5 pt-2 border-t border-border">
+                <div className="text-xs font-bold text-muted-foreground">Role Portals</div>
+                <div className="grid grid-cols-1 gap-1.5">
+                  {portalLinks.map((portal) => (
+                    <Link
+                      key={portal.href}
+                      href={portal.href}
+                      onClick={() => setDrawerOpen(false)}
+                      className="min-h-[44px] flex items-center justify-between rounded-lg border border-border bg-card px-3 text-sm font-semibold text-foreground hover:bg-accent"
+                    >
+                      <span>{portal.label}</span>
+                      <Badge variant={portal.badge === 'ADMIN' ? 'danger' : 'warning'}>{portal.badge}</Badge>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {!user && (
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border">
+                <Button asChild variant="outline" onClick={() => setDrawerOpen(false)}>
+                  <Link href="/login">Sign In</Link>
+                </Button>
+                <Button asChild onClick={() => setDrawerOpen(false)}>
+                  <Link href="/register">Sign Up</Link>
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </header>
   );
 }

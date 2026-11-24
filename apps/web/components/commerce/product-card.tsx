@@ -21,15 +21,17 @@ export function ProductCard({
   onAddToCart,
 }: ProductCardProps) {
   return (
-    <Card className="flex flex-col justify-between hover:border-indigo-200 transition">
+    <Card className="p-5 flex flex-col justify-between hover:border-primary/40 transition-colors">
       <div>
-        <div className="text-xs text-indigo-600 font-medium mb-1">{businessName}</div>
-        <h3 className="font-semibold text-slate-900 text-lg">{name}</h3>
-        {description && <p className="text-slate-500 text-sm mt-1 line-clamp-2">{description}</p>}
+        <div className="text-xs text-primary font-semibold mb-1">{businessName}</div>
+        <h3 className="font-display font-bold text-foreground text-base">{name}</h3>
+        {description && (
+          <p className="text-muted-foreground text-xs mt-1 line-clamp-2 leading-relaxed">{description}</p>
+        )}
       </div>
 
-      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-        <span className="font-bold text-slate-900">{formatETB(priceMinor)}</span>
+      <div className="mt-4 pt-3 border-t border-border flex items-center justify-between gap-2">
+        <span className="font-mono font-bold text-foreground tabular-nums">{formatETB(priceMinor)}</span>
         <Button size="sm" onClick={() => onAddToCart?.(id)}>
           Add to Cart
         </Button>

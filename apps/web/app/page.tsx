@@ -1,560 +1,577 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Navbar } from '@/components/layout/navbar';
-import { Footer } from '@/components/layout/footer';
-import { QRCodeSVG } from 'qrcode.react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { AppShell } from '@/components/layout/app-shell';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { TicketStub } from '@/components/ui/ticket-stub';
+import { LoadingState, EmptyState } from '@/components/ui/state-views';
+import { useToast } from '@/components/ui/toast';
+import { useAuth } from '@/lib/auth-context';
+import { apiClient } from '@/lib/api-client';
+import { formatETB } from '@/lib/utils';
 import {
   Bus,
   Coffee,
   Home,
   BookOpen,
-  Store,
-  GraduationCap,
-  ShieldCheck,
+  Calendar,
+  Wrench,
+  Tag,
   Search,
   PhoneCall,
   CreditCard,
-  Download,
-  Check,
   ChevronRight,
+  Megaphone,
+  Store,
+  ShieldCheck,
+  GraduationCap,
+  Copy,
+  LogIn,
+  ArrowRight,
+  MapPin,
 } from 'lucide-react';
 
-export default function HomePage() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState<'all' | 'food' | 'transport' | 'housing' | 'academic'>('all');
-  const [copiedAccount, setCopiedAccount] = useState<string | null>(null);
+interface TripSummary {
+  id: string;
+  vehicleType: string;
+  departureTime: string;
+  availableSeats: number;
+  priceMinor: number | string;
+  operator?: { name: string };
+  route: {
+    origin: string;
+    destination: string;
+    departureStation?: string;
+    estimatedDurationMin?: number;
+  };
+}
 
-  const copyCreds = (email: string) => {
-    navigator.clipboard.writeText(`${email}\npassword123`);
-    setCopiedAccount(email);
-    setTimeout(() => setCopiedAccount(null), 2000);
+interface BusinessSummary {
+  id: string;
+  name: string;
+  description: string | null;
+  products?: { id: string; name: string; priceMinor: number | string }[];
+}
+
+interface AnnouncementSummary {
+  id: string;
+  title: string;
+  body: string;
+  createdAt: string;
+}
+
+interface StudentMe {
+  studentIdNumber?: string;
+  department?: string;
+  yearOfStudy?: number;
+}
+
+interface WalletMe {
+  balanceMinor?: number | string;
+  currency?: string;
+}
+
+export default function HomePage() {
+  const router = useRouter();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [trips, setTrips] = useState<TripSummary[]>([]);
+  const [businesses, setBusinesses] = useState<BusinessSummary[]>([]);
+  const [announcements, setAnnouncements] = useState<AnnouncementSummary[]>([]);
+  const [studentProfile, setStudentProfile] = useState<StudentMe | null>(null);
+  const [wallet, setWallet] = useState<WalletMe | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [tripsFailed, setTripsFailed] = useState(false);
+  const [bizFailed, setBizFailed] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadPulse() {
+      setIsLoading(true);
+      try {
+        const [campusesRes, tripsRes, bizRes] = await Promise.allSettled([
+          apiClient<{ id: string }[]>('/campuses'),
+          apiClient<TripSummary[]>('/transport/trips'),
+          apiClient<BusinessSummary[]>('/businesses'),
+        ]);
+
+        if (!active) return;
+
+        setTripsFailed(tripsRes.status === 'rejected');
+        setBizFailed(bizRes.status === 'rejected');
+
+        if (tripsRes.status === 'fulfilled') {
+          setTrips(tripsRes.value.slice(0, 3));
+        }
+
+        if (bizRes.status === 'fulfilled') {
+          setBusinesses(bizRes.value.slice(0, 4));
+        }
+
+        if (campusesRes.status === 'fulfilled' && campusesRes.value.length > 0) {
+          const campusId = campusesRes.value[0].id;
+          const ann = await apiClient<AnnouncementSummary[]>(`/announcements?campusId=${campusId}`).catch(() => []);
+          if (active) setAnnouncements(ann.slice(0, 1));
+        }
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    }
+
+    loadPulse();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setStudentProfile(null);
+      setWallet(null);
+      return;
+    }
+    apiClient<StudentMe>('/student/me').then(setStudentProfile).catch(() => null);
+    apiClient<WalletMe>('/wallet/me').then(setWallet).catch(() => null);
+  }, [user]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    router.push(q ? `/directory?q=${encodeURIComponent(q)}` : '/directory');
   };
 
+  const copyCredentials = async (label: string, email: string) => {
+    try {
+      await navigator.clipboard.writeText(`${email}\npassword123`);
+      toast({
+        title: `${label} credentials copied`,
+        description: `${email} (password: password123)`,
+        variant: 'success',
+      });
+    } catch {
+      toast({
+        title: 'Copy unavailable',
+        description: `Use ${email} / password123 on Sign In.`,
+        variant: 'warning',
+      });
+    }
+  };
+
+  const quickModules = [
+    { href: '/directory', label: 'Cafeterias & Shops', icon: Coffee, tone: 'text-primary' },
+    { href: '/transport', label: 'Bus Shuttles', icon: Bus, tone: 'text-secondary' },
+    { href: '/housing', label: 'Verified Housing', icon: Home, tone: 'text-teal-700' },
+    { href: '/learning', label: 'Past Papers Vault', icon: BookOpen, tone: 'text-primary' },
+    { href: '/events', label: 'Campus Events', icon: Calendar, tone: 'text-secondary' },
+    { href: '/bookings', label: 'Service Bookings', icon: Wrench, tone: 'text-foreground' },
+    { href: '/marketplace', label: 'Student Market', icon: Tag, tone: 'text-primary' },
+    { href: '/maintenance', label: 'Dorm Maintenance', icon: ShieldCheck, tone: 'text-secondary' },
+  ];
+
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-slate-100 text-slate-900 font-sans selection:bg-indigo-600 selection:text-white">
-      <Navbar />
-
-      {/* Main Workspace Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full space-y-6">
-
-        {/* Command & Quick Search Bar */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
-          <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search dishes, shuttle lines, study rooms, course exam papers, or professors..."
-              className="w-full pl-10 pr-24 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-indigo-600 transition"
-            />
-            <Link
-              href={`/directory?q=${encodeURIComponent(searchQuery)}`}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-md hover:bg-indigo-700 transition"
-            >
-              Search
-            </Link>
-          </div>
-
-          {/* Category Tabs */}
-          <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100 text-xs">
-            <span className="text-slate-400 font-medium">Quick Views:</span>
-            {[
-              { id: 'all', label: 'All Campus Services' },
-              { id: 'food', label: 'Food & Cafeterias' },
-              { id: 'transport', label: 'Shuttles & Buses' },
-              { id: 'housing', label: 'Dorm & Rooms' },
-              { id: 'academic', label: 'Exam Papers Vault' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveCategory(tab.id as any)}
-                className={`px-3 py-1 rounded-md font-semibold transition ${
-                  activeCategory === tab.id
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* 2-Column Responsive Workspace Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          
-          {/* Main Stage (8 cols on desktop) */}
-          <div className="lg:col-span-8 space-y-6">
-
-            {/* Section 1: Live Shuttle Departures */}
-            {(activeCategory === 'all' || activeCategory === 'transport') && (
-              <section className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                      <Bus className="w-4 h-4 text-amber-600" /> Live Shuttle Departures
-                    </h2>
-                    <p className="text-xs text-slate-500 mt-0.5">Real-time gate departures with reserved seating and QR boarding passes</p>
-                  </div>
-                  <Link href="/transport" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
-                    View All Routes <ChevronRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-
-                <div className="divide-y divide-slate-100">
-                  {/* Route 1 */}
-                  <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold bg-amber-100 text-amber-900 px-2 py-0.5 rounded">
-                          Leaves in 12 min
-                        </span>
-                        <span className="text-xs text-slate-400 font-mono">Toyota Coaster (Plate 3-48210)</span>
-                      </div>
-                      <div className="text-sm font-bold text-slate-900">
-                        Main Gate 1 &rarr; Harar Health Science Campus
-                      </div>
-                      <div className="text-xs text-slate-500">
-                        6 seats open &bull; Est. travel time: 25 mins &bull; Drop-off at Jugol Gate
-                      </div>
-                    </div>
-                    <div className="flex items-center sm:flex-col sm:items-end justify-between gap-2">
-                      <div className="text-sm font-bold text-slate-900">15.00 ETB</div>
-                      <Link
-                        href="/transport"
-                        className="px-3.5 py-1.5 bg-amber-600 text-white text-xs font-bold rounded-lg hover:bg-amber-700 transition"
-                      >
-                        Reserve Seat
-                      </Link>
-                    </div>
-                  </div>
-
-                  {/* Route 2 */}
-                  <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
-                          Departs 16:00
-                        </span>
-                        <span className="text-xs text-slate-400 font-mono">Minibus Express (Plate 3-19402)</span>
-                      </div>
-                      <div className="text-sm font-bold text-slate-900">
-                        Main Campus &rarr; Dire Dawa (Meskel Square)
-                      </div>
-                      <div className="text-xs text-slate-500">
-                        11 seats open &bull; Direct expressway route &bull; Air conditioned
-                      </div>
-                    </div>
-                    <div className="flex items-center sm:flex-col sm:items-end justify-between gap-2">
-                      <div className="text-sm font-bold text-slate-900">45.00 ETB</div>
-                      <Link
-                        href="/transport"
-                        className="px-3.5 py-1.5 bg-slate-800 text-white text-xs font-bold rounded-lg hover:bg-slate-900 transition"
-                      >
-                        Reserve Seat
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            )}
-
-            {/* Section 2: Fast Food & Buna Pre-orders */}
-            {(activeCategory === 'all' || activeCategory === 'food') && (
-              <section className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                      <Coffee className="w-4 h-4 text-indigo-600" /> Cafeterias & Pre-Orders
-                    </h2>
-                    <p className="text-xs text-slate-500 mt-0.5">Skip counter lines with live preparation updates and pickup chime alerts</p>
-                  </div>
-                  <Link href="/directory" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
-                    All Menus <ChevronRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-
-                <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {/* Dish 1 */}
-                  <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50 flex flex-col justify-between space-y-3">
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-indigo-700 bg-indigo-100 px-1.5 py-0.5 rounded">
-                          10 min prep
-                        </span>
-                        <span className="text-xs font-mono font-bold text-slate-900">85.00 ETB</span>
-                      </div>
-                      <div className="text-sm font-bold text-slate-900 mt-2">Injera with Shiro & Salad</div>
-                      <div className="text-xs text-slate-500 mt-0.5">Haramaya Central Cafeteria</div>
-                    </div>
-                    <Link
-                      href="/directory"
-                      className="w-full text-center py-1.5 bg-indigo-600 text-white text-xs font-bold rounded hover:bg-indigo-700 transition"
-                    >
-                      Order Meal
-                    </Link>
-                  </div>
-
-                  {/* Dish 2 */}
-                  <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50 flex flex-col justify-between space-y-3">
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
-                          8 min prep
-                        </span>
-                        <span className="text-xs font-mono font-bold text-slate-900">65.00 ETB</span>
-                      </div>
-                      <div className="text-sm font-bold text-slate-900 mt-2">Special Ful with Egg & Oil</div>
-                      <div className="text-xs text-slate-500 mt-0.5">Bate Green Cafe &bull; Fresh bread</div>
-                    </div>
-                    <Link
-                      href="/directory"
-                      className="w-full text-center py-1.5 bg-indigo-600 text-white text-xs font-bold rounded hover:bg-indigo-700 transition"
-                    >
-                      Order Meal
-                    </Link>
-                  </div>
-
-                  {/* Dish 3 */}
-                  <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50 flex flex-col justify-between space-y-3">
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
-                          Ready Now
-                        </span>
-                        <span className="text-xs font-mono font-bold text-slate-900">35.00 ETB</span>
-                      </div>
-                      <div className="text-sm font-bold text-slate-900 mt-2">Harar Buna & Sambusa (2x)</div>
-                      <div className="text-xs text-slate-500 mt-0.5">Student Lounge &bull; Traditional brew</div>
-                    </div>
-                    <Link
-                      href="/directory"
-                      className="w-full text-center py-1.5 bg-indigo-600 text-white text-xs font-bold rounded hover:bg-indigo-700 transition"
-                    >
-                      Order Meal
-                    </Link>
-                  </div>
-                </div>
-              </section>
-            )}
-
-            {/* Section 3: Verified Student Housing */}
-            {(activeCategory === 'all' || activeCategory === 'housing') && (
-              <section className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                      <Home className="w-4 h-4 text-teal-600" /> Verified Student Housing
-                    </h2>
-                    <p className="text-xs text-slate-500 mt-0.5">Audited off-campus rooms in Bate with verified water, power backup, and zero broker fees</p>
-                  </div>
-                  <Link href="/housing" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
-                    All Listings <ChevronRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-
-                <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Listing 1 */}
-                  <div className="p-4 rounded-lg border border-slate-200 bg-slate-50 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-teal-900 bg-teal-100 px-2 py-0.5 rounded">
-                        450m from Gate 2
-                      </span>
-                      <span className="text-xs font-mono font-bold text-slate-900">1,400 ETB / mo</span>
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-slate-900">Single Dorm Room (Concrete Floor)</div>
-                      <div className="text-xs text-slate-600 mt-1">
-                        Water Tank Reserve &bull; Backup Generator &bull; Private Key & Padlock
-                      </div>
-                    </div>
-                    <Link
-                      href="/housing"
-                      className="block text-center py-1.5 bg-teal-600 text-white text-xs font-bold rounded hover:bg-teal-700 transition"
-                    >
-                      View Details & Landlord Contact
-                    </Link>
-                  </div>
-
-                  {/* Listing 2 */}
-                  <div className="p-4 rounded-lg border border-slate-200 bg-slate-50 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-700 bg-slate-200 px-2 py-0.5 rounded">
-                        Bate Town Center
-                      </span>
-                      <span className="text-xs font-mono font-bold text-slate-900">950 ETB / student</span>
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-slate-900">Shared 2-Bed Room (Near Market)</div>
-                      <div className="text-xs text-slate-600 mt-1">
-                        High-speed WiFi included &bull; Shared Kitchen & Bathroom &bull; Gated compound
-                      </div>
-                    </div>
-                    <Link
-                      href="/housing"
-                      className="block text-center py-1.5 bg-slate-800 text-white text-xs font-bold rounded hover:bg-slate-900 transition"
-                    >
-                      View Details & Landlord Contact
-                    </Link>
-                  </div>
-                </div>
-              </section>
-            )}
-
-            {/* Section 4: Academic Vault (Past Papers & Notes) */}
-            {(activeCategory === 'all' || activeCategory === 'academic') && (
-              <section className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                      <BookOpen className="w-4 h-4 text-cyan-700" /> Academic Resource Vault
-                    </h2>
-                    <p className="text-xs text-slate-500 mt-0.5">Open peer repository of past exam papers, lecture notes, and lab manuals</p>
-                  </div>
-                  <Link href="/learning" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
-                    Explore Repository <ChevronRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-
-                <div className="divide-y divide-slate-100 text-xs">
-                  <div className="p-3.5 flex items-center justify-between hover:bg-slate-50 transition">
-                    <div>
-                      <span className="font-mono font-bold text-slate-800">SEng 3122: Software Architecture</span>
-                      <div className="text-slate-500 text-[11px] mt-0.5">Final Exam with Answer Key (2025/26) &bull; PDF (2.4 MB)</div>
-                    </div>
-                    <Link
-                      href="/learning"
-                      className="px-3 py-1 bg-slate-100 text-slate-700 hover:bg-slate-200 font-semibold rounded flex items-center gap-1"
-                    >
-                      <Download className="w-3.5 h-3.5" /> Download
-                    </Link>
-                  </div>
-
-                  <div className="p-3.5 flex items-center justify-between hover:bg-slate-50 transition">
-                    <div>
-                      <span className="font-mono font-bold text-slate-800">Agri 2041: Soil Fertility & Crop Nutrition</span>
-                      <div className="text-slate-500 text-[11px] mt-0.5">Midterm Review & Lab Exercise Sheets &bull; PDF (4.1 MB)</div>
-                    </div>
-                    <Link
-                      href="/learning"
-                      className="px-3 py-1 bg-slate-100 text-slate-700 hover:bg-slate-200 font-semibold rounded flex items-center gap-1"
-                    >
-                      <Download className="w-3.5 h-3.5" /> Download
-                    </Link>
-                  </div>
-                </div>
-              </section>
-            )}
-
-          </div>
-
-          {/* Utility Rail (4 cols on desktop) */}
-          <div className="lg:col-span-4 space-y-6">
-
-            {/* Card 1: Official Digital Student ID Pass */}
-            <div className="bg-slate-900 text-white rounded-xl p-5 border border-slate-800 shadow-sm space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded bg-indigo-600 flex items-center justify-center font-bold text-xs">
-                    HU
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold leading-none">Haramaya University</div>
-                    <div className="text-[10px] text-slate-400">Digital Student Pass</div>
-                  </div>
-                </div>
-                <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-mono font-bold border border-emerald-500/30">
-                  VERIFIED
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="w-16 h-16 bg-slate-800 rounded-lg border border-slate-700 flex items-center justify-center text-slate-400">
-                  <GraduationCap className="w-8 h-8" />
-                </div>
-                <div className="space-y-0.5 text-xs">
-                  <div className="font-bold text-white text-sm">Sample Student</div>
-                  <div className="font-mono text-indigo-300 text-[11px]">ID: HU/00000/00 (Example)</div>
-                  <div className="text-slate-400 text-[11px]">Faculty &bull; Year (Example)</div>
-                </div>
-              </div>
-
-              <div className="bg-white p-3 rounded-lg flex items-center justify-between gap-3 text-slate-900">
-                <div className="w-14 h-14 bg-white p-1 rounded border border-slate-200 flex items-center justify-center shrink-0">
-                  <QRCodeSVG
-                    value="https://campusflow.haramaya.edu.et/verify/id/HU-SAMPLE-PASS"
-                    size={48}
-                    level="M"
-                    includeMargin={false}
-                  />
-                </div>
-                <div className="text-right text-[11px] text-slate-600">
-                  <div className="font-bold text-slate-900">Dynamic Gate QR</div>
-                  <div className="text-[10px] text-slate-500 font-mono">Refreshes every 30s</div>
-                  <div className="text-[10px] text-emerald-700 font-semibold">Offline Validated</div>
-                </div>
-              </div>
-
-              <div className="text-[11px] text-slate-400 flex items-center justify-between pt-1">
-                <span>Validity: 30 Jul 2027</span>
-                <span className="font-mono">Gate 1 &bull; Library Access</span>
-              </div>
+    <AppShell>
+      <div className="space-y-6">
+        {/* Daylight Search & Command Strip */}
+        <section className="rounded-2xl border border-border bg-card p-5 sm:p-6 space-y-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <h1 className="font-display text-2xl sm:text-3xl font-black text-foreground">
+                Haramaya Campus Pulse
+              </h1>
+              <p className="text-sm text-muted-foreground max-w-2xl">
+                Live cafeteria menus, Dire Dawa &amp; Harar shuttle seats, verified off-campus rooms, and exam archives.
+              </p>
             </div>
-
-            {/* Card 2: Campus Digital Wallet */}
-            <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                  <CreditCard className="w-4 h-4 text-indigo-600" /> Campus Digital Wallet
-                </div>
-                <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-bold border border-emerald-200">
-                  Zero Fee
-                </span>
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="text-xs font-bold text-slate-900">
-                  Integrated Telebirr &amp; CBE Birr
-                </div>
-                <p className="text-[11px] text-slate-600 leading-relaxed">
-                  Fast cashless checkout across campus cafeterias, bus shuttles, stationery printing, and dorm deposits with instant USSD or dynamic QR settlement.
-                </p>
-              </div>
-
-              <div className="space-y-1 pt-2 border-t border-slate-100 text-[11px] text-slate-600 font-medium">
-                <div className="flex items-center justify-between">
-                  <span>Student Transfer Fee:</span>
-                  <span className="font-bold text-emerald-700">0.00 ETB (100% Free)</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Top-Up Methods:</span>
-                  <span className="font-semibold text-slate-800">Telebirr &bull; CBE Birr</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Accounting Standard:</span>
-                  <span className="font-mono text-slate-800">Integer Cents (Zero Loss)</span>
-                </div>
-              </div>
-
-              <div className="pt-1">
-                <Link
-                  href="/orders"
-                  className="block w-full py-2 text-center font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs transition shadow-xs"
-                >
-                  Manage Wallet &amp; Top Up &rarr;
+            <div className="flex items-center gap-2 shrink-0">
+              <Button asChild variant="outline" size="sm">
+                <Link href="/merchant/register">
+                  <Store className="h-3.5 w-3.5 mr-1.5 text-primary" />
+                  Open a Campus Shop
                 </Link>
-              </div>
+              </Button>
             </div>
-
-            {/* Card 3: Emergency & Campus Hotlines */}
-            <div className="bg-rose-50 border border-rose-200 rounded-xl p-5 space-y-3 text-xs">
-              <div className="font-bold text-rose-900 flex items-center gap-1.5">
-                <PhoneCall className="w-4 h-4 text-rose-600" /> Emergency Hotlines
-              </div>
-              <div className="space-y-2 text-slate-700">
-                <div className="flex items-center justify-between">
-                  <span>Campus Clinic (24/7):</span>
-                  <a href="tel:0255530112" className="font-mono font-bold text-rose-700 hover:underline">
-                    025-553-0112
-                  </a>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Security Patrol Dispatch:</span>
-                  <a href="tel:0255530333" className="font-mono font-bold text-rose-700 hover:underline">
-                    025-553-0333
-                  </a>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Bate Police Sub-Station:</span>
-                  <a href="tel:0255530991" className="font-mono font-bold text-slate-900 hover:underline">
-                    025-553-0991
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* Card 4: Pre-Seeded Pilot Credentials Switcher */}
-            <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-slate-600" /> Pilot Sandbox Credentials
-                </div>
-                <span className="text-[10px] text-slate-400">Click to Copy</span>
-              </div>
-
-              <div className="space-y-2 text-xs">
-                {/* Student */}
-                <button
-                  onClick={() => copyCreds('student@haramaya.edu.et')}
-                  className="w-full text-left p-2.5 rounded-lg border border-slate-200 hover:border-indigo-400 bg-slate-50 transition flex items-center justify-between"
-                >
-                  <div>
-                    <div className="font-bold text-slate-800 flex items-center gap-1">
-                      <GraduationCap className="w-3.5 h-3.5 text-indigo-600" /> Student
-                    </div>
-                    <div className="text-slate-500 font-mono text-[11px]">student@haramaya.edu.et</div>
-                  </div>
-                  {copiedAccount === 'student@haramaya.edu.et' ? (
-                    <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5">
-                      <Check className="w-3 h-3" /> Copied
-                    </span>
-                  ) : (
-                    <span className="text-[10px] text-slate-400 font-mono">pass: password123</span>
-                  )}
-                </button>
-
-                {/* Merchant */}
-                <button
-                  onClick={() => copyCreds('merchant@haramayacafe.et')}
-                  className="w-full text-left p-2.5 rounded-lg border border-slate-200 hover:border-amber-400 bg-slate-50 transition flex items-center justify-between"
-                >
-                  <div>
-                    <div className="font-bold text-slate-800 flex items-center gap-1">
-                      <Store className="w-3.5 h-3.5 text-amber-600" /> Merchant
-                    </div>
-                    <div className="text-slate-500 font-mono text-[11px]">merchant@haramayacafe.et</div>
-                  </div>
-                  {copiedAccount === 'merchant@haramayacafe.et' ? (
-                    <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5">
-                      <Check className="w-3 h-3" /> Copied
-                    </span>
-                  ) : (
-                    <span className="text-[10px] text-slate-400 font-mono">pass: password123</span>
-                  )}
-                </button>
-
-                {/* Admin */}
-                <button
-                  onClick={() => copyCreds('admin@campusflow.et')}
-                  className="w-full text-left p-2.5 rounded-lg border border-slate-200 hover:border-emerald-400 bg-slate-50 transition flex items-center justify-between"
-                >
-                  <div>
-                    <div className="font-bold text-slate-800 flex items-center gap-1">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Admin / Moderator
-                    </div>
-                    <div className="text-slate-500 font-mono text-[11px]">admin@campusflow.et</div>
-                  </div>
-                  {copiedAccount === 'admin@campusflow.et' ? (
-                    <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5">
-                      <Check className="w-3 h-3" /> Copied
-                    </span>
-                  ) : (
-                    <span className="text-[10px] text-slate-400 font-mono">pass: password123</span>
-                  )}
-                </button>
-              </div>
-            </div>
-
           </div>
 
+          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2.5">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search campus cafeterias, dishes, stationery, or printing centers..."
+                className="pl-10"
+              />
+            </div>
+            <Button type="submit" className="sm:w-36 font-bold">
+              Search Shops
+            </Button>
+          </form>
+
+          {/* Compact Service Shortcuts */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 pt-1">
+            {quickModules.map((mod) => {
+              const Icon = mod.icon;
+              return (
+                <Link
+                  key={mod.href}
+                  href={mod.href}
+                  className="min-h-[44px] flex items-center gap-2 rounded-lg border border-border bg-muted/40 hover:bg-accent px-2.5 py-2 text-xs font-semibold text-foreground transition-colors"
+                >
+                  <Icon className={`h-3.5 w-3.5 shrink-0 ${mod.tone}`} />
+                  <span className="truncate">{mod.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Official Campus Notice */}
+        {announcements.length > 0 && (
+          <section className="rounded-xl border border-primary/25 bg-primary-50/70 p-4 flex items-start gap-3">
+            <Megaphone className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="default">Campus Notice</Badge>
+                <span className="text-xs text-muted-foreground">
+                  {new Date(announcements[0].createdAt).toLocaleDateString()}
+                </span>
+              </div>
+              <h2 className="font-display text-sm font-bold text-foreground mt-1">
+                {announcements[0].title}
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                {announcements[0].body}
+              </p>
+            </div>
+          </section>
+        )}
+
+        {/* Two-Column Operational Ledger */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Primary Feed (8 cols) */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* Live Shuttles */}
+            <Card>
+              <CardHeader className="pb-3 flex-row items-center justify-between space-y-0 border-b border-border">
+                <div>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Bus className="h-4 w-4 text-secondary" />
+                    Next Departing Shuttles
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Real-time seat availability from Haramaya terminal
+                  </p>
+                </div>
+                <Link
+                  href="/transport"
+                  className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  All Routes <ChevronRight className="h-3.5 w-3.5" />
+                </Link>
+              </CardHeader>
+
+              <CardContent className="p-0">
+                {isLoading ? (
+                  <div className="p-5">
+                    <LoadingState label="Checking live shuttle departures..." count={2} />
+                  </div>
+                ) : trips.length === 0 ? (
+                  <div className="p-5">
+                    <EmptyState
+                      icon={<Bus className="h-5 w-5" />}
+                      title={tripsFailed ? 'Could not load shuttle schedule' : 'No upcoming trips posted yet'}
+                      description={
+                        tripsFailed
+                          ? 'Unable to reach the campus transit server right now. Check back shortly or open Transport.'
+                          : 'Operators have not posted departures for this window yet.'
+                      }
+                      actionLabel="Open Transport Desk"
+                      actionHref="/transport"
+                    />
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border">
+                    {trips.map((trip) => {
+                      const depDate = new Date(trip.departureTime);
+                      const lowSeats = trip.availableSeats <= 3;
+                      return (
+                        <div
+                          key={trip.id}
+                          className="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-muted/35 transition-colors"
+                        >
+                          <div className="space-y-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Badge variant={lowSeats ? 'danger' : 'success'}>
+                                {trip.availableSeats} seats left
+                              </Badge>
+                              <span className="font-mono text-xs text-muted-foreground">
+                                {depDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} &bull;{' '}
+                                {depDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                &bull; {trip.vehicleType}
+                              </span>
+                            </div>
+                            <div className="font-display text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5">
+                              <span>{trip.route.origin}</span>
+                              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              <span className="text-primary">{trip.route.destination}</span>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {trip.operator?.name || 'Verified Campus Carrier'}
+                              {trip.route.estimatedDurationMin ? ` • ~${trip.route.estimatedDurationMin} min` : ''}
+                            </div>
+                          </div>
+
+                          <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2 shrink-0">
+                            <span className="font-mono text-sm font-bold text-foreground tabular-nums">
+                              {formatETB(trip.priceMinor)}
+                            </span>
+                            <Button asChild size="sm" variant="secondary">
+                              <Link href="/transport">Select Seat</Link>
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Verified Campus Shops */}
+            <Card>
+              <CardHeader className="pb-3 flex-row items-center justify-between space-y-0 border-b border-border">
+                <div>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Coffee className="h-4 w-4 text-primary" />
+                    Verified Cafeterias &amp; Campus Shops
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Order ahead for pickup without waiting at the counter
+                  </p>
+                </div>
+                <Link
+                  href="/directory"
+                  className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  Browse Directory <ChevronRight className="h-3.5 w-3.5" />
+                </Link>
+              </CardHeader>
+
+              <CardContent className="pt-5">
+                {isLoading ? (
+                  <LoadingState label="Loading campus shops..." count={2} />
+                ) : businesses.length === 0 ? (
+                  <EmptyState
+                    icon={<Store className="h-5 w-5" />}
+                    title={bizFailed ? 'Could not load campus directory' : 'No verified shops listed yet'}
+                    description={
+                      bizFailed
+                        ? 'Unable to reach the directory service right now. Try opening the Directory directly.'
+                        : 'Check the full Campus Directory or apply to list a verified campus shop.'
+                    }
+                    actionLabel="Open Directory"
+                    actionHref="/directory"
+                  />
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {businesses.map((biz) => (
+                      <div
+                        key={biz.id}
+                        className="rounded-xl border border-border bg-muted/30 p-4 flex flex-col justify-between gap-3 hover:border-primary/40 transition-colors"
+                      >
+                        <div className="space-y-1.5">
+                          <div className="flex items-start justify-between gap-2">
+                            <h3 className="font-display font-bold text-sm text-foreground leading-snug">
+                              {biz.name}
+                            </h3>
+                            <Badge variant="success" className="shrink-0">Verified</Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                            {biz.description || 'Verified Haramaya campus merchant serving student meals and essentials.'}
+                          </p>
+                          {biz.products && biz.products.length > 0 && (
+                            <div className="flex flex-wrap gap-1 pt-1">
+                              {biz.products.slice(0, 3).map((item) => (
+                                <span
+                                  key={item.id}
+                                  className="rounded bg-card border border-border px-2 py-0.5 text-[11px] font-medium text-foreground"
+                                >
+                                  {item.name}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div className="pt-2 border-t border-border flex items-center justify-between">
+                          <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                            <MapPin className="h-3 w-3" /> Bate Campus
+                          </span>
+                          <Button asChild size="sm">
+                            <Link href={`/shop/${biz.id}`}>View Menu</Link>
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Utility Rail (4 cols) */}
+          <aside className="lg:col-span-4 space-y-5">
+            {user ? (
+              <>
+                <TicketStub
+                  accent="ink"
+                  title="Haramaya Digital ID"
+                  subtitle={user.displayName}
+                  badge={<Badge variant="success">ACTIVE</Badge>}
+                  code={studentProfile?.studentIdNumber || 'HU-VERIFIED-PASS'}
+                  qrValue={`https://campusflow.haramaya.edu.et/verify/id/${user.id}`}
+                  meta={[
+                    {
+                      label: 'Department',
+                      value: studentProfile?.department || 'Haramaya Campus',
+                    },
+                    {
+                      label: 'Year',
+                      value: studentProfile?.yearOfStudy ? `Year ${studentProfile.yearOfStudy}` : 'Enrolled',
+                    },
+                  ]}
+                  footerRight={
+                    <Link href="/profile" className="font-semibold text-primary hover:underline">
+                      Open Full Pass &rarr;
+                    </Link>
+                  }
+                />
+
+                <Card>
+                  <CardContent className="p-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-foreground inline-flex items-center gap-1.5">
+                        <CreditCard className="h-4 w-4 text-primary" /> Campus Wallet
+                      </span>
+                      <Badge variant="success">0% Fee</Badge>
+                    </div>
+                    <div className="font-display text-2xl font-black text-foreground tabular-nums">
+                      {wallet?.balanceMinor !== undefined ? formatETB(wallet.balanceMinor) : '0.00 ETB'}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Integer-cent settlement backed by Telebirr and CBE Birr.
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <Button asChild size="sm">
+                        <Link href="/orders">My Orders</Link>
+                      </Button>
+                      <Button asChild size="sm" variant="outline">
+                        <Link href="/profile">Wallet &amp; ID</Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            ) : (
+              <Card>
+                <CardContent className="p-5 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-primary-50 border border-primary/20 text-primary flex items-center justify-center shrink-0">
+                      <GraduationCap className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h2 className="font-display text-base font-bold text-foreground">
+                        Student &amp; Partner Access
+                      </h2>
+                      <p className="text-xs text-muted-foreground">
+                        Sign in to order meals, view your QR ID, or manage a verified shop.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button asChild size="sm">
+                      <Link href="/login">
+                        <LogIn className="h-3.5 w-3.5 mr-1.5" /> Sign In
+                      </Link>
+                    </Button>
+                    <Button asChild size="sm" variant="outline">
+                      <Link href="/register">Sign Up</Link>
+                    </Button>
+                  </div>
+
+                  <details className="rounded-lg border border-border bg-muted/40 p-3 text-xs">
+                    <summary className="cursor-pointer font-semibold text-foreground select-none">
+                      Pilot Sandbox Credentials
+                    </summary>
+                    <div className="mt-2.5 space-y-1.5">
+                      {[
+                        { label: 'Student', email: 'student@haramaya.edu.et' },
+                        { label: 'Merchant', email: 'merchant@haramayacafe.et' },
+                        { label: 'System Admin', email: 'admin@campusflow.et' },
+                      ].map((acct) => (
+                        <button
+                          key={acct.email}
+                          type="button"
+                          onClick={() => copyCredentials(acct.label, acct.email)}
+                          className="w-full min-h-[40px] flex items-center justify-between rounded-md border border-border bg-card px-2.5 py-1.5 text-left hover:bg-accent transition-colors"
+                        >
+                          <div className="min-w-0">
+                            <div className="font-semibold text-foreground">{acct.label}</div>
+                            <div className="font-mono text-[11px] text-muted-foreground truncate">
+                              {acct.email}
+                            </div>
+                          </div>
+                          <Copy className="h-3.5 w-3.5 text-muted-foreground shrink-0 ml-2" />
+                        </button>
+                      ))}
+                    </div>
+                  </details>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Emergency Hotlines */}
+            <Card className="border-rose-200 bg-rose-50/60">
+              <CardContent className="p-5 space-y-3 text-xs">
+                <div className="font-display font-bold text-sm text-rose-950 flex items-center gap-1.5">
+                  <PhoneCall className="h-4 w-4 text-rose-700" /> Campus Emergency Hotlines
+                </div>
+                <div className="space-y-2 text-rose-950/90">
+                  <div className="flex items-center justify-between">
+                    <span>Campus Clinic (24/7)</span>
+                    <a href="tel:0255530112" className="font-mono font-bold text-rose-800 hover:underline tabular-nums">
+                      025-553-0112
+                    </a>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Security Patrol</span>
+                    <a href="tel:0255530333" className="font-mono font-bold text-rose-800 hover:underline tabular-nums">
+                      025-553-0333
+                    </a>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Bate Police Station</span>
+                    <a href="tel:0255530991" className="font-mono font-bold text-rose-950 hover:underline tabular-nums">
+                      025-553-0991
+                    </a>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </aside>
         </div>
-
-      </main>
-
-      <Footer />
-    </div>
+      </div>
+    </AppShell>
   );
 }

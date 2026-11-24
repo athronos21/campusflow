@@ -4,8 +4,8 @@
   "description": "Unified campus marketplace, bus ticketing, and student services platform for Ethiopian higher education.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#4f46e5",
+  "background_color": "#FAF8F5",
+  "theme_color": "#14532D",
   "icons": [
     {
       "src": "/icon.svg",

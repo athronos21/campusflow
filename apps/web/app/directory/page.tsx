@@ -1,24 +1,21 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Navbar } from '@/components/layout/navbar';
-import { Footer } from '@/components/layout/footer';
+import { useSearchParams } from 'next/navigation';
+import { AppShell } from '@/components/layout/app-shell';
+import { PageHeader } from '@/components/layout/page-header';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { LoadingState, EmptyState } from '@/components/ui/state-views';
 import { apiClient } from '@/lib/api-client';
 import {
   Megaphone,
   Coffee,
   Printer,
   Laptop,
-  Bus,
-  Home,
-  Calendar,
-  BookOpen,
-  CalendarCheck,
   MapPin,
   Search,
   CheckCircle2,
@@ -55,47 +52,57 @@ interface Announcement {
   createdAt: string;
 }
 
-export default function DirectoryPage() {
+function DirectoryContent() {
+  const searchParams = useSearchParams();
+  const initialQuery = searchParams.get('q') || '';
+
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [campuses, setCampuses] = useState<Campus[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [selectedCampus, setSelectedCampus] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [search, setSearch] = useState<string>('');
+  const [search, setSearch] = useState<string>(initialQuery);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        setIsLoading(true);
-        const campusData = await apiClient<Campus[]>('/campuses');
-        setCampuses(campusData);
+    setSearch(searchParams.get('q') || '');
+  }, [searchParams]);
 
-        const activeCampus = campusData[0]?.id || '';
-        setSelectedCampus(activeCampus);
+  const loadInitialData = async () => {
+    try {
+      setIsLoading(true);
+      setLoadError(null);
+      const campusData = await apiClient<Campus[]>('/campuses');
+      setCampuses(campusData);
 
-        if (activeCampus) {
-          const [bizData, annData] = await Promise.all([
-            apiClient<Business[]>(`/businesses?campusId=${activeCampus}`),
-            apiClient<Announcement[]>(`/announcements?campusId=${activeCampus}`).catch(() => []),
-          ]);
-          setBusinesses(bizData);
-          setAnnouncements(annData);
-        }
-      } catch (err) {
-        console.error('Failed to load directory:', err);
-      } finally {
-        setIsLoading(false);
+      const activeCampus = campusData[0]?.id || '';
+      setSelectedCampus(activeCampus);
+
+      if (activeCampus) {
+        const [bizData, annData] = await Promise.all([
+          apiClient<Business[]>(`/businesses?campusId=${activeCampus}`),
+          apiClient<Announcement[]>(`/announcements?campusId=${activeCampus}`).catch(() => []),
+        ]);
+        setBusinesses(bizData);
+        setAnnouncements(annData);
       }
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : 'Unable to reach campus directory API');
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    loadData();
+  useEffect(() => {
+    loadInitialData();
   }, []);
 
   const handleCampusChange = async (campusId: string) => {
     setSelectedCampus(campusId);
     try {
       setIsLoading(true);
+      setLoadError(null);
       const [bizData, annData] = await Promise.all([
         apiClient<Business[]>(`/businesses?campusId=${campusId}`),
         apiClient<Announcement[]>(`/announcements?campusId=${campusId}`).catch(() => []),
@@ -103,94 +110,76 @@ export default function DirectoryPage() {
       setBusinesses(bizData);
       setAnnouncements(annData);
     } catch (err) {
-      console.error(err);
+      setLoadError(err instanceof Error ? err.message : 'Unable to load shops for this campus');
     } finally {
       setIsLoading(false);
     }
   };
 
   const filteredBusinesses = businesses.filter((b) => {
+    const q = search.trim().toLowerCase();
     const matchesSearch =
-      b.name.toLowerCase().includes(search.toLowerCase()) ||
-      (b.description && b.description.toLowerCase().includes(search.toLowerCase())) ||
-      (b.products && b.products.some((p) => p.name.toLowerCase().includes(search.toLowerCase())));
+      !q ||
+      b.name.toLowerCase().includes(q) ||
+      (b.description && b.description.toLowerCase().includes(q)) ||
+      (b.products && b.products.some((p) => p.name.toLowerCase().includes(q)));
 
     if (!matchesSearch) return false;
 
+    const hay = `${b.name} ${b.description || ''}`.toLowerCase();
     if (selectedCategory === 'food') {
-      return (
-        b.name.toLowerCase().includes('cafe') ||
-        b.name.toLowerCase().includes('snack') ||
-        b.name.toLowerCase().includes('food') ||
-        b.name.toLowerCase().includes('restaurant')
-      );
+      return hay.includes('cafe') || hay.includes('snack') || hay.includes('food') || hay.includes('restaurant') || hay.includes('buna');
     }
     if (selectedCategory === 'stationery') {
-      return (
-        b.name.toLowerCase().includes('print') ||
-        b.name.toLowerCase().includes('stationery') ||
-        b.name.toLowerCase().includes('book')
-      );
+      return hay.includes('print') || hay.includes('stationery') || hay.includes('book');
     }
     if (selectedCategory === 'tech') {
-      return (
-        b.name.toLowerCase().includes('tech') ||
-        b.name.toLowerCase().includes('electronic') ||
-        b.name.toLowerCase().includes('laptop') ||
-        b.name.toLowerCase().includes('phone') ||
-        b.name.toLowerCase().includes('repair')
-      );
+      return hay.includes('tech') || hay.includes('electronic') || hay.includes('laptop') || hay.includes('phone') || hay.includes('repair');
     }
     return true;
   });
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-slate-50 text-slate-900 font-sans">
-      <Navbar />
+    <div className="space-y-6">
+      <PageHeader
+        title="Campus Directory & Shops"
+        description="Verified cafeterias, printing centers, and campus supply stores across Haramaya University."
+        badge={<Badge variant="success">Haramaya Pilot</Badge>}
+        action={
+          <Button asChild variant="outline" size="sm">
+            <Link href="/merchant/register">
+              <Store className="h-3.5 w-3.5 mr-1.5 text-primary" />
+              Register a Shop
+            </Link>
+          </Button>
+        }
+      />
 
-      <main className="max-w-6xl mx-auto px-4 py-8 flex-1 w-full space-y-8">
-        {/* Campus Announcement Banner */}
-        {announcements.length > 0 && (
-          <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl flex items-start gap-3 shadow-xs">
-            <Megaphone className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <Badge variant="default" className="text-[10px] font-bold uppercase tracking-wider h-5">
-                  Campus Notice
-                </Badge>
-                <span className="text-xs text-slate-500">
-                  {new Date(announcements[0].createdAt).toLocaleDateString()}
-                </span>
-              </div>
-              <h3 className="font-bold text-slate-900 text-sm mt-1">{announcements[0].title}</h3>
-              <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">{announcements[0].body}</p>
+      {announcements.length > 0 && (
+        <div className="p-4 bg-primary-50/70 border border-primary/25 rounded-xl flex items-start gap-3">
+          <Megaphone className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <Badge variant="default">Campus Notice</Badge>
+              <span className="text-xs text-muted-foreground">
+                {new Date(announcements[0].createdAt).toLocaleDateString()}
+              </span>
             </div>
+            <h2 className="font-display font-bold text-foreground text-sm mt-1">{announcements[0].title}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{announcements[0].body}</p>
           </div>
-        )}
-
-        {/* Header */}
-        <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
-              Campus Directory & Shops
-            </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Haramaya Pilot
-            </span>
-          </div>
-          <p className="text-sm text-slate-600 max-w-2xl leading-relaxed">
-            Verified campus cafeterias, printing centers, and stationery stores serving students and faculty across Haramaya University.
-          </p>
         </div>
+      )}
 
-        {/* Filter Bar */}
+      {/* Search & Campus Filter Bar */}
+      <div className="rounded-xl border border-border bg-card p-4 space-y-3">
         <div className="flex flex-col sm:flex-row gap-3">
           {campuses.length > 0 && (
             <select
+              aria-label="Filter by campus"
               value={selectedCampus}
               onChange={(e) => handleCampusChange(e.target.value)}
-              className="h-11 px-3.5 rounded-lg border border-slate-300 text-sm font-semibold bg-white text-slate-800 shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+              className="h-11 px-3.5 rounded-lg border border-input text-sm font-semibold bg-card text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               {campuses.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -201,146 +190,126 @@ export default function DirectoryPage() {
           )}
 
           <div className="relative flex-1 flex items-center">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />
+            <Search className="w-4 h-4 text-muted-foreground absolute left-3.5 pointer-events-none" />
             <Input
               type="text"
-              placeholder="Search verified food, coffee, printing, stationery, books..."
+              placeholder="Search food, coffee, thesis printing, stationery, electronics..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 h-11 bg-white border-slate-300 text-sm shadow-xs"
+              className="pl-10"
             />
           </div>
         </div>
 
-        {/* Category Pills & Quick Shortcuts */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant={selectedCategory === 'all' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedCategory('all')}
-            className="h-8 rounded-full text-xs font-bold"
-          >
-            All Merchants ({businesses.length})
-          </Button>
-          <Button
-            variant={selectedCategory === 'food' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedCategory('food')}
-            className="h-8 rounded-full text-xs font-bold flex items-center gap-1.5"
-          >
-            <Coffee className="w-3.5 h-3.5" /> Food & Cafeteria
-          </Button>
-          <Button
-            variant={selectedCategory === 'stationery' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedCategory('stationery')}
-            className="h-8 rounded-full text-xs font-bold flex items-center gap-1.5"
-          >
-            <Printer className="w-3.5 h-3.5" /> Printing & Stationery
-          </Button>
-          <Button
-            variant={selectedCategory === 'tech' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedCategory('tech')}
-            className="h-8 rounded-full text-xs font-bold flex items-center gap-1.5"
-          >
-            <Laptop className="w-3.5 h-3.5" /> Tech & Electronics
-          </Button>
-
-          <span className="text-slate-300 mx-1 hidden lg:inline">|</span>
-
-          <Link href="/transport">
-            <Badge variant="outline" className="hover:border-primary transition cursor-pointer flex items-center gap-1">
-              <Bus className="w-3.5 h-3.5 text-amber-600" /> Shuttles
-            </Badge>
-          </Link>
-          <Link href="/housing">
-            <Badge variant="outline" className="hover:border-teal-500 transition cursor-pointer flex items-center gap-1">
-              <Home className="w-3.5 h-3.5 text-teal-600" /> Housing
-            </Badge>
-          </Link>
-          <Link href="/events">
-            <Badge variant="outline" className="hover:border-purple-500 transition cursor-pointer flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5 text-purple-600" /> Events
-            </Badge>
-          </Link>
-          <Link href="/learning">
-            <Badge variant="outline" className="hover:border-sky-500 transition cursor-pointer flex items-center gap-1">
-              <BookOpen className="w-3.5 h-3.5 text-sky-600" /> Exams
-            </Badge>
-          </Link>
-          <Link href="/bookings">
-            <Badge variant="outline" className="hover:border-indigo-500 transition cursor-pointer flex items-center gap-1">
-              <CalendarCheck className="w-3.5 h-3.5 text-indigo-600" /> Bookings
-            </Badge>
-          </Link>
-        </div>
-
-        {/* Business Grid */}
-        {isLoading ? (
-          <div className="text-center py-20 text-slate-500 text-sm font-medium">
-            Loading verified campus shops...
-          </div>
-        ) : filteredBusinesses.length === 0 ? (
-          <Card className="text-center py-16 p-6 border-slate-200">
-            <Store className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-            <p className="text-slate-600 font-semibold text-sm">No verified businesses match your search filter.</p>
-            <p className="text-slate-400 text-xs mt-1">Try another category or clear your search query.</p>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {filteredBusinesses.map((b) => (
-              <Card
-                key={b.id}
-                className="flex flex-col justify-between border-slate-200 hover:border-primary/50 hover:shadow-xs transition p-6"
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          {[
+            { id: 'all', label: `All Merchants (${businesses.length})`, icon: null },
+            { id: 'food', label: 'Food & Cafeteria', icon: Coffee },
+            { id: 'stationery', label: 'Printing & Stationery', icon: Printer },
+            { id: 'tech', label: 'Tech & Electronics', icon: Laptop },
+          ].map((cat) => {
+            const Icon = cat.icon;
+            const active = selectedCategory === cat.id;
+            return (
+              <Button
+                key={cat.id}
+                type="button"
+                variant={active ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedCategory(cat.id)}
+                className="rounded-full"
               >
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-bold text-lg text-slate-900">{b.name}</h3>
-                    <Badge variant="success" className="text-[10px] font-bold flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" /> VERIFIED
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-4 leading-relaxed font-normal">
-                    {b.description || 'Verified campus partner providing student meals, beverages, and supplies.'}
-                  </p>
+                {Icon && <Icon className="w-3.5 h-3.5 mr-1.5" />}
+                {cat.label}
+              </Button>
+            );
+          })}
+        </div>
+      </div>
 
-                  {b.products && b.products.length > 0 && (
-                    <div className="space-y-1 mb-4 pt-3 border-t border-slate-100">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                        Popular Items
-                      </span>
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {b.products.slice(0, 4).map((p) => (
-                          <span
-                            key={p.id}
-                            className="inline-block text-[11px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium"
-                          >
-                            {p.name}
-                          </span>
-                        ))}
-                      </div>
+      {/* Business Grid */}
+      {isLoading ? (
+        <LoadingState label="Loading verified campus shops..." count={4} />
+      ) : loadError ? (
+        <EmptyState
+          icon={<Store className="w-5 h-5 text-destructive" />}
+          title="Could not load campus directory"
+          description={loadError}
+          actionLabel="Retry"
+          onAction={loadInitialData}
+        />
+      ) : filteredBusinesses.length === 0 ? (
+        <EmptyState
+          icon={<Store className="w-5 h-5" />}
+          title="No verified shops match your filter"
+          description="Try clearing your search term or switching back to all merchant categories."
+          actionLabel="Reset Filters"
+          onAction={() => {
+            setSearch('');
+            setSelectedCategory('all');
+          }}
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {filteredBusinesses.map((b) => (
+            <Card
+              key={b.id}
+              className="flex flex-col justify-between hover:border-primary/45 transition-colors p-5 sm:p-6"
+            >
+              <div>
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <h2 className="font-display font-bold text-lg text-foreground">{b.name}</h2>
+                  <Badge variant="success" className="shrink-0">
+                    <CheckCircle2 className="w-3 h-3" /> VERIFIED
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+                  {b.description || 'Verified campus partner providing student meals, beverages, and supplies.'}
+                </p>
+
+                {b.products && b.products.length > 0 && (
+                  <div className="space-y-1.5 mb-4 pt-3 border-t border-border">
+                    <span className="text-[11px] font-semibold text-muted-foreground block">
+                      Popular Items
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {b.products.slice(0, 4).map((p) => (
+                        <span
+                          key={p.id}
+                          className="inline-block text-[11px] bg-muted border border-border text-foreground px-2 py-0.5 rounded font-medium"
+                        >
+                          {p.name}
+                        </span>
+                      ))}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
+              </div>
 
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1 text-xs text-slate-500 font-medium">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400" /> Main Campus &bull; Bate
-                  </span>
-                  <Button size="sm" asChild className="h-8 text-xs font-bold">
-                    <Link href={`/shop/${b.id}`} className="flex items-center gap-1">
-                      View Menu & Order <ChevronRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </main>
-
-      <Footer />
+              <div className="pt-4 border-t border-border flex items-center justify-between gap-3">
+                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground font-medium">
+                  <MapPin className="w-3.5 h-3.5" /> Main Campus &bull; Bate
+                </span>
+                <Button size="sm" asChild>
+                  <Link href={`/shop/${b.id}`} className="inline-flex items-center gap-1">
+                    View Menu <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
+  );
+}
+
+export default function DirectoryPage() {
+  return (
+    <AppShell maxWidth="6xl">
+      <Suspense fallback={<LoadingState label="Loading directory..." count={4} />}>
+        <DirectoryContent />
+      </Suspense>
+    </AppShell>
   );
 }
