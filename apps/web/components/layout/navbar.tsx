@@ -183,7 +183,7 @@ export function Navbar({
               <DropdownMenu.Content
                 align="start"
                 sideOffset={8}
-                className="z-50 w-64 rounded-xl border border-border bg-popover p-1.5 shadow-sm text-popover-foreground animate-in fade-in-0 zoom-in-95"
+                className="z-50 w-64 rounded-xl border border-border bg-popover p-1.5 text-popover-foreground animate-in fade-in-0 zoom-in-95"
               >
                 {MORE_CAMPUS_ITEMS.map((item) => (
                   <DropdownMenu.Item key={item.href} asChild>
@@ -239,8 +239,8 @@ export function Navbar({
                   className={cn(
                     'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors',
                     portal.badge === 'ADMIN'
-                      ? 'border-rose-200 bg-rose-50 text-rose-900 hover:bg-rose-100'
-                      : 'border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100',
+                      ? 'border-rose-200 bg-rose-50 text-rose-900 hover:bg-rose-100 dark:border-rose-900 dark:bg-rose-950/70 dark:text-rose-200 dark:hover:bg-rose-950'
+                      : 'border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-900 dark:bg-amber-950/70 dark:text-amber-200 dark:hover:bg-amber-950',
                   )}
                 >
                   {portal.badge === 'ADMIN' ? (
@@ -272,11 +272,11 @@ export function Navbar({
             <div className="flex items-center gap-1.5 pl-1.5 border-l border-border">
               <Link
                 href="/profile"
-                className="flex items-center gap-2 rounded-lg px-1.5 py-1 hover:bg-accent transition-colors"
+                className="flex min-h-[44px] sm:min-h-[38px] items-center gap-2 rounded-lg px-1.5 py-1 hover:bg-accent transition-colors"
                 title="Profile & Digital Student ID"
               >
-                <Avatar className="h-8 w-8 border border-border bg-primary-50">
-                  <AvatarFallback className="text-xs font-bold bg-primary-50 text-primary">
+                <Avatar className="h-8 w-8 border border-border bg-primary-50 dark:bg-primary-950">
+                  <AvatarFallback className="text-xs font-bold bg-primary-50 text-primary dark:bg-primary-950 dark:text-primary-200">
                     {getInitials(user.displayName)}
                   </AvatarFallback>
                 </Avatar>
@@ -293,7 +293,7 @@ export function Navbar({
                 onClick={handleLogout}
                 aria-label="Sign out"
                 title="Sign Out"
-                className="text-destructive hover:bg-rose-50"
+                className="text-destructive hover:bg-rose-50 dark:hover:bg-rose-950/50"
               >
                 <LogOut className="h-4 w-4" />
               </Button>

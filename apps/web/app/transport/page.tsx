@@ -319,10 +319,14 @@ export default function TransportPage() {
             ) : filteredTrips.length === 0 ? (
               <EmptyState
                 icon={<Bus className="w-5 h-5" />}
-                title="No departures for this destination"
-                description="No scheduled vehicles matched this route filter."
-                actionLabel="Show All Routes"
-                onAction={() => setSelectedDestination('all')}
+                title={selectedDestination === 'all' ? 'No scheduled shuttles currently posted' : 'No departures for this destination'}
+                description={
+                  selectedDestination === 'all'
+                    ? 'Vehicle operators post daily schedules for Dire Dawa, Harar, and local lines each morning.'
+                    : 'No scheduled vehicles matched this route filter.'
+                }
+                actionLabel={selectedDestination !== 'all' ? 'Show All Routes' : undefined}
+                onAction={selectedDestination !== 'all' ? () => setSelectedDestination('all') : undefined}
               />
             ) : (
               <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">

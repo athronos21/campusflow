@@ -264,7 +264,7 @@ export default function CartPage() {
                   </div>
                   <div className="flex justify-between text-muted-foreground">
                     <span>Platform Fee</span>
-                    <span className="font-mono font-bold text-emerald-700">0.00 ETB</span>
+                    <span className="font-mono font-bold text-emerald-700">{formatETB(0)}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
                     <span>Estimated Prep</span>

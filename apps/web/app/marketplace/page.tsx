@@ -68,7 +68,28 @@ export default function MarketplacePage() {
           }[]
         >('/products').catch(() => []);
         if (data && data.length > 0) {
-          const mapped: MarketplaceItem[] = data.map((p) => {
+          const nonDining = data.filter((p) => {
+            const biz = (p.business?.name || '').toLowerCase();
+            const slug = (p.category?.slug || '').toLowerCase();
+            const name = (p.name || '').toLowerCase();
+            const isFood =
+              biz.includes('cafe') ||
+              biz.includes('snack') ||
+              biz.includes('food') ||
+              slug.includes('food') ||
+              slug.includes('beverage') ||
+              slug.includes('cafe') ||
+              name.includes('buna') ||
+              name.includes('ful') ||
+              name.includes('coffee') ||
+              name.includes('tea') ||
+              name.includes('macchiato') ||
+              name.includes('bread') ||
+              name.includes('pastry');
+            return !isFood;
+          });
+
+          const mapped: MarketplaceItem[] = nonDining.map((p) => {
             let cat: MarketplaceItem['category'] = 'stationery';
             const slug = (p.category?.slug || '').toLowerCase();
             const nameLower = (p.name || '').toLowerCase();
@@ -91,8 +112,8 @@ export default function MarketplacePage() {
               category: cat,
               priceMinor: p.priceMinor,
               condition: 'Like New',
-              sellerName: p.business?.name || 'Haramaya Campus Merchant',
-              sellerDorm: 'Commercial & Student Center',
+              sellerName: p.business?.name || 'Campus Student Seller',
+              sellerDorm: 'Student Dormitory, Main Campus',
               phone: '+251 91 122 3344',
               description: p.description || 'Verified product listing on CampusFlow.',
               createdAt: p.createdAt,
@@ -187,6 +208,8 @@ export default function MarketplacePage() {
           <div className="relative flex items-center">
             <Search className="w-4 h-4 text-muted-foreground absolute left-3.5 pointer-events-none" />
             <Input
+              id="marketplace-search"
+              name="q"
               type="text"
               placeholder="Search textbooks, calculators, desk lamps, mattresses..."
               value={search}

@@ -199,6 +199,8 @@ export default function LearningPage() {
           <div className="relative flex items-center">
             <Search className="w-4 h-4 text-muted-foreground absolute left-3.5 pointer-events-none" />
             <Input
+              id="learning-search"
+              name="q"
               type="text"
               placeholder='Search by course code or title, e.g. "SEng 3122", "Soil Fertility", "Midterm"...'
               value={searchQuery}

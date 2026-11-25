@@ -163,7 +163,7 @@ export default function ShopDetailPage() {
           actionHref="/directory"
         />
       ) : (
-        <div className="space-y-6 pb-20 lg:pb-0">
+        <div className={shopItemCount > 0 ? 'space-y-6 pb-24 lg:pb-0' : 'space-y-6'}>
           <div>
             <Link
               href="/directory"
@@ -252,6 +252,7 @@ export default function ShopDetailPage() {
                           type="button"
                           size="sm"
                           disabled={!available}
+                          aria-label={qty > 0 ? `Increase quantity of ${product.name}` : `Add ${product.name} to cart`}
                           onClick={() => handleAddItem(product)}
                         >
                           <Plus className="w-4 h-4 mr-1" />
@@ -324,9 +325,9 @@ export default function ShopDetailPage() {
             </aside>
           </div>
 
-          {/* Sticky Mobile Summary Bar */}
+          {/* Sticky Mobile & Tablet Summary Bar */}
           {shopItemCount > 0 && (
-            <div className="lg:hidden fixed bottom-16 inset-x-0 z-30 border-t border-border bg-card/95 backdrop-blur-sm p-3 shadow-drawer">
+            <div className="lg:hidden fixed bottom-16 md:bottom-0 inset-x-0 z-30 border-t border-border bg-card/95 backdrop-blur-sm p-3 shadow-drawer">
               <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
                 <div>
                   <div className="text-[11px] font-semibold text-muted-foreground">

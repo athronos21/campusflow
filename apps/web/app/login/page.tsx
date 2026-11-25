@@ -212,6 +212,8 @@ export default function LoginPage() {
                   </Label>
                   <Input
                     id="identifier"
+                    name="username"
+                    autoComplete="username"
                     type="text"
                     required
                     value={identifier}
@@ -226,6 +228,8 @@ export default function LoginPage() {
                   </Label>
                   <Input
                     id="password"
+                    name="password"
+                    autoComplete="current-password"
                     type="password"
                     required
                     value={password}

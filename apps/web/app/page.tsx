@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/app-shell';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -166,14 +166,14 @@ export default function HomePage() {
   };
 
   const quickModules = [
-    { href: '/directory', label: 'Cafeterias & Shops', icon: Coffee, tone: 'text-primary' },
-    { href: '/transport', label: 'Bus Shuttles', icon: Bus, tone: 'text-secondary' },
-    { href: '/housing', label: 'Verified Housing', icon: Home, tone: 'text-teal-700' },
-    { href: '/learning', label: 'Past Papers Vault', icon: BookOpen, tone: 'text-primary' },
-    { href: '/events', label: 'Campus Events', icon: Calendar, tone: 'text-secondary' },
-    { href: '/bookings', label: 'Service Bookings', icon: Wrench, tone: 'text-foreground' },
-    { href: '/marketplace', label: 'Student Market', icon: Tag, tone: 'text-primary' },
-    { href: '/maintenance', label: 'Dorm Maintenance', icon: ShieldCheck, tone: 'text-secondary' },
+    { href: '/directory', label: 'Cafes & Shops', icon: Coffee, tone: 'text-primary' },
+    { href: '/transport', label: 'Shuttles', icon: Bus, tone: 'text-secondary' },
+    { href: '/housing', label: 'Housing', icon: Home, tone: 'text-teal-700' },
+    { href: '/learning', label: 'Past Papers', icon: BookOpen, tone: 'text-primary' },
+    { href: '/events', label: 'Events', icon: Calendar, tone: 'text-secondary' },
+    { href: '/bookings', label: 'Bookings', icon: Wrench, tone: 'text-foreground' },
+    { href: '/marketplace', label: 'Marketplace', icon: Tag, tone: 'text-primary' },
+    { href: '/maintenance', label: 'Maintenance', icon: ShieldCheck, tone: 'text-secondary' },
   ];
 
   return (
@@ -204,10 +204,12 @@ export default function HomePage() {
             <div className="relative flex-1">
               <Search className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <Input
+                id="pulse-search"
+                name="q"
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search campus cafeterias, dishes, stationery, or printing centers..."
+                placeholder="Search cafeterias, shuttles, past papers..."
                 className="pl-10"
               />
             </div>
@@ -263,17 +265,17 @@ export default function HomePage() {
             <Card>
               <CardHeader className="pb-3 flex-row items-center justify-between space-y-0 border-b border-border">
                 <div>
-                  <CardTitle className="text-base flex items-center gap-2">
+                  <h2 className="font-display text-base font-bold text-foreground flex items-center gap-2">
                     <Bus className="h-4 w-4 text-secondary" />
                     Next Departing Shuttles
-                  </CardTitle>
+                  </h2>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     Real-time seat availability from Haramaya terminal
                   </p>
                 </div>
                 <Link
                   href="/transport"
-                  className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+                  className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1 shrink-0 whitespace-nowrap ml-2"
                 >
                   All Routes <ChevronRight className="h-3.5 w-3.5" />
                 </Link>
@@ -352,17 +354,17 @@ export default function HomePage() {
             <Card>
               <CardHeader className="pb-3 flex-row items-center justify-between space-y-0 border-b border-border">
                 <div>
-                  <CardTitle className="text-base flex items-center gap-2">
+                  <h2 className="font-display text-base font-bold text-foreground flex items-center gap-2">
                     <Coffee className="h-4 w-4 text-primary" />
                     Verified Cafeterias &amp; Campus Shops
-                  </CardTitle>
+                  </h2>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     Order ahead for pickup without waiting at the counter
                   </p>
                 </div>
                 <Link
                   href="/directory"
-                  className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+                  className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1 shrink-0 whitespace-nowrap ml-2"
                 >
                   Browse Directory <ChevronRight className="h-3.5 w-3.5" />
                 </Link>
@@ -547,22 +549,22 @@ export default function HomePage() {
                 <div className="font-display font-bold text-sm text-rose-950 flex items-center gap-1.5">
                   <PhoneCall className="h-4 w-4 text-rose-700" /> Campus Emergency Hotlines
                 </div>
-                <div className="space-y-2 text-rose-950/90">
-                  <div className="flex items-center justify-between">
+                <div className="space-y-1 text-rose-950/90">
+                  <div className="flex items-center justify-between min-h-[44px]">
                     <span>Campus Clinic (24/7)</span>
-                    <a href="tel:0255530112" className="font-mono font-bold text-rose-800 hover:underline tabular-nums">
+                    <a href="tel:0255530112" className="min-h-[44px] flex items-center font-mono font-bold text-rose-800 hover:underline tabular-nums">
                       025-553-0112
                     </a>
                   </div>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between min-h-[44px]">
                     <span>Security Patrol</span>
-                    <a href="tel:0255530333" className="font-mono font-bold text-rose-800 hover:underline tabular-nums">
+                    <a href="tel:0255530333" className="min-h-[44px] flex items-center font-mono font-bold text-rose-800 hover:underline tabular-nums">
                       025-553-0333
                     </a>
                   </div>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between min-h-[44px]">
                     <span>Bate Police Station</span>
-                    <a href="tel:0255530991" className="font-mono font-bold text-rose-950 hover:underline tabular-nums">
+                    <a href="tel:0255530991" className="min-h-[44px] flex items-center font-mono font-bold text-rose-950 hover:underline tabular-nums">
                       025-553-0991
                     </a>
                   </div>

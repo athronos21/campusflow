@@ -28,19 +28,19 @@ const ToastContext = createContext<ToastContextValue>({
 
 const VARIANT_STYLES: Record<ToastVariant, string> = {
   default: 'border-border bg-card text-foreground',
-  success: 'border-emerald-300 bg-emerald-50 text-emerald-950',
-  error: 'border-rose-300 bg-rose-50 text-rose-950',
-  warning: 'border-amber-300 bg-amber-50 text-amber-950',
+  success: 'border-emerald-300 bg-emerald-50 text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/90 dark:text-emerald-100',
+  error: 'border-rose-300 bg-rose-50 text-rose-950 dark:border-rose-800 dark:bg-rose-950/90 dark:text-rose-100',
+  warning: 'border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950/90 dark:text-amber-100',
 };
 
 function ToastIcon({ variant }: { variant: ToastVariant }) {
   switch (variant) {
     case 'success':
-      return <CheckCircle2 className="h-4 w-4 text-emerald-700 shrink-0 mt-0.5" />;
+      return <CheckCircle2 className="h-4 w-4 text-emerald-700 dark:text-emerald-400 shrink-0 mt-0.5" />;
     case 'error':
-      return <XCircle className="h-4 w-4 text-rose-700 shrink-0 mt-0.5" />;
+      return <XCircle className="h-4 w-4 text-rose-700 dark:text-rose-400 shrink-0 mt-0.5" />;
     case 'warning':
-      return <AlertTriangle className="h-4 w-4 text-amber-700 shrink-0 mt-0.5" />;
+      return <AlertTriangle className="h-4 w-4 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />;
     default:
       return <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />;
   }
@@ -77,7 +77,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             key={item.id}
             role="status"
             className={cn(
-              'pointer-events-auto flex items-start gap-3 rounded-xl border p-3.5 shadow-sm animate-in fade-in slide-in-from-bottom-2',
+              'pointer-events-auto flex items-start gap-3 rounded-xl border p-3.5 animate-in fade-in slide-in-from-bottom-2',
               VARIANT_STYLES[item.variant],
             )}
           >
@@ -92,7 +92,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               type="button"
               onClick={() => dismiss(item.id)}
               aria-label="Dismiss notification"
-              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-70 hover:opacity-100 hover:bg-black/5"
+              className="inline-flex h-11 w-11 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-md opacity-75 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/10"
             >
               <X className="h-3.5 w-3.5" />
             </button>

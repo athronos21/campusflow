@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { LayoutDashboard, ShoppingBag, UtensilsCrossed, Store } from 'lucide-react';
+import { AppShell } from '@/components/layout/app-shell';
 import { PortalShell } from '@/components/layout/portal-shell';
 import { AccessGateCard, LoadingState } from '@/components/ui/state-views';
 import { useAuth } from '@/lib/auth-context';
@@ -20,11 +21,16 @@ export default function MerchantPortalLayout({ children }: { children: React.Rea
 
   if (!user || !hasMerchantAccess(user.roles)) {
     return (
-      <AccessGateCard
-        title="Merchant Access Required"
-        description="Sign in with an approved merchant or system administrator account to manage orders and menus, or apply to register your campus shop."
-        showRegisterShop
-      />
+      <AppShell maxWidth="5xl">
+        <div className="py-8">
+          <AccessGateCard
+            title="Merchant Access Required"
+            description="Sign in with an approved merchant or system administrator account to manage orders and menus, or apply to register your campus shop."
+            showRegisterShop
+            returnTo="/merchant/dashboard"
+          />
+        </div>
+      </AppShell>
     );
   }
 

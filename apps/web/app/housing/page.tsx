@@ -213,7 +213,7 @@ export default function HousingPage() {
               {filteredListings.map((listing) => (
                 <Card key={listing.id} className="overflow-hidden flex flex-col justify-between">
                   <div>
-                    <div className="relative h-44 bg-muted w-full overflow-hidden border-b border-border">
+                    <div className="relative h-36 bg-gradient-to-br from-muted to-accent/50 w-full overflow-hidden border-b border-border">
                       {listing.imageUrl ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img
@@ -235,7 +235,7 @@ export default function HousingPage() {
 
                     <div className="p-5 space-y-3">
                       <div>
-                        <h2 className="font-display font-bold text-base text-foreground line-clamp-1">
+                        <h2 className="font-display font-bold text-base text-foreground line-clamp-2">
                           {listing.title}
                         </h2>
                         <p className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
@@ -250,21 +250,21 @@ export default function HousingPage() {
                       <div className="flex flex-wrap items-center gap-3 pt-2 text-xs border-t border-border">
                         <span
                           className={`flex items-center gap-1 ${
-                            listing.hasWater ? 'text-teal-800 font-semibold' : 'text-muted-foreground/50 line-through'
+                            listing.hasWater ? 'text-teal-800 dark:text-teal-300 font-semibold' : 'text-muted-foreground/80 line-through'
                           }`}
                         >
                           <Droplets className="w-3.5 h-3.5" /> Water
                         </span>
                         <span
                           className={`flex items-center gap-1 ${
-                            listing.hasElectricity ? 'text-amber-800 font-semibold' : 'text-muted-foreground/50 line-through'
+                            listing.hasElectricity ? 'text-amber-800 dark:text-amber-300 font-semibold' : 'text-muted-foreground/80 line-through'
                           }`}
                         >
                           <Zap className="w-3.5 h-3.5" /> Power
                         </span>
                         <span
                           className={`flex items-center gap-1 ${
-                            listing.hasWifi ? 'text-primary font-semibold' : 'text-muted-foreground/50 line-through'
+                            listing.hasWifi ? 'text-primary font-semibold' : 'text-muted-foreground/80 line-through'
                           }`}
                         >
                           <Wifi className="w-3.5 h-3.5" /> WiFi

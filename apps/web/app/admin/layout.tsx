@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ShieldCheck, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { AppShell } from '@/components/layout/app-shell';
 import { PortalShell } from '@/components/layout/portal-shell';
 import { AccessGateCard, LoadingState } from '@/components/ui/state-views';
 import { useAuth } from '@/lib/auth-context';
@@ -20,10 +21,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (!user || !hasAdminAccess(user.roles)) {
     return (
-      <AccessGateCard
-        title="System Administrator Access Required"
-        description="This governance panel is restricted to verified CampusFlow administrators and moderators."
-      />
+      <AppShell maxWidth="5xl">
+        <div className="py-8">
+          <AccessGateCard
+            title="System Administrator Access Required"
+            description="This governance panel is restricted to verified CampusFlow administrators and moderators."
+            returnTo="/admin/verifications"
+          />
+        </div>
+      </AppShell>
     );
   }
 

@@ -241,6 +241,8 @@ export default function RegisterPage() {
                   </Label>
                   <Input
                     id="displayName"
+                    name="name"
+                    autoComplete="name"
                     type="text"
                     required
                     value={displayName}
@@ -255,6 +257,8 @@ export default function RegisterPage() {
                   </Label>
                   <Input
                     id="email"
+                    name="email"
+                    autoComplete="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -268,7 +272,9 @@ export default function RegisterPage() {
                   </Label>
                   <Input
                     id="phone"
-                    type="text"
+                    name="tel"
+                    autoComplete="tel"
+                    type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+251911223344"
@@ -281,6 +287,8 @@ export default function RegisterPage() {
                   </Label>
                   <Input
                     id="password"
+                    name="password"
+                    autoComplete="new-password"
                     type="password"
                     required
                     minLength={8}

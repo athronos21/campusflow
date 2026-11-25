@@ -192,6 +192,8 @@ function DirectoryContent() {
           <div className="relative flex-1 flex items-center">
             <Search className="w-4 h-4 text-muted-foreground absolute left-3.5 pointer-events-none" />
             <Input
+              id="directory-search"
+              name="q"
               type="text"
               placeholder="Search food, coffee, thesis printing, stationery, electronics..."
               value={search}

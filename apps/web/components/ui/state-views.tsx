@@ -103,41 +103,43 @@ export function AccessGateCard({
   title,
   description,
   showRegisterShop = false,
+  returnTo,
 }: {
   title: string;
   description: string;
   showRegisterShop?: boolean;
+  returnTo?: string;
 }) {
+  const loginHref = returnTo ? `/login?next=${encodeURIComponent(returnTo)}` : '/login';
+
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-lg">
-        <CardContent className="py-10 px-6 text-center flex flex-col items-center">
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-amber-800">
-            <ShieldAlert className="h-6 w-6" />
-          </div>
-          <h1 className="font-display text-2xl font-bold text-foreground">{title}</h1>
-          <p className="mt-2 max-w-md text-sm text-muted-foreground leading-relaxed">{description}</p>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
-            <Button asChild>
-              <Link href="/login">
-                <LogIn className="h-4 w-4 mr-2" />
-                Sign In with Authorized Account
+    <Card className="w-full max-w-lg mx-auto">
+      <CardContent className="py-10 px-6 text-center flex flex-col items-center">
+        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-amber-800">
+          <ShieldAlert className="h-6 w-6" />
+        </div>
+        <h1 className="font-display text-2xl font-bold text-foreground">{title}</h1>
+        <p className="mt-2 max-w-md text-sm text-muted-foreground leading-relaxed">{description}</p>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
+          <Button asChild>
+            <Link href={loginHref}>
+              <LogIn className="h-4 w-4 mr-2" />
+              Sign In with Authorized Account
+            </Link>
+          </Button>
+          {showRegisterShop && (
+            <Button asChild variant="secondary">
+              <Link href="/merchant/register">
+                <Store className="h-4 w-4 mr-2" />
+                Register a Campus Shop
               </Link>
             </Button>
-            {showRegisterShop && (
-              <Button asChild variant="secondary">
-                <Link href="/merchant/register">
-                  <Store className="h-4 w-4 mr-2" />
-                  Register a Campus Shop
-                </Link>
-              </Button>
-            )}
-            <Button asChild variant="outline">
-              <Link href="/">Return to Campus Hub</Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          )}
+          <Button asChild variant="outline">
+            <Link href="/">Return to Campus Hub</Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
