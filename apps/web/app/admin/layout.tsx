@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { ShieldCheck, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { AppShell } from '@/components/layout/app-shell';
 import { PortalShell } from '@/components/layout/portal-shell';
@@ -22,7 +23,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (!user || !hasAdminAccess(user.roles)) {
     return (
       <AppShell maxWidth="5xl">
-        <div className="py-8">
+        <div className="py-6 space-y-4">
+          <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
+            <span>/</span>
+            <span className="font-semibold text-foreground">System Administration</span>
+          </nav>
           <AccessGateCard
             title="System Administrator Access Required"
             description="This governance panel is restricted to verified CampusFlow administrators and moderators."

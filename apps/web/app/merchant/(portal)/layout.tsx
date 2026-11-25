@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { LayoutDashboard, ShoppingBag, UtensilsCrossed, Store } from 'lucide-react';
 import { AppShell } from '@/components/layout/app-shell';
 import { PortalShell } from '@/components/layout/portal-shell';
@@ -22,7 +23,12 @@ export default function MerchantPortalLayout({ children }: { children: React.Rea
   if (!user || !hasMerchantAccess(user.roles)) {
     return (
       <AppShell maxWidth="5xl">
-        <div className="py-8">
+        <div className="py-6 space-y-4">
+          <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
+            <span>/</span>
+            <span className="font-semibold text-foreground">Merchant Portal</span>
+          </nav>
           <AccessGateCard
             title="Merchant Access Required"
             description="Sign in with an approved merchant or system administrator account to manage orders and menus, or apply to register your campus shop."

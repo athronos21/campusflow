@@ -110,9 +110,9 @@ export function Navbar({
             <span className="text-stone-600" aria-hidden="true">|</span>
             <a
               href="tel:0255530112"
-              className="text-amber-300 hover:text-white font-semibold flex items-center gap-1 transition-colors"
+              className="min-h-[44px] text-amber-300 hover:text-white font-semibold flex items-center gap-1 transition-colors px-1"
             >
-              <PhoneCall className="w-3 h-3" />
+              <PhoneCall className="w-3.5 h-3.5" />
               <span>Clinic 025-553-0112</span>
             </a>
           </div>
