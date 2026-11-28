@@ -14,6 +14,7 @@ import { useToast } from '@/components/ui/toast';
 import { useAuth } from '@/lib/auth-context';
 import { apiClient } from '@/lib/api-client';
 import { formatETB } from '@/lib/utils';
+import { hasStudentAccess, hasMerchantAccess, hasAdminAccess, getPrimaryRoleLabel } from '@/lib/roles';
 import {
   Bus,
   Coffee,
@@ -138,7 +139,11 @@ export default function HomePage() {
       setWallet(null);
       return;
     }
-    apiClient<StudentMe>('/student/me').then(setStudentProfile).catch(() => null);
+    if (hasStudentAccess(user.roles)) {
+      apiClient<StudentMe>('/student/me').then(setStudentProfile).catch(() => null);
+    } else {
+      setStudentProfile(null);
+    }
     apiClient<WalletMe>('/wallet/me').then(setWallet).catch(() => null);
   }, [user]);
 
@@ -437,25 +442,57 @@ export default function HomePage() {
               <>
                 <TicketStub
                   accent="ink"
-                  title="Haramaya Digital ID"
+                  title={
+                    hasAdminAccess(user.roles)
+                      ? 'Campus Operations Pass'
+                      : hasMerchantAccess(user.roles)
+                        ? 'Merchant Partner Pass'
+                        : 'Haramaya Digital ID'
+                  }
                   subtitle={user.displayName}
-                  badge={<Badge variant="success">ACTIVE</Badge>}
-                  code={studentProfile?.studentIdNumber || 'HU-VERIFIED-PASS'}
+                  badge={<Badge variant="success">{getPrimaryRoleLabel(user.roles).toUpperCase()}</Badge>}
+                  code={
+                    hasAdminAccess(user.roles)
+                      ? 'HU-ADMIN-PASS'
+                      : hasMerchantAccess(user.roles)
+                        ? 'HU-MERCHANT-PASS'
+                        : (studentProfile?.studentIdNumber || 'HU-VERIFIED-PASS')
+                  }
                   qrValue={`https://campusflow.haramaya.edu.et/verify/id/${user.id}`}
                   meta={[
                     {
-                      label: 'Department',
-                      value: studentProfile?.department || 'Haramaya Campus',
+                      label: hasMerchantAccess(user.roles) || hasAdminAccess(user.roles) ? 'Role' : 'Department',
+                      value:
+                        hasAdminAccess(user.roles)
+                          ? 'Campus Administrator'
+                          : hasMerchantAccess(user.roles)
+                            ? 'Verified Merchant'
+                            : (studentProfile?.department || 'Haramaya Campus'),
                     },
                     {
-                      label: 'Year',
-                      value: studentProfile?.yearOfStudy ? `Year ${studentProfile.yearOfStudy}` : 'Enrolled',
+                      label: hasMerchantAccess(user.roles) || hasAdminAccess(user.roles) ? 'Campus' : 'Year',
+                      value:
+                        hasMerchantAccess(user.roles) || hasAdminAccess(user.roles)
+                          ? 'Main Campus (Bate)'
+                          : studentProfile?.yearOfStudy
+                            ? `Year ${studentProfile.yearOfStudy}`
+                            : 'Enrolled',
                     },
                   ]}
                   footerRight={
-                    <Link href="/profile" className="font-semibold text-primary hover:underline">
-                      Open Full Pass &rarr;
-                    </Link>
+                    hasAdminAccess(user.roles) ? (
+                      <Link href="/admin/verifications" className="font-semibold text-primary hover:underline">
+                        Admin Portal &rarr;
+                      </Link>
+                    ) : hasMerchantAccess(user.roles) ? (
+                      <Link href="/merchant/dashboard" className="font-semibold text-primary hover:underline">
+                        Merchant Hub &rarr;
+                      </Link>
+                    ) : (
+                      <Link href="/profile" className="font-semibold text-primary hover:underline">
+                        Open Full Pass &rarr;
+                      </Link>
+                    )
                   }
                 />
 

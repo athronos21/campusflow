@@ -42,7 +42,12 @@ export async function apiClient<T>(
     throw new ApiError(message, response.status);
   }
 
-  return response.json();
+  if (response.status === 204) {
+    return {} as T;
+  }
+
+  const text = await response.text();
+  return text ? JSON.parse(text) : ({} as T);
 }
 
 apiClient.get = function <T>(endpoint: string, options: RequestInit = {}): Promise<T> {

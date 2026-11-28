@@ -11,7 +11,7 @@ import { TicketStub } from '@/components/ui/ticket-stub';
 import { LoadingState, AuthPromptCard } from '@/components/ui/state-views';
 import { useAuth } from '@/lib/auth-context';
 import { apiClient } from '@/lib/api-client';
-import { getPrimaryRoleLabel } from '@/lib/roles';
+import { getPrimaryRoleLabel, hasStudentAccess } from '@/lib/roles';
 import { formatETB } from '@/lib/utils';
 import {
   Mail,
@@ -57,7 +57,11 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (user) {
-      apiClient<StudentProfileData>('/student/me').then(setStudentProfile).catch(() => null);
+      if (hasStudentAccess(user.roles)) {
+        apiClient<StudentProfileData>('/student/me').then(setStudentProfile).catch(() => null);
+      } else {
+        setStudentProfile(null);
+      }
       apiClient<WalletData>('/wallet/me').then(setWallet).catch(() => null);
     }
   }, [user]);

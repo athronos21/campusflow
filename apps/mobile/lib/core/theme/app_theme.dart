@@ -20,7 +20,7 @@ class AppTheme {
         seedColor: AppColors.primary,
         primary: AppColors.primary,
         onPrimary: Colors.white,
-        secondary: AppColors.accent,
+        secondary: AppColors.secondary,
         onSecondary: Colors.white,
         surface: AppColors.surface,
         onSurface: AppColors.textPrimary,
@@ -96,11 +96,11 @@ class AppTheme {
   }
 
   static ThemeData get darkTheme {
-    const darkBackground = Color(0xFF0F172A); // Slate 900
-    const darkSurface = Color(0xFF1E293B); // Slate 800
-    const darkBorder = Color(0xFF334155); // Slate 700
-    const darkTextPrimary = Color(0xFFF8FAFC); // Slate 50
-    const darkTextSecondary = Color(0xFF94A3B8); // Slate 400
+    const darkBackground = Color(0xFF0C110E); // Obsidian Pine Canvas
+    const darkSurface = Color(0xFF141C17); // Pine Card Surface
+    const darkBorder = Color(0xFF24332A); // Dark Border
+    const darkTextPrimary = Color(0xFFF5F3EE); // Warm Ivory
+    const darkTextSecondary = Color(0xFFA8A29E); // Warm Stone
 
     return ThemeData(
       useMaterial3: true,
@@ -111,9 +111,9 @@ class AppTheme {
       colorScheme: ColorScheme.fromSeed(
         brightness: Brightness.dark,
         seedColor: AppColors.primary,
-        primary: const Color(0xFF6366F1),
-        onPrimary: Colors.white,
-        secondary: AppColors.accent,
+        primary: const Color(0xFF22C55E),
+        onPrimary: Colors.black,
+        secondary: AppColors.secondary,
         surface: darkSurface,
         onSurface: darkTextPrimary,
         error: AppColors.danger,

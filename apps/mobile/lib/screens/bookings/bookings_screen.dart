@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/booking.dart';
 import '../../models/business.dart';
 import '../../services/booking_service.dart';
 import '../../services/business_service.dart';
+import '../../widgets/perforated_ticket_stub.dart';
 
 class BookingsScreen extends StatefulWidget {
   const BookingsScreen({super.key});
@@ -52,6 +52,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -74,11 +75,16 @@ class _BookingsScreenState extends State<BookingsScreen> {
                     children: [
                       const Text(
                         'Book Campus Appointment',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: AppColors.textPrimary,
+                          letterSpacing: -0.2,
+                        ),
                       ),
                       IconButton(
                         onPressed: () => Navigator.pop(ctx),
-                        icon: const Icon(Icons.close),
+                        icon: const Icon(Icons.close, color: AppColors.textSecondary),
                       ),
                     ],
                   ),
@@ -86,7 +92,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                     'Select a verified campus service and preferred appointment slot.',
                     style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                   ),
-                  const Divider(height: 24),
+                  const Divider(height: 24, color: AppColors.border),
 
                   const Text(
                     'Service Type',
@@ -96,9 +102,18 @@ class _BookingsScreenState extends State<BookingsScreen> {
                   DropdownButtonFormField<String>(
                     initialValue: selectedService,
                     isExpanded: true,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: AppColors.muted,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     ),
                     items: _availableServices
                         .map((s) => DropdownMenuItem(value: s, child: Text(s, style: const TextStyle(fontSize: 13))))
@@ -117,19 +132,20 @@ class _BookingsScreenState extends State<BookingsScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
+                      color: AppColors.muted,
+                      border: Border.all(color: AppColors.border),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.calendar_today, size: 14, color: AppColors.primary),
-                            const SizedBox(width: 6),
+                            const Icon(Icons.calendar_today, size: 15, color: AppColors.primary),
+                            const SizedBox(width: 8),
                             Text(
                               selectedDateTime.toLocal().toString().substring(0, 16),
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                             ),
                           ],
                         ),
@@ -159,7 +175,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
                               }
                             }
                           },
-                          child: const Text('Change'),
+                          style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+                          child: const Text('Change', style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                       ],
                     ),
@@ -168,6 +185,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
 
                   SizedBox(
                     width: double.infinity,
+                    height: 48,
                     child: ElevatedButton(
                       onPressed: () async {
                         try {
@@ -203,7 +221,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                           messenger.showSnackBar(
                             const SnackBar(
                               backgroundColor: AppColors.success,
-                              content: Text('Appointment confirmed! Tap "Show Counter Pass QR" to view.'),
+                              content: Text('Appointment confirmed! Tap "Counter Pass QR" to view.'),
                             ),
                           );
                         } catch (e) {
@@ -213,11 +231,11 @@ class _BookingsScreenState extends State<BookingsScreen> {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.purple.shade700,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text('Confirm Appointment', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      child: const Text('Confirm Appointment', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                     ),
                   ),
                 ],
@@ -233,15 +251,27 @@ class _BookingsScreenState extends State<BookingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Cancel Appointment', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text('Are you sure you want to cancel your appointment for "${b.serviceName}"?'),
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: AppColors.border),
+        ),
+        title: const Text('Cancel Appointment', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+        content: Text(
+          'Are you sure you want to cancel your appointment for "${b.serviceName}"?',
+          style: const TextStyle(color: AppColors.textSecondary),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Keep Appointment'),
+            child: const Text('Keep Appointment', style: TextStyle(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
             onPressed: () async {
               Navigator.pop(ctx);
               await _bookingService.cancelBooking(b.id);
@@ -254,7 +284,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 );
               }
             },
-            child: const Text('Cancel Appointment', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: const Text('Cancel Appointment', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -265,44 +295,54 @@ class _BookingsScreenState extends State<BookingsScreen> {
     final refCode = b.id.length > 8 ? b.id.substring(0, 8).toUpperCase() : b.id.toUpperCase();
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.all(24),
+        return Container(
+          margin: const EdgeInsets.all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Appointment Check-in Pass', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close)),
+              PerforatedTicketStub(
+                accent: TicketStubAccent.ink,
+                title: b.serviceName,
+                subtitle: b.businessName ?? 'Campus Partner Shop',
+                code: 'HU-APPT-$refCode',
+                qrValue: 'CAMPUSFLOW:APPT:${b.id}:${b.serviceName}',
+                badge: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: b.status.toLowerCase() == 'confirmed'
+                        ? AppColors.success
+                        : AppColors.warning,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    b.status.toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                meta: [
+                  TicketStubMetaItem(label: 'Shop', value: b.businessName ?? 'Partner Shop'),
+                  TicketStubMetaItem(label: 'Slot', value: b.startsAt.length > 16 ? b.startsAt.substring(0, 16) : b.startsAt),
+                  TicketStubMetaItem(label: 'Status', value: b.status.toUpperCase()),
+                  const TicketStubMetaItem(label: 'Campus', value: 'Main (Bate)'),
                 ],
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: QrImageView(
-                  data: 'CAMPUSFLOW:APPT:${b.id}:${b.serviceName}',
-                  version: QrVersions.auto,
-                  size: 140.0,
-                  backgroundColor: Colors.white,
+                footer: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Close Pass', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
-              Text(b.serviceName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-              Text(b.businessName ?? 'Campus Partner Shop', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-              const SizedBox(height: 8),
-              Text('REF: #$refCode', style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, color: Colors.purple)),
-              const SizedBox(height: 4),
-              const Text('Present this QR code at the counter for fast check-in', style: TextStyle(fontSize: 11, color: Colors.black54)),
+              const SizedBox(height: 16),
             ],
           ),
         );
@@ -315,13 +355,20 @@ class _BookingsScreenState extends State<BookingsScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Service Appointments', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        backgroundColor: Colors.white,
+        title: const Text(
+          'Service Appointments',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textPrimary),
+        ),
+        backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
-        elevation: 0.5,
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: AppColors.border, height: 1),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_circle_outline, color: Colors.purple),
+            icon: const Icon(Icons.add_circle, color: AppColors.primary),
             onPressed: _showNewBookingDialog,
           ),
         ],
@@ -329,22 +376,52 @@ class _BookingsScreenState extends State<BookingsScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : RefreshIndicator(
+              color: AppColors.primary,
               onRefresh: _loadBookings,
               child: _bookings.isEmpty
                   ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.calendar_today_outlined, size: 48, color: AppColors.textMuted),
-                          const SizedBox(height: 12),
-                          const Text('No service appointments booked yet.', style: TextStyle(color: AppColors.textSecondary)),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: _showNewBookingDialog,
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.purple.shade700),
-                            child: const Text('Request New Appointment', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                          ),
-                        ],
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 64,
+                              height: 64,
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryLight,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                              ),
+                              child: const Icon(Icons.calendar_today, size: 28, color: AppColors.primary),
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'No Service Appointments Yet',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                            ),
+                            const SizedBox(height: 6),
+                            const Text(
+                              'Book campus thesis binding, laptop repairs, or laundry drop-offs.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                            ),
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              height: 44,
+                              child: ElevatedButton.icon(
+                                onPressed: _showNewBookingDialog,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                                icon: const Icon(Icons.add, size: 18),
+                                label: const Text('Book Appointment', style: TextStyle(fontWeight: FontWeight.bold)),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     )
                   : ListView.builder(
@@ -352,12 +429,15 @@ class _BookingsScreenState extends State<BookingsScreen> {
                       itemCount: _bookings.length,
                       itemBuilder: (context, index) {
                         final b = _bookings[index];
-                        return Card(
+                        final isConfirmed = b.status.toLowerCase() == 'confirmed';
+                        final isCancelled = b.status.toLowerCase() == 'cancelled';
+
+                        return Container(
                           margin: const EdgeInsets.only(bottom: 12),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
                             borderRadius: BorderRadius.circular(14),
-                            side: const BorderSide(color: AppColors.border),
+                            border: Border.all(color: AppColors.border, width: 1),
                           ),
                           child: Padding(
                             padding: const EdgeInsets.all(16),
@@ -370,31 +450,47 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                     Expanded(
                                       child: Text(
                                         b.serviceName,
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                          color: AppColors.textPrimary,
+                                          letterSpacing: -0.2,
+                                        ),
                                       ),
                                     ),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                       decoration: BoxDecoration(
-                                        color: Colors.purple.shade50,
+                                        color: isConfirmed
+                                            ? AppColors.successBg
+                                            : (isCancelled ? AppColors.dangerBg : AppColors.warningBg),
                                         borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: isConfirmed
+                                              ? AppColors.success.withValues(alpha: 0.3)
+                                              : (isCancelled
+                                                  ? AppColors.danger.withValues(alpha: 0.3)
+                                                  : AppColors.warning.withValues(alpha: 0.3)),
+                                        ),
                                       ),
                                       child: Text(
                                         b.status.toUpperCase(),
                                         style: TextStyle(
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.purple.shade800,
+                                          color: isConfirmed
+                                              ? AppColors.success
+                                              : (isCancelled ? AppColors.danger : AppColors.warning),
                                         ),
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 8),
                                 Row(
                                   children: [
                                     const Icon(Icons.store, size: 14, color: AppColors.textSecondary),
-                                    const SizedBox(width: 4),
+                                    const SizedBox(width: 5),
                                     Text(
                                       b.businessName ?? 'Campus Partner Shop',
                                       style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
@@ -405,34 +501,39 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                 Row(
                                   children: [
                                     const Icon(Icons.access_time, size: 14, color: AppColors.textSecondary),
-                                    const SizedBox(width: 4),
+                                    const SizedBox(width: 5),
                                     Text(
                                       'Slot: ${b.startsAt}',
                                       style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 10),
+                                const SizedBox(height: 12),
                                 Row(
                                   children: [
                                     Expanded(
-                                      child: OutlinedButton.icon(
-                                        onPressed: () => _showAppointmentQrPass(b),
-                                        icon: const Icon(Icons.qr_code_2, size: 16),
-                                        label: const Text('Counter Pass QR', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                        style: OutlinedButton.styleFrom(
-                                          foregroundColor: Colors.purple.shade700,
-                                          side: BorderSide(color: Colors.purple.shade200),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      child: SizedBox(
+                                        height: 40,
+                                        child: OutlinedButton.icon(
+                                          onPressed: () => _showAppointmentQrPass(b),
+                                          icon: const Icon(Icons.qr_code_2, size: 16),
+                                          label: const Text('Counter Pass QR', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: AppColors.primary,
+                                            side: const BorderSide(color: AppColors.border),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                          ),
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
-                                    IconButton(
-                                      icon: const Icon(Icons.cancel_outlined, color: AppColors.danger, size: 20),
-                                      tooltip: 'Cancel Appointment',
-                                      onPressed: () => _showCancelBookingDialog(b),
-                                    ),
+                                    if (!isCancelled) ...[
+                                      const SizedBox(width: 8),
+                                      IconButton(
+                                        icon: const Icon(Icons.cancel_outlined, color: AppColors.danger, size: 20),
+                                        tooltip: 'Cancel Appointment',
+                                        onPressed: () => _showCancelBookingDialog(b),
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ],

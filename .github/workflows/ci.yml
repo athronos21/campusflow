@@ -71,6 +71,15 @@ jobs:
       - name: Run Turborepo Typecheck
         run: pnpm typecheck
 
+      - name: Run Web Linter
+        run: pnpm --filter @campusflow/web lint
+
+      - name: Run Contract Invariant Tests
+        run: pnpm test:contracts
+
+      - name: Run Service Unit Tests
+        run: pnpm test:services
+
       - name: Run Payment Gateway Cryptography Tests
         run: pnpm test:payments
 

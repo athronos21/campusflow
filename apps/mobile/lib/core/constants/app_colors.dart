@@ -1,68 +1,75 @@
 import 'package:flutter/material.dart';
 
+/// CampusFlow — Haramaya Daylight Ledger Design System Colors for Mobile
 class AppColors {
-  // Brand Colors (indigo & violet modern theme)
-  static const Color primary = Color(0xFF4F46E5); // Indigo 600
-  static const Color primaryLight = Color(0xFFEEF2FF); // Indigo 50
-  static const Color primaryDark = Color(0xFF3730A3); // Indigo 800
-  static const Color accent = Color(0xFF8B5CF6); // Purple 500
+  // Brand Colors (Haramaya Forest Green & Harar Ochre)
+  static const Color primary = Color(0xFF14532D); // Highland Forest Green
+  static const Color primaryLight = Color(0xFFF0FDF4); // Daylight Green tint
+  static const Color primaryDark = Color(0xFF052E16); // Deep Pine
+  static const Color secondary = Color(0xFFB45309); // Harar Ochre / Terracotta
+  static const Color secondaryLight = Color(0xFFFEF3C7); // Amber-gold tint
+  static const Color accent = Color(0xFF0F766E); // Bate Pine Teal
 
   // Semantic Status Colors
-  static const Color success = Color(0xFF10B981); // Emerald 500
-  static const Color successBg = Color(0xFFECFDF5);
-  static const Color warning = Color(0xFFF59E0B); // Amber 500
-  static const Color warningBg = Color(0xFFFFFBEB);
-  static const Color danger = Color(0xFFEF4444); // Red 500
-  static const Color dangerBg = Color(0xFFFEF2F2);
+  static const Color success = Color(0xFF15803D); // Emerald Green
+  static const Color successBg = Color(0xFFDCFCE7);
+  static const Color warning = Color(0xFFB45309); // Ochre Amber
+  static const Color warningBg = Color(0xFFFEF3C7);
+  static const Color danger = Color(0xFFBE123C); // Deep Crimson Rose
+  static const Color dangerBg = Color(0xFFFFE4E6);
 
-  // Neutral Background & Surface Colors
-  static const Color background = Color(0xFFF1F5F9); // Slate 100
-  static const Color surface = Colors.white;
-  static const Color border = Color(0xFFE2E8F0); // Slate 200
+  // Neutral Background & Surface Colors (Daylight Limestone & Paper)
+  static const Color background = Color(0xFFFAF8F5); // Warm Limestone Canvas
+  static const Color surface = Colors.white; // Crisp Paper Card Surface
+  static const Color border = Color(0xFFE2DDD5); // Hairline Travertine Border
+  static const Color muted = Color(0xFFF2EFE9); // Warm Stone Well
 
-  // Text Colors
-  static const Color textPrimary = Color(0xFF0F172A); // Slate 900
-  static const Color textSecondary = Color(0xFF475569); // Slate 600
-  static const Color textMuted = Color(0xFF94A3B8); // Slate 400
+  // High-Contrast Text Colors
+  static const Color textPrimary = Color(0xFF161815); // Deep Charcoal Ink
+  static const Color textSecondary = Color(0xFF57534E); // High-contrast Stone
+  static const Color textMuted = Color(0xFF78716C); // Medium Stone
 
   // Theme Helpers
   static Color getBg(BuildContext context) => Theme.of(context).scaffoldBackgroundColor;
   static Color getSurface(BuildContext context) => Theme.of(context).cardColor;
-  static Color getTextPrimary(BuildContext context) => Theme.of(context).brightness == Brightness.dark ? const Color(0xFFF8FAFC) : textPrimary;
-  static Color getTextSecondary(BuildContext context) => Theme.of(context).brightness == Brightness.dark ? const Color(0xFF94A3B8) : textSecondary;
-  static Color getBorder(BuildContext context) => Theme.of(context).brightness == Brightness.dark ? const Color(0xFF334155) : border;
+  static Color getTextPrimary(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? const Color(0xFFF5F3EE) : textPrimary;
+  static Color getTextSecondary(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? const Color(0xFFA8A29E) : textSecondary;
+  static Color getBorder(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? const Color(0xFF292524) : border;
 
-  // Gradients
+  // Daylight Ledger Gradients
   static const LinearGradient heroGradient = LinearGradient(
-    colors: [Color(0xFF1E1B4B), Color(0xFF4F46E5)],
+    colors: [Color(0xFF052E16), Color(0xFF14532D)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient cardGradient = LinearGradient(
-    colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)],
+    colors: [Color(0xFF14532D), Color(0xFF15803D)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient walletGradient = LinearGradient(
-    colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF334155)],
+    colors: [Color(0xFF11241A), Color(0xFF1C3829), Color(0xFF0A1811)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
-  // Soft Card Box Shadow
+  // Crisp Single-Elevation Shadow
   static List<BoxShadow> softShadow = [
     BoxShadow(
-      color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-      blurRadius: 16,
-      offset: const Offset(0, 6),
+      color: const Color(0xFF161815).withValues(alpha: 0.04),
+      blurRadius: 10,
+      offset: const Offset(0, 4),
     ),
   ];
 
   static List<BoxShadow> glowShadow = [
     BoxShadow(
-      color: const Color(0xFF4F46E5).withValues(alpha: 0.25),
+      color: const Color(0xFF14532D).withValues(alpha: 0.2),
       blurRadius: 20,
       offset: const Offset(0, 8),
     ),

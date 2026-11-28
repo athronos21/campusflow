@@ -10,6 +10,23 @@ export interface OrderEvent {
   order: any;
 }
 
+function formatOrder<T extends { subtotalMinor: bigint; feeMinor: bigint; totalMinor: bigint; items?: Array<any> }>(order: T) {
+  return {
+    ...order,
+    subtotalMinor: Number(order.subtotalMinor),
+    feeMinor: Number(order.feeMinor),
+    totalMinor: Number(order.totalMinor),
+    ...(order.items
+      ? {
+          items: order.items.map((i) => ({
+            ...i,
+            unitPriceMinor: Number(i.unitPriceMinor),
+          })),
+        }
+      : {}),
+  };
+}
+
 @Injectable()
 export class OrdersService {
   private orderEvents$ = new Subject<OrderEvent>();
@@ -83,16 +100,7 @@ export class OrdersService {
       },
     });
 
-    const formattedOrder = {
-      ...order,
-      subtotalMinor: Number(order.subtotalMinor),
-      feeMinor: Number(order.feeMinor),
-      totalMinor: Number(order.totalMinor),
-      items: order.items.map((i) => ({
-        ...i,
-        unitPriceMinor: Number(i.unitPriceMinor),
-      })),
-    };
+    const formattedOrder = formatOrder(order);
 
     // Emit live event for connected merchants and customers
     this.orderEvents$.next({
@@ -113,16 +121,7 @@ export class OrdersService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return orders.map((o) => ({
-      ...o,
-      subtotalMinor: Number(o.subtotalMinor),
-      feeMinor: Number(o.feeMinor),
-      totalMinor: Number(o.totalMinor),
-      items: o.items.map((i) => ({
-        ...i,
-        unitPriceMinor: Number(i.unitPriceMinor),
-      })),
-    }));
+    return orders.map(formatOrder);
   }
 
   async findBusinessOrders(businessId: string) {
@@ -135,16 +134,7 @@ export class OrdersService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return orders.map((o) => ({
-      ...o,
-      subtotalMinor: Number(o.subtotalMinor),
-      feeMinor: Number(o.feeMinor),
-      totalMinor: Number(o.totalMinor),
-      items: o.items.map((i) => ({
-        ...i,
-        unitPriceMinor: Number(i.unitPriceMinor),
-      })),
-    }));
+    return orders.map(formatOrder);
   }
 
   async updateStatus(orderId: string, dto: UpdateOrderStatusDto) {
@@ -154,11 +144,7 @@ export class OrdersService {
       include: { items: true },
     });
 
-    const formattedOrder = {
-      ...order,
-      subtotalMinor: Number(order.subtotalMinor),
-      totalMinor: Number(order.totalMinor),
-    };
+    const formattedOrder = formatOrder(order);
 
     this.orderEvents$.next({
       type: 'order_updated',

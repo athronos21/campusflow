@@ -2,8 +2,11 @@ import { BookingsService } from '../apps/api/src/bookings/bookings.service';
 import { AuthService } from '../apps/api/src/auth/auth.service';
 import { ModerationService } from '../apps/api/src/moderation/moderation.service';
 import { BusinessesService } from '../apps/api/src/businesses/businesses.service';
+import { CatalogService } from '../apps/api/src/catalog/catalog.service';
+import { OrdersService } from '../apps/api/src/orders/orders.service';
 import { signAccessToken, verifyAccessToken } from '../apps/api/src/common/auth-token';
-import { BookingStatus, BusinessStatus, CampusRole, MembershipStatus } from '@prisma/client';
+import { hasStudentAccess } from '../apps/web/lib/roles';
+import { BookingStatus, BusinessStatus, CampusRole, MembershipStatus, OrderStatus } from '@prisma/client';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 
 async function runServicesUnitTests() {
@@ -253,6 +256,102 @@ async function runServicesUnitTests() {
     parsedSingle?.products?.[0]?.priceMinor === 4500,
     'BusinessesService.findOne serializes BigInt product priceMinor to JSON number',
   );
+
+  // Test 12: OrdersService.updateStatus serializes BigInt feeMinor and item unitPriceMinor
+  const sampleOrderRow = {
+    id: 'ord-1',
+    campusId: 'campus-1',
+    customerId: 'cust-1',
+    businessId: 'biz-1',
+    status: OrderStatus.pending,
+    currency: 'ETB',
+    subtotalMinor: BigInt(5000),
+    feeMinor: BigInt(250),
+    totalMinor: BigInt(5250),
+    items: [
+      {
+        id: 'ord-item-1',
+        orderId: 'ord-1',
+        productId: 'prod-1',
+        productName: 'Macchiato',
+        unitPriceMinor: BigInt(2500),
+        quantity: 2,
+      },
+    ],
+  };
+  const ordersMockPrisma: any = {
+    order: {
+      update: async ({ data }: any) => ({
+        ...sampleOrderRow,
+        status: data.status,
+      }),
+    },
+  };
+  const ordersService = new OrdersService(ordersMockPrisma);
+  const updatedOrder = await ordersService.updateStatus('ord-1', { status: OrderStatus.ready });
+  let orderJson: any = null;
+  let serializationError: any = null;
+  try {
+    orderJson = JSON.parse(JSON.stringify(updatedOrder));
+  } catch (err) {
+    serializationError = err;
+  }
+  assert(!serializationError, 'OrdersService.updateStatus output serializes to JSON without BigInt error');
+  assert(orderJson?.feeMinor === 250, 'OrdersService.updateStatus serializes BigInt feeMinor to number');
+  assert(
+    orderJson?.items?.[0]?.unitPriceMinor === 2500,
+    'OrdersService.updateStatus serializes BigInt items.unitPriceMinor to number',
+  );
+
+  // Test 13: hasStudentAccess correctly restricts student profile fetching
+  assert(hasStudentAccess(['student']) === true, 'hasStudentAccess returns true for student role');
+  assert(hasStudentAccess(['student', 'merchant']) === true, 'hasStudentAccess returns true for multi-role student');
+  assert(hasStudentAccess(['merchant']) === false, 'hasStudentAccess returns false for pure merchant');
+  assert(hasStudentAccess(['campus_admin']) === false, 'hasStudentAccess returns false for campus_admin');
+  assert(hasStudentAccess([]) === true, 'hasStudentAccess defaults to true for empty roles guest');
+
+  // Test 14: CatalogService serializes BigInt priceMinor across operations
+  const catalogMockPrisma: any = {
+    product: {
+      findMany: async () => [
+        {
+          id: 'prod-cat-1',
+          businessId: 'biz-1',
+          name: 'Sambusa',
+          priceMinor: BigInt(2500),
+          currency: 'ETB',
+          isAvailable: true,
+        },
+      ],
+      create: async ({ data }: any) => ({
+        id: 'prod-cat-2',
+        ...data,
+      }),
+      update: async ({ data }: any) => ({
+        id: 'prod-cat-1',
+        businessId: 'biz-1',
+        name: 'Sambusa',
+        priceMinor: BigInt(2500),
+        currency: 'ETB',
+        isAvailable: data.isAvailable,
+      }),
+    },
+  };
+  const catalogService = new CatalogService(catalogMockPrisma);
+  const foundProducts = await catalogService.findProducts({});
+  const parsedFound = JSON.parse(JSON.stringify(foundProducts));
+  assert(parsedFound[0]?.priceMinor === 2500, 'CatalogService.findProducts serializes BigInt priceMinor to number');
+
+  const createdProd = await catalogService.createProduct('biz-1', {
+    name: 'Tea',
+    priceMinor: 1500,
+  } as any);
+  const parsedCreated = JSON.parse(JSON.stringify(createdProd));
+  assert(parsedCreated?.priceMinor === 1500, 'CatalogService.createProduct serializes BigInt priceMinor to number');
+
+  const toggledProd = await catalogService.toggleAvailability('prod-cat-1', false);
+  const parsedToggled = JSON.parse(JSON.stringify(toggledProd));
+  assert(parsedToggled?.priceMinor === 2500, 'CatalogService.toggleAvailability serializes BigInt priceMinor to number');
 
   console.log(`\n====================================================`);
   console.log(`🎉 ALL SERVICE UNIT TESTS PASSED (${passed}/${total})`);

@@ -29,6 +29,9 @@ import * as express from 'express';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Enable graceful shutdown hooks for socket and connection release
+  app.enableShutdownHooks();
+
   // Serve static uploads
   app.use('/uploads', express.static(join(process.cwd(), 'uploads')));
 

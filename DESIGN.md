@@ -35,6 +35,30 @@ CampusFlow rejects generic "AI slop" (random gradient cards, illegible low-contr
 
 ---
 
-## Mobile Application (`apps/mobile`) Reference
-- **Primary Brand:** Deep Indigo (`#4f46e5`) and Modern Violet (`#7c3aed`) on Slate neutrals (`#f8fafc`), with Emerald (`#10b981`), Amber (`#f59e0b`), and Rose (`#f43f5e`) semantic statuses.
-- **Audio Feedback:** Real-time Web Audio chimes for merchant kitchen and order status updates.
+## Mobile Application (`apps/mobile`): Haramaya Daylight Ledger Alignment
+
+### 1. Unified Mobile Token Hierarchy (`lib/core/constants/app_colors.dart`)
+- **Canvas & Surface:**
+  - `AppColors.background`: `0xFFFAF8F5` (Warm Limestone Canvas for sunlight readability on mobile screens).
+  - `AppColors.surface`: `0xFFFFFFFF` (Crisp Paper Card Surface).
+  - `AppColors.border`: `0xFFE2DDD5` (Hairline Travertine Border, `1px` crisp outlines).
+  - `AppColors.muted`: `0xFFF2EFE9` (Warm Stone Well for input fills and unselected filter chips).
+- **Brand Palette:**
+  - `AppColors.primary`: `0xFF14532D` (Haramaya Highland Forest Green).
+  - `AppColors.primaryLight`: `0xFFF0FDF4` (Daylight Green tint for active state pills and badges).
+  - `AppColors.primaryDark`: `0xFF052E16` (Deep Pine for high-contrast headers).
+  - `AppColors.secondary`: `0xFFB45309` (Harar Ochre / Terracotta for urgent actions, transit, and badges).
+  - `AppColors.secondaryLight`: `0xFFFEF3C7` (Amber-gold tint).
+- **Semantics:**
+  - `AppColors.success` / `successBg`: `0xFF15803D` / `0xFFDCFCE7` (Emerald).
+  - `AppColors.warning` / `warningBg`: `0xFFB45309` / `0xFFFEF3C7` (Ochre Amber).
+  - `AppColors.danger` / `dangerBg`: `0xFFBE123C` / `0xFFFFE4E6` (Deep Crimson Rose).
+- **Ink & Typography:**
+  - `AppColors.textPrimary`: `0xFF161815` (Deep Charcoal Ink).
+  - `AppColors.textSecondary`: `0xFF57534E` (High-contrast Stone).
+  - `AppColors.textMuted`: `0xFF78716C` (Medium Stone).
+
+### 2. Signature Mobile Widgets
+- **Perforated Ticket Stub (`PerforatedTicketStub`):** Custom-painted ticket component with circular side cutouts, dashed ticket divider line, high-contrast QR pass container, and tabular metadata grid. Used across check-in passes, cafeteria meal tickets, and appointment bookings.
+- **Physical Touch Target Standards:** Minimum `44x44px` (recommended `48px`) touch targets on all interactive cards, icon buttons, and action buttons.
+- **Elevation & Shadowcraft:** Zero blur-heavy elevation cards; strictly single-elevation hairline borders (`Border.all(color: AppColors.border)`) with subtle daylight diffusion (`AppColors.softShadow`).

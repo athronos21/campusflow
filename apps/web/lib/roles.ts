@@ -18,6 +18,16 @@ export function hasMerchantAccess(roles?: string[] | null): boolean {
 }
 
 /**
+ * Checks whether a user has student access / student profile.
+ * Non-student roles (such as pure merchant or pure campus_admin) without the student role
+ * should not trigger student-specific profile queries.
+ */
+export function hasStudentAccess(roles?: string[] | null): boolean {
+  if (!roles || roles.length === 0) return true; // Default fallback for guest / unassigned
+  return roles.some((role) => role.toLowerCase() === 'student');
+}
+
+/**
  * Resolves a human-readable primary badge label from a user's assigned campus roles.
  */
 export function getPrimaryRoleLabel(roles?: string[] | null): string {
