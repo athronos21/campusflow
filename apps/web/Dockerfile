@@ -3,7 +3,7 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-RUN npm install -g pnpm@9.1.0
+RUN npm install -g pnpm@12.21.0
 
 COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml turbo.json ./
 COPY packages/contracts/package.json ./packages/contracts/
@@ -29,7 +29,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-RUN npm install -g pnpm@9.1.0
+RUN npm install -g pnpm@12.21.0
 
 COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml ./
 COPY apps/web/package.json ./apps/web/
